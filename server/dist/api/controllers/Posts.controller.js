@@ -46,12 +46,14 @@ const commentSchema = Yup.object()
     .strict();
 class PostsController {
     static getPosts(req, res) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const posts = yield Posts_dao_1.default.getPosts();
+                const posts = yield Posts_dao_1.default.getPosts((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
                 res.status(200).json(posts);
             }
             catch (e) {
+                console.error(e);
                 res.status(500).json({ msg: "Internal error" });
             }
         });
@@ -82,6 +84,7 @@ class PostsController {
                     res.status(404).json({ msg: "Not found" });
             }
             catch (e) {
+                console.error(e);
                 res.status(500).json({ msg: "Internal error" });
             }
         });
@@ -99,10 +102,33 @@ class PostsController {
                     .end();
             }
             try {
-                const post = yield Posts_dao_1.default.createPost(req.body.title, req.body.body, req.body.description, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const post = yield Posts_dao_1.default.createPost(req.body.title, req.body.body, req.body.description, req.body.tags, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(201).json(post).end();
             }
             catch (e) {
+                console.error(e);
+                res.status(500).json({ message: "Internal Error" }).end();
+            }
+        });
+    }
+    static updatePost(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield createPostSchema.strict().validate(req.body);
+            }
+            catch (e) {
+                return res
+                    .status(400)
+                    .json({ msg: `${e}`.replace("ValidationError: ", "") })
+                    .end();
+            }
+            try {
+                const post = yield Posts_dao_1.default.updatePost(req.body.title, req.body.body, req.body.description, req.body.tags, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.slug);
+                res.status(201).json(post).end();
+            }
+            catch (e) {
+                console.error(e);
                 res.status(500).json({ message: "Internal Error" }).end();
             }
         });
@@ -156,6 +182,7 @@ class PostsController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                console.log(req.params);
                 const cmt = yield Posts_dao_1.default.deleteComment(req.params.commentId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 if (!cmt) {
                     return res.status(403).json({ msg: "Unauthorized" }).end();
@@ -163,13 +190,11 @@ class PostsController {
                 return res.status(200).json(cmt).end();
             }
             catch (e) {
+                console.error(e);
                 return res.status(500).json({ msg: "Internal Error" });
             }
         });
     }
-    /**
-     Sends back { addLike } to the client, if addLike is true that means the user likes the comment, if it is not true that means that the user has removed their like. The frontend uses or should use this variable accordingly.
-     */
     static toggleCommentLike(req, res) {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
@@ -184,16 +209,26 @@ class PostsController {
             }
         });
     }
-    /**
-     Sends back { addLike } to the client, if addLike is true that means the user likes the post, if it is not true that means that the user has removed their like. The frontend uses or should use this variable accordingly.
-     */
     static togglePostLike(req, res) {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log(req.params.postId, (_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-                const like = yield Posts_dao_1.default.togglePostLike(req.params.postId, String((_b = req.user) === null || _b === void 0 ? void 0 : _b.id));
+                console.log(req.params.id, (_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+                const like = yield Posts_dao_1.default.togglePostLike(req.params.id, String((_b = req.user) === null || _b === void 0 ? void 0 : _b.id));
                 return res.status(200).json(like).end();
+            }
+            catch (e) {
+                console.error(e);
+                return res.status(500).json({ msg: "Internal Error" });
+            }
+        });
+    }
+    static togglePostShare(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const share = yield Posts_dao_1.default.togglePostShare(req.params.id, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                return res.status(200).json(share).end();
             }
             catch (e) {
                 console.error(e);

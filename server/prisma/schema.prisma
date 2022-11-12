@@ -23,6 +23,12 @@ model Post {
   authorId    String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  tags        Tag[]
+}
+
+model Tag {
+  name  String @id @unique
+  posts Post[]
 }
 
 model User {
@@ -36,7 +42,6 @@ model User {
   postShares       PostShare[]
   sentMessages     PrivateMessage[] @relation("sentMessages")
   receivedMessages PrivateMessage[] @relation("receivedMessages")
-  PrivateMessage   PrivateMessage[]
 }
 
 model Comment {
@@ -95,8 +100,7 @@ model PrivateMessage {
   attachmentType    String?
   attachmentPending Boolean?
   attachmentError   Boolean?
-  User              User?    @relation(fields: [userId], references: [id])
-  userId            String?
+  attachmentKey     String?
 
   @@index([senderId])
 }

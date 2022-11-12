@@ -27,14 +27,19 @@ const prisma_1 = __importDefault(require("../../utils/prisma"));
 const prismaQueryRedisCache_1 = __importDefault(require("../../utils/prismaQueryRedisCache"));
 const crypto_1 = __importDefault(require("crypto"));
 const __1 = require("../..");
-const parsePostComments = (post, uid) => __awaiter(void 0, void 0, void 0, function* () {
+const parsePost = (post, uid) => __awaiter(void 0, void 0, void 0, function* () {
     const usersCommentLikes = yield prisma_1.default.commentLike.findMany({
         where: {
             userId: uid,
             commentId: { in: post.comments.map((cmt) => cmt.id) },
         },
     });
-    return Object.assign(Object.assign({}, post), { comments: post.comments.map((cmt) => {
+    console.log("UID + " + uid);
+    return Object.assign(Object.assign({}, post), { tags: post.tags.map((tag) => tag.name), likedByMe: post.likes.find((like) => like.userId === uid)
+            ? true
+            : false, sharedByMe: post.shares.find((share) => share.userId === uid)
+            ? true
+            : false, comments: post.comments.map((cmt) => {
             const { _count } = cmt, commentFields = __rest(cmt, ["_count"]);
             return Object.assign(Object.assign({}, commentFields), { likedByMe: usersCommentLikes.length > 0
                     ? usersCommentLikes.find((like) => like.commentId === cmt.id)
@@ -42,9 +47,9 @@ const parsePostComments = (post, uid) => __awaiter(void 0, void 0, void 0, funct
         }) });
 });
 class PostsDAO {
-    static getPosts() {
+    static getPosts(uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            const posts = yield (0, prismaQueryRedisCache_1.default)("all-posts", prisma_1.default.post.findMany({
+            const posts = yield prisma_1.default.post.findMany({
                 select: {
                     id: true,
                     slug: true,
@@ -57,9 +62,22 @@ class PostsDAO {
                             name: true,
                         },
                     },
+                    likes: true,
+                    shares: true,
+                    tags: true,
                 },
-            }), 15);
-            return posts;
+            });
+            console.log(uid);
+            return posts.map((post) => {
+                let likedByMe = false;
+                let sharedByMe = false;
+                likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
+                sharedByMe = post.shares.find((share) => share.userId === uid)
+                    ? true
+                    : false;
+                return Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
+                    sharedByMe });
+            });
         });
     }
     static getPostById(id, uid) {
@@ -91,8 +109,11 @@ class PostsDAO {
                             name: true,
                         },
                     },
+                    tags: true,
+                    likes: true,
+                    shares: true,
                 },
-            }), 5).then((post) => __awaiter(this, void 0, void 0, function* () { return parsePostComments(post, uid); }));
+            }), 5).then((post) => __awaiter(this, void 0, void 0, function* () { return parsePost(post, uid); }));
             return post;
         });
     }
@@ -125,12 +146,15 @@ class PostsDAO {
                             name: true,
                         },
                     },
+                    tags: true,
+                    likes: true,
+                    shares: true,
                 },
-            }), 5).then((post) => __awaiter(this, void 0, void 0, function* () { return parsePostComments(post, uid); }));
+            }), 5).then((post) => __awaiter(this, void 0, void 0, function* () { return parsePost(post, uid); }));
             return post;
         });
     }
-    static createPost(title, body, description, authorId) {
+    static createPost(title, body, description, tags, authorId) {
         return __awaiter(this, void 0, void 0, function* () {
             const slug = title
                 .toLowerCase()
@@ -138,13 +162,60 @@ class PostsDAO {
                 .replace(/^-+|-+$/g, "") +
                 crypto_1.default.randomBytes(64).toString("hex").slice(0, 6);
             const post = yield prisma_1.default.post.create({
-                data: { title, body, authorId, description, slug },
+                data: {
+                    title,
+                    body,
+                    authorId,
+                    description,
+                    slug,
+                    tags: {
+                        connectOrCreate: tags
+                            .split("#")
+                            .filter((tag) => tag !== "")
+                            .map((tag) => {
+                            const name = tag.trim().toLowerCase();
+                            return {
+                                where: { name },
+                                create: { name },
+                            };
+                        }),
+                    },
+                },
+            });
+            return post;
+        });
+    }
+    static updatePost(title, body, description, tags, authorId, slug) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const post = yield prisma_1.default.post.update({
+                where: {
+                    slug,
+                },
+                data: {
+                    title,
+                    body,
+                    authorId,
+                    description,
+                    tags: {
+                        connectOrCreate: tags
+                            .split("#")
+                            .filter((tag) => tag !== "")
+                            .map((tag) => {
+                            const name = tag.trim().toLowerCase();
+                            return {
+                                where: { name },
+                                create: { name },
+                            };
+                        }),
+                    },
+                },
             });
             return post;
         });
     }
     static addComment(message, uid, postId, parentId = undefined, name) {
         return __awaiter(this, void 0, void 0, function* () {
+            console.log("Adding comment " + message);
             const comment = yield prisma_1.default.comment
                 .create({
                 data: {
@@ -168,7 +239,7 @@ class PostsDAO {
                 },
             })
                 .then((comment) => (Object.assign(Object.assign({}, comment), { likeCount: 0, likedByMe: false })));
-            __1.io.to(comment.post.slug).emit("commentAdded", message, comment.id, parentId, uid, name);
+            __1.io.to(comment.post.slug).emit("comment_added", message, comment.id, parentId, uid, name);
             return comment;
         });
     }
@@ -180,7 +251,7 @@ class PostsDAO {
             });
             if (!userId || userId !== uid)
                 return false;
-            __1.io.to(slug).emit("commentUpdated", message, commentId, uid);
+            __1.io.to(slug).emit("comment_updated", message, commentId, uid);
             return yield prisma_1.default.comment.update({
                 where: { id: commentId },
                 data: { message },
@@ -196,7 +267,8 @@ class PostsDAO {
             });
             if (!userId || userId !== uid)
                 return false;
-            __1.io.to(slug).emit("commentDeleted", commentId, uid);
+            console.log("Deleting comment " + commentId);
+            __1.io.to(slug).emit("comment_deleted", commentId, uid);
             return yield prisma_1.default.comment.delete({
                 where: { id: commentId },
                 select: { id: true },
@@ -219,7 +291,7 @@ class PostsDAO {
                     data,
                     include: { comment: { select: { post: { select: { slug: true } } } } },
                 });
-                __1.io.to(newLike.comment.post.slug).emit("commentLiked", true, uid);
+                __1.io.to(newLike.comment.post.slug).emit("comment_liked", true, uid);
                 return { addLike: true };
             }
             else {
@@ -228,7 +300,7 @@ class PostsDAO {
                         userId_commentId: data,
                     },
                 });
-                __1.io.to(like.comment.post.slug).emit("commentLiked", false, uid);
+                __1.io.to(like.comment.post.slug).emit("comment_liked", false, uid);
                 return { addLike: false };
             }
         });
@@ -250,6 +322,26 @@ class PostsDAO {
                     },
                 });
                 return { addLike: false };
+            }
+        });
+    }
+    static togglePostShare(postId, uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = { userId: uid, postId };
+            const share = yield prisma_1.default.postShare.findUnique({
+                where: { userId_postId: data },
+            });
+            if (share == null) {
+                yield prisma_1.default.postShare.create({ data });
+                return { addShare: true };
+            }
+            else {
+                yield prisma_1.default.postShare.delete({
+                    where: {
+                        userId_postId: data,
+                    },
+                });
+                return { addShare: false };
             }
         });
     }

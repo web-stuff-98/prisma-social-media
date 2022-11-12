@@ -27,6 +27,12 @@ async function seed() {
       slug: "post-one",
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer placerat urna vel ante volutpat, ut elementum mi placerat. Phasellus varius nisi a nisl interdum",
+      tags: {
+        connectOrCreate: {
+          where: { name: "TestTag1" },
+          create: { name: "TestTag1" },
+        },
+      },
     },
   });
   const post2 = await prisma.post.create({
@@ -37,6 +43,12 @@ async function seed() {
       slug: "post-two",
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer placerat urna vel ante volutpat, ut elementum mi placerat. Phasellus varius nisi a nisl interdum",
+      tags: {
+        connectOrCreate: {
+          where: { name: "TestTag1" },
+          create: { name: "TestTag1" },
+        },
+      },
     },
   });
 

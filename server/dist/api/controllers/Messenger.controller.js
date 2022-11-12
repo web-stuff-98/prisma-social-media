@@ -21,21 +21,13 @@ class MessengerController {
             req.pipe(bb);
             try {
                 yield Messenger_dao_1.default.uploadAttachment(bb, req.params.msgId, Number(req.params.bytes));
+                res.writeHead(200, { Connection: "close" });
+                res.end();
             }
             catch (e) {
                 req.unpipe(bb);
                 res.status(400).json({ msg: `${e}` });
             }
-        });
-    }
-    static sendMessage(req, res) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const { message, recipientId, attachmentPending } = req.body;
-                yield Messenger_dao_1.default.sendMessage(message, attachmentPending, recipientId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
-            }
-            catch (e) { }
         });
     }
 }

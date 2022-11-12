@@ -6,15 +6,23 @@ import crypto from "crypto";
 
 import { io } from "../..";
 
-const parsePostComments = async (post: any, uid?: string) => {
+const parsePost = async (post: any, uid?: string) => {
   const usersCommentLikes = await prisma.commentLike.findMany({
     where: {
       userId: uid,
       commentId: { in: post.comments.map((cmt: any) => cmt.id) },
     },
   });
+  console.log("UID + " + uid);
   return {
     ...post,
+    tags: post.tags.map((tag: any) => tag.name),
+    likedByMe: post.likes.find((like: any) => like.userId === uid)
+      ? true
+      : false,
+    sharedByMe: post.shares.find((share: any) => share.userId === uid)
+      ? true
+      : false,
     comments: post.comments.map((cmt: any) => {
       const { _count, ...commentFields } = cmt;
       return {
@@ -32,27 +40,42 @@ const parsePostComments = async (post: any, uid?: string) => {
 };
 
 export default class PostsDAO {
-  static async getPosts() {
-    const posts = await prismaQueryRedisCache(
-      "all-posts",
-      prisma.post.findMany({
-        select: {
-          id: true,
-          slug: true,
-          title: true,
-          createdAt: true,
-          description: true,
-          author: {
-            select: {
-              id: true,
-              name: true,
-            },
+  static async getPosts(uid?: string) {
+    const posts = await prisma.post.findMany({
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        createdAt: true,
+        description: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
           },
         },
-      }),
-      15
-    );
-    return posts;
+        likes: true,
+        shares: true,
+        tags: true,
+      },
+    });
+    console.log(uid);
+    return posts.map((post) => {
+      let likedByMe = false;
+      let sharedByMe = false;
+      likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
+      sharedByMe = post.shares.find((share) => share.userId === uid)
+        ? true
+        : false;
+      return {
+        ...post,
+        likes: post.likes.length,
+        shares: post.shares.length,
+        tags: post.tags.map((tag) => tag.name),
+        likedByMe,
+        sharedByMe,
+      };
+    });
   }
 
   static async getPostById(id: string, uid?: string | undefined) {
@@ -85,10 +108,13 @@ export default class PostsDAO {
               name: true,
             },
           },
+          tags: true,
+          likes: true,
+          shares: true,
         },
       }),
       5
-    ).then(async (post) => parsePostComments(post, uid));
+    ).then(async (post) => parsePost(post, uid));
     return post;
   }
 
@@ -122,10 +148,13 @@ export default class PostsDAO {
               name: true,
             },
           },
+          tags: true,
+          likes: true,
+          shares: true,
         },
       }),
       5
-    ).then(async (post) => parsePostComments(post, uid));
+    ).then(async (post) => parsePost(post, uid));
     return post;
   }
 
@@ -133,6 +162,7 @@ export default class PostsDAO {
     title: string,
     body: string,
     description: string,
+    tags: string,
     authorId: string
   ) {
     const slug =
@@ -142,7 +172,59 @@ export default class PostsDAO {
         .replace(/^-+|-+$/g, "") +
       crypto.randomBytes(64).toString("hex").slice(0, 6);
     const post = await prisma.post.create({
-      data: { title, body, authorId, description, slug },
+      data: {
+        title,
+        body,
+        authorId,
+        description,
+        slug,
+        tags: {
+          connectOrCreate: tags
+            .split("#")
+            .filter((tag) => tag !== "")
+            .map((tag) => {
+              const name = tag.trim().toLowerCase();
+              return {
+                where: { name },
+                create: { name },
+              };
+            }),
+        },
+      },
+    });
+    return post;
+  }
+
+  static async updatePost(
+    title: string,
+    body: string,
+    description: string,
+    tags: string,
+    authorId: string,
+    slug: string
+  ) {
+    const post = await prisma.post.update({
+      where: {
+        slug,
+      },
+      data: {
+        title,
+        body,
+        authorId,
+        description,
+        tags: {
+          connectOrCreate: tags
+            .split("#")
+            .filter((tag) => tag !== "")
+            .map((tag) => {
+              const name = tag.trim().toLowerCase();
+              return {
+                where: { name },
+                create: { name },
+              };
+            }),
+        },
+      },
     });
     return post;
   }
@@ -154,6 +236,7 @@ export default class PostsDAO {
     parentId: string | undefined = undefined,
     name: string
   ) {
+    console.log("Adding comment " + message);
     const comment = await prisma.comment
       .create({
         data: {
@@ -182,7 +265,7 @@ export default class PostsDAO {
         likedByMe: false,
       }));
     io.to(comment.post.slug).emit(
-      "commentAdded",
+      "comment_added",
       message,
       comment.id,
       parentId,
@@ -201,7 +284,7 @@ export default class PostsDAO {
       select: { userId: true, post: { select: { slug: true } } },
     });
     if (!userId || userId !== uid) return false;
-    io.to(slug).emit("commentUpdated", message, commentId, uid);
+    io.to(slug).emit("comment_updated", message, commentId, uid);
     return await prisma.comment.update({
       where: { id: commentId },
       data: { message },
@@ -218,7 +301,8 @@ export default class PostsDAO {
       select: { userId: true, post: { select: { slug: true } } },
     });
     if (!userId || userId !== uid) return false;
-    io.to(slug).emit("commentDeleted", commentId, uid);
+    console.log("Deleting comment " + commentId)
+    io.to(slug).emit("comment_deleted", commentId, uid);
     return await prisma.comment.delete({
       where: { id: commentId },
       select: { id: true },
@@ -240,7 +324,7 @@ export default class PostsDAO {
         data,
         include: { comment: { select: { post: { select: { slug: true } } } } },
       });
-      io.to(newLike.comment.post.slug).emit("commentLiked", true, uid);
+      io.to(newLike.comment.post.slug).emit("comment_liked", true, uid);
       return { addLike: true };
     } else {
       await prisma.commentLike.delete({
@@ -248,7 +332,7 @@ export default class PostsDAO {
           userId_commentId: data,
         },
       });
-      io.to(like.comment.post.slug).emit("commentLiked", false, uid);
+      io.to(like.comment.post.slug).emit("comment_liked", false, uid);
       return { addLike: false };
     }
   }
@@ -268,6 +352,24 @@ export default class PostsDAO {
         },
       });
       return { addLike: false };
+    }
+  }
+
+  static async togglePostShare(postId: string, uid: string) {
+    const data = { userId: uid, postId };
+    const share = await prisma.postShare.findUnique({
+      where: { userId_postId: data },
+    });
+    if (share == null) {
+      await prisma.postShare.create({ data });
+      return { addShare: true };
+    } else {
+      await prisma.postShare.delete({
+        where: {
+          userId_postId: data,
+        },
+      });
+      return { addShare: false };
     }
   }
 }

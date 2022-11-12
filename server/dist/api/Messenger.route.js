@@ -7,7 +7,6 @@ const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = __importDefault(require("../utils/authMiddleware"));
 const Messenger_controller_1 = __importDefault(require("./controllers/Messenger.controller"));
 const router = express_1.default.Router();
-router.route("/").post(authMiddleware_1.default, Messenger_controller_1.default.sendMessage);
 router
     .route("/:msgId/:bytes")
     .post(authMiddleware_1.default, Messenger_controller_1.default.uploadAttachment);

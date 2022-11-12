@@ -43,8 +43,7 @@ io.on("connection", (socket) => {
         rawCookie.replace("token=", ""),
         String(process.env.JWT_SECRET)
       );
-      //@ts-ignore
-      socket.data.user = decoded;
+      socket.data.user = decoded as { id: string; name: string };
     } catch (e) {
       console.warn(
         "User trying to connect to socket with malformed token : " + e
@@ -53,8 +52,27 @@ io.on("connection", (socket) => {
     }
   }
 
-  socket.on("openPost", (slug) => socket.join(slug));
-  socket.on("leavePost", (slug) => socket.leave(slug));
+  socket.on("open_post", (slug) => {
+    console.log("opened post")
+    socket.join(slug)
+  });
+  socket.on("leave_post", (slug) => {
+    console.log("left post")
+    socket.leave(slug)
+  });
+
+  socket.on("private_message", async (message, recipientId, hasAttachment) => {
+    try {
+      await MessengerDAO.sendMessage(
+        message,
+        hasAttachment,
+        recipientId,
+        String(socket.data.user?.id)
+      );
+    } catch (e) {
+      socket.emit("private_message_error", String(e));
+    }
+  });
 });
 
 import Posts from "./api/Posts.route";
@@ -65,6 +83,7 @@ import {
   ServerToClientEvents,
   SocketData,
 } from "./socket-interfaces";
+import MessengerDAO from "./api/dao/Messenger.dao";
 
 app.use("/api/posts", Posts);
 app.use("/api/users", Users);

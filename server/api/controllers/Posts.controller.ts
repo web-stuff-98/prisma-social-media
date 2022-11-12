@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request as Req, Response as Res } from "express";
 import PostsDAO from "../dao/Posts.dao";
 
 import * as Yup from "yup";
@@ -13,16 +13,17 @@ const commentSchema = Yup.object()
   .strict();
 
 export default class PostsController {
-  static async getPosts(req: Request, res: Response) {
+  static async getPosts(req: Req, res: Res) {
     try {
-      const posts = await PostsDAO.getPosts();
+      const posts = await PostsDAO.getPosts(req.user?.id);
       res.status(200).json(posts);
     } catch (e) {
+      console.error(e);
       res.status(500).json({ msg: "Internal error" });
     }
   }
 
-  static async getPostById(req: Request, res: Response) {
+  static async getPostById(req: Req, res: Res) {
     try {
       const post = await PostsDAO.getPostById(req.params.id, req.user?.id);
       if (post) res.status(200).json(post);
@@ -32,17 +33,18 @@ export default class PostsController {
     }
   }
 
-  static async getPostBySlug(req: Request, res: Response) {
+  static async getPostBySlug(req: Req, res: Res) {
     try {
       const post = await PostsDAO.getPostBySlug(req.params.slug, req.user?.id);
       if (post) res.status(200).json(post);
       else res.status(404).json({ msg: "Not found" });
     } catch (e) {
+      console.error(e);
       res.status(500).json({ msg: "Internal error" });
     }
   }
 
-  static async createPost(req: Request, res: Response) {
+  static async createPost(req: Req, res: Res) {
     try {
       await createPostSchema.strict().validate(req.body);
     } catch (e) {
@@ -57,15 +59,43 @@ export default class PostsController {
         req.body.title,
         req.body.body,
         req.body.description,
+        req.body.tags,
         String(req.user?.id)
       );
       res.status(201).json(post).end();
     } catch (e) {
+      console.error(e);
       res.status(500).json({ message: "Internal Error" }).end();
     }
   }
 
-  static async addComment(req: Request, res: Response) {
+  static async updatePost(req: Req, res: Res) {
+    try {
+      await createPostSchema.strict().validate(req.body);
+    } catch (e) {
+      return res
+        .status(400)
+        .json({ msg: `${e}`.replace("ValidationError: ", "") })
+        .end();
+    }
+
+    try {
+      const post = await PostsDAO.updatePost(
+        req.body.title,
+        req.body.body,
+        req.body.description,
+        req.body.tags,
+        String(req.user?.id),
+        req.params.slug
+      );
+      res.status(201).json(post).end();
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({ message: "Internal Error" }).end();
+    }
+  }
+
+  static async addComment(req: Req, res: Res) {
     try {
       await commentSchema.validate(req.body);
     } catch (e) {
@@ -81,7 +111,7 @@ export default class PostsController {
         String(req.user?.id),
         req.params.id,
         req.body.parentId,
-        String(req.user?.name),
+        String(req.user?.name)
       );
       return res.status(201).json(cmt).end();
     } catch (e) {
@@ -90,7 +120,7 @@ export default class PostsController {
     }
   }
 
-  static async updateComment(req: Request, res: Response) {
+  static async updateComment(req: Req, res: Res) {
     try {
       await commentSchema.validate(req.body);
     } catch (e) {
@@ -114,8 +144,9 @@ export default class PostsController {
     }
   }
 
-  static async deleteComment(req: Request, res: Response) {
+  static async deleteComment(req: Req, res: Res) {
     try {
+      console.log(req.params)
       const cmt = await PostsDAO.deleteComment(
         req.params.commentId,
         String(req.user?.id)
@@ -125,14 +156,12 @@ export default class PostsController {
       }
       return res.status(200).json(cmt).end();
     } catch (e) {
+      console.error(e)
       return res.status(500).json({ msg: "Internal Error" });
     }
   }
 
-  /**
-   Sends back { addLike } to the client, if addLike is true that means the user likes the comment, if it is not true that means that the user has removed their like. The frontend uses or should use this variable accordingly.
-   */
-  static async toggleCommentLike(req: Request, res: Response) {
+  static async toggleCommentLike(req: Req, res: Res) {
     try {
       console.log(req.params.commentId, req.user?.id);
       const like = await PostsDAO.toggleCommentLike(
@@ -146,17 +175,27 @@ export default class PostsController {
     }
   }
 
-  /**
-   Sends back { addLike } to the client, if addLike is true that means the user likes the post, if it is not true that means that the user has removed their like. The frontend uses or should use this variable accordingly.
-   */
-  static async togglePostLike(req: Request, res: Response) {
+  static async togglePostLike(req: Req, res: Res) {
     try {
-      console.log(req.params.postId, req.user?.id);
+      console.log(req.params.id, req.user?.id);
       const like = await PostsDAO.togglePostLike(
-        req.params.postId,
+        req.params.id,
         String(req.user?.id)
       );
       return res.status(200).json(like).end();
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ msg: "Internal Error" });
+    }
+  }
+
+  static async togglePostShare(req: Req, res: Res) {
+    try {
+      const share = await PostsDAO.togglePostShare(
+        req.params.id,
+        String(req.user?.id)
+      );
+      return res.status(200).json(share).end();
     } catch (e) {
       console.error(e);
       return res.status(500).json({ msg: "Internal Error" });

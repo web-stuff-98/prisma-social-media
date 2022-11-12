@@ -30,13 +30,23 @@ const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = __importStar(require("../utils/authMiddleware"));
 const Posts_controller_1 = __importDefault(require("./controllers/Posts.controller"));
 const router = express_1.default.Router();
-router.route("/").get(Posts_controller_1.default.getPosts);
-router.route("/").post(Posts_controller_1.default.createPost);
+router.route("/").get(authMiddleware_1.withUser, Posts_controller_1.default.getPosts);
+router.route("/").post(authMiddleware_1.default, Posts_controller_1.default.createPost);
+router.route("/:slug").put(authMiddleware_1.default, Posts_controller_1.default.updatePost);
 router.route("/:slug").get(authMiddleware_1.withUser, Posts_controller_1.default.getPostBySlug);
-router.route("/:id/toggleLike").post(authMiddleware_1.default, Posts_controller_1.default.togglePostLike);
+router
+    .route("/:id/toggleLike")
+    .post(authMiddleware_1.default, Posts_controller_1.default.togglePostLike);
+router
+    .route("/:id/toggleShare")
+    .post(authMiddleware_1.default, Posts_controller_1.default.togglePostShare);
 router.route("/:id/comments").post(authMiddleware_1.default, Posts_controller_1.default.addComment);
-router.route("/:id/comments/:commentId").put(authMiddleware_1.default, Posts_controller_1.default.updateComment);
-router.route("/:id/comments/:commentId").delete(authMiddleware_1.default, Posts_controller_1.default.deleteComment);
+router
+    .route("/:id/comments/:commentId")
+    .put(authMiddleware_1.default, Posts_controller_1.default.updateComment);
+router
+    .route("/:id/comments/:commentId")
+    .delete(authMiddleware_1.default, Posts_controller_1.default.deleteComment);
 router
     .route("/:id/comments/:commentId/toggleLike")
     .post(authMiddleware_1.default, Posts_controller_1.default.toggleCommentLike);

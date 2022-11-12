@@ -13,21 +13,11 @@ export default class MessengerController {
         req.params.msgId,
         Number(req.params.bytes)
       );
+      res.writeHead(200, { Connection: "close" })
+      res.end()
     } catch (e) {
       req.unpipe(bb);
       res.status(400).json({ msg: `${e}` });
     }
-  }
-
-  static async sendMessage(req: Req, res: Res) {
-    try {
-      const { message, recipientId, attachmentPending } = req.body;
-      await MessengerDAO.sendMessage(
-        message,
-        attachmentPending,
-        recipientId,
-        String(req.user?.id)
-      );
-    } catch (e) {}
   }
 }

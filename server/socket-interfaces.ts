@@ -1,19 +1,31 @@
 export interface ServerToClientEvents {
-  commentAdded: (
+  comment_added: (
     message: string,
     commentId: string,
     parentId: string | undefined,
     uid: string,
     name: string
   ) => void;
-  commentUpdated: (message: string, commentId: string, uid: string) => void;
-  commentDeleted: (commentId: string, uid: string) => void;
-  commentLiked: (addLike: boolean, uid: string) => void;
+  comment_updated: (message: string, commentId: string, uid: string) => void;
+  comment_deleted: (commentId: string, uid: string) => void;
+  comment_liked: (addLike: boolean, uid: string) => void;
+  private_message_attachment_progress: (
+    progress: number,
+    msgId: string
+  ) => void;
+  private_message_attachment_failed: (messageId: string) => void;
+  private_message_attachment_complete: (
+    messageId: string,
+    type: string
+  ) => void;
+  private_message_error: (error:string) => void;
 }
 
 export interface ClientToServerEvents {
-  openPost: (slug: string) => void;
-  leavePost: (slug: string) => void;
+  open_post: (slug: string) => void;
+  leave_post: (slug: string) => void;
+
+  private_message: (message: string, recipientId: string, hasAttachment:boolean) => void;
 }
 
 export interface InterServerEvents {

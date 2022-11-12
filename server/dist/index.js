@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -33,7 +42,6 @@ io.on("connection", (socket) => {
     if (rawCookie) {
         try {
             const decoded = jsonwebtoken_1.default.verify(rawCookie.replace("token=", ""), String(process.env.JWT_SECRET));
-            //@ts-ignore
             socket.data.user = decoded;
         }
         catch (e) {
@@ -41,11 +49,27 @@ io.on("connection", (socket) => {
             socket.disconnect();
         }
     }
-    socket.on("openPost", (slug) => socket.join(slug));
-    socket.on("leavePost", (slug) => socket.leave(slug));
+    socket.on("open_post", (slug) => {
+        console.log("opened post");
+        socket.join(slug);
+    });
+    socket.on("leave_post", (slug) => {
+        console.log("left post");
+        socket.leave(slug);
+    });
+    socket.on("private_message", (message, recipientId, hasAttachment) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
+        try {
+            yield Messenger_dao_1.default.sendMessage(message, hasAttachment, recipientId, String((_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.id));
+        }
+        catch (e) {
+            socket.emit("private_message_error", String(e));
+        }
+    }));
 });
 const Posts_route_1 = __importDefault(require("./api/Posts.route"));
 const Users_route_1 = __importDefault(require("./api/Users.route"));
+const Messenger_dao_1 = __importDefault(require("./api/dao/Messenger.dao"));
 app.use("/api/posts", Posts_route_1.default);
 app.use("/api/users", Users_route_1.default);
 server.listen(process.env.PORT, () => {
