@@ -2,6 +2,8 @@ import prisma from "../../utils/prisma";
 import prismaQueryRedisCache from "../../utils/prismaQueryRedisCache";
 
 import bcrypt from "bcrypt";
+import imageProcessing from "../../utils/imageProcessing";
+import { io } from "../..";
 
 export default class UsersDAO {
   static async getUsers() {
@@ -15,14 +17,18 @@ export default class UsersDAO {
   }
 
   static async getUserById(id: string) {
-    const user = await prismaQueryRedisCache(
-      `user:${id}`,
-      prisma.user.findUnique({
-        where: { id },
-      }),
-      30
-    );
-    return user;
+    let user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, pfp: { select: { base64: true } } },
+    });
+    const out = user
+      ? {
+          id: user.id,
+          name: user.name,
+          pfp: user.pfp?.base64,
+        }
+      : undefined;
+    return out;
   }
 
   static async getUserByName(name: string) {
@@ -33,8 +39,62 @@ export default class UsersDAO {
           mode: "insensitive",
         },
       },
+      select: {
+        id: true,
+        name: true,
+        pfp: { select: { base64: true } },
+      },
     });
-    return findQ[0] || undefined;
+    const out = findQ[0]
+      ? {
+          id: findQ[0].id,
+          name: findQ[0].name,
+          pfp: findQ[0].pfp?.base64,
+        }
+      : undefined;
+    return out || undefined;
+  }
+
+  static async updateUser(uid: string, data: { name?: string; pfp?: string }) {
+    if (data.name) {
+      await prisma.user.update({
+        where: { id: uid },
+        data: {
+          name: data.name,
+        },
+      });
+    }
+    let base64;
+    if (data.pfp) {
+      try {
+        base64 = await imageProcessing(data.pfp, { width: 48, height: 48 });
+      } catch (e) {
+        throw new Error(`Error processing image : ${e}`);
+      }
+      const matchingPfp = await prisma.pfp.findUnique({
+        where: { userId: uid },
+      });
+      if (matchingPfp) {
+        await prisma.pfp.update({
+          where: { userId: uid },
+          data: {
+            base64,
+          },
+        });
+      } else {
+        await prisma.pfp.create({
+          data: {
+            userId: uid,
+            base64,
+          },
+        });
+      }
+    }
+    io.to(uid).emit("user_subscription_update", {
+      id: uid,
+      ...(data.name ? { name: data.name } : {}),
+      ...(data.pfp ? { pfp: base64 } : {}),
+    });
   }
 
   static async createUser(username: string, password: string) {

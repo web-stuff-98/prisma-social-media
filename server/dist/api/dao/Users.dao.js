@@ -13,8 +13,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const prisma_1 = __importDefault(require("../../utils/prisma"));
-const prismaQueryRedisCache_1 = __importDefault(require("../../utils/prismaQueryRedisCache"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
+const __1 = require("../..");
 class UsersDAO {
     static getUsers() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -28,14 +29,24 @@ class UsersDAO {
         });
     }
     static getUserById(id) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            const user = yield (0, prismaQueryRedisCache_1.default)(`user:${id}`, prisma_1.default.user.findUnique({
+            let user = yield prisma_1.default.user.findUnique({
                 where: { id },
-            }), 30);
-            return user;
+                select: { id: true, name: true, pfp: { select: { base64: true } } },
+            });
+            const out = user
+                ? {
+                    id: user.id,
+                    name: user.name,
+                    pfp: (_a = user.pfp) === null || _a === void 0 ? void 0 : _a.base64,
+                }
+                : undefined;
+            return out;
         });
     }
     static getUserByName(name) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const findQ = yield prisma_1.default.user.findMany({
                 where: {
@@ -44,8 +55,61 @@ class UsersDAO {
                         mode: "insensitive",
                     },
                 },
+                select: {
+                    id: true,
+                    name: true,
+                    pfp: { select: { base64: true } },
+                },
             });
-            return findQ[0] || undefined;
+            const out = findQ[0]
+                ? {
+                    id: findQ[0].id,
+                    name: findQ[0].name,
+                    pfp: (_a = findQ[0].pfp) === null || _a === void 0 ? void 0 : _a.base64,
+                }
+                : undefined;
+            return out || undefined;
+        });
+    }
+    static updateUser(uid, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (data.name) {
+                yield prisma_1.default.user.update({
+                    where: { id: uid },
+                    data: {
+                        name: data.name,
+                    },
+                });
+            }
+            let base64;
+            if (data.pfp) {
+                try {
+                    base64 = yield (0, imageProcessing_1.default)(data.pfp, { width: 48, height: 48 });
+                }
+                catch (e) {
+                    throw new Error(`Error processing image : ${e}`);
+                }
+                const matchingPfp = yield prisma_1.default.pfp.findUnique({
+                    where: { userId: uid },
+                });
+                if (matchingPfp) {
+                    yield prisma_1.default.pfp.update({
+                        where: { userId: uid },
+                        data: {
+                            base64,
+                        },
+                    });
+                }
+                else {
+                    yield prisma_1.default.pfp.create({
+                        data: {
+                            userId: uid,
+                            base64,
+                        },
+                    });
+                }
+            }
+            __1.io.to(uid).emit("user_subscription_update", Object.assign(Object.assign({ id: uid }, (data.name ? { name: data.name } : {})), (data.pfp ? { pfp: base64 } : {})));
         });
     }
     static createUser(username, password) {

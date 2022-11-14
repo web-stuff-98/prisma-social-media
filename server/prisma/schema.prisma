@@ -42,6 +42,16 @@ model User {
   postShares       PostShare[]
   sentMessages     PrivateMessage[] @relation("sentMessages")
   receivedMessages PrivateMessage[] @relation("receivedMessages")
+  pfp              Pfp?
+}
+
+model Pfp {
+  base64 String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@id([userId])
+  @@index([base64])
 }
 
 model Comment {
@@ -93,10 +103,11 @@ model PrivateMessage {
   id String @id @default(cuid())
 
   sender      User   @relation(name: "sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver    User   @relation(name: "receivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient   User   @relation(name: "receivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
   senderId    String
   recipientId String
 
+  hasAttachment     Boolean  @default(false)
   attachmentType    String?
   attachmentPending Boolean?
   attachmentError   Boolean?

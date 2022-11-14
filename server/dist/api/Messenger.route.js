@@ -8,6 +8,15 @@ const authMiddleware_1 = __importDefault(require("../utils/authMiddleware"));
 const Messenger_controller_1 = __importDefault(require("./controllers/Messenger.controller"));
 const router = express_1.default.Router();
 router
-    .route("/:msgId/:bytes")
+    .route("/conversations")
+    .get(authMiddleware_1.default, Messenger_controller_1.default.getConversations);
+router
+    .route("/conversation/:uid")
+    .get(authMiddleware_1.default, Messenger_controller_1.default.getConversation);
+router
+    .route("/conversation/:uid")
+    .delete(authMiddleware_1.default, Messenger_controller_1.default.deleteConversation);
+router
+    .route("/attachment/:msgId/:bytes")
     .post(authMiddleware_1.default, Messenger_controller_1.default.uploadAttachment);
 exports.default = router;

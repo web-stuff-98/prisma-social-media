@@ -59,7 +59,6 @@ class PostsDAO {
                     author: {
                         select: {
                             id: true,
-                            name: true,
                         },
                     },
                     likes: true,
@@ -97,7 +96,6 @@ class PostsDAO {
                             user: {
                                 select: {
                                     id: true,
-                                    name: true,
                                 },
                             },
                             _count: { select: { likes: true } },
@@ -134,7 +132,6 @@ class PostsDAO {
                             user: {
                                 select: {
                                     id: true,
-                                    name: true,
                                 },
                             },
                             _count: { select: { likes: true } },
@@ -215,7 +212,6 @@ class PostsDAO {
     }
     static addComment(message, uid, postId, parentId = undefined, name) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Adding comment " + message);
             const comment = yield prisma_1.default.comment
                 .create({
                 data: {
@@ -228,7 +224,6 @@ class PostsDAO {
                     user: {
                         select: {
                             id: true,
-                            name: true,
                         },
                     },
                     post: {

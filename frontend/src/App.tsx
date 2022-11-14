@@ -4,19 +4,22 @@ import { InterfaceProvider } from "./context/InterfaceContext";
 import { ModalProvider } from "./context/ModalContext";
 import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
+import { UsersProvider } from "./context/UsersContext";
 
 function App() {
   return (
     <InterfaceProvider>
-      <SocketProvider>
-        <ModalProvider>
-          <AuthProvider>
-            <MessengerProvider>
-              <Layout />
-            </MessengerProvider>
-          </AuthProvider>
-        </ModalProvider>
-      </SocketProvider>
+        <SocketProvider>
+        <UsersProvider>
+          <ModalProvider>
+            <AuthProvider>
+              <MessengerProvider>
+                <Layout />
+              </MessengerProvider>
+            </AuthProvider>
+          </ModalProvider>
+      </UsersProvider>
+        </SocketProvider>
     </InterfaceProvider>
   );
 }

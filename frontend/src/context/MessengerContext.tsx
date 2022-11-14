@@ -4,43 +4,47 @@ import {
   useState,
   ReactNode,
   CSSProperties,
-  ChangeEvent,
-  FormEvent,
 } from "react";
 
 import { BsFillChatRightFill } from "react-icons/bs";
 
 import MessengerTopIcons from "../components/MessengerTopIcons";
-import Message from "../components/messenger/Message";
-import MessageForm from "../components/messenger/MessageForm";
-
-/**
- * messengerSection = Conversation || Converations
- */
+import ConversationSection from "../components/messenger/conversation/ConversationSection";
+import ConversationsSection from "../components/messenger/conversations/ConversationsSection";
 
 export const MessengerProvider = ({ children }: { children: ReactNode }) => {
   const [messengerOpen, setMessengerOpen] = useState(false);
 
   const openMessenger = () => {
-    setMessengerSection("Conversation");
+    setMessengerSection("Conversations");
     setMessengerOpen(true);
   };
   const closeMessenger = () => {
     setMessengerOpen(false);
+    setMessengerSection("Conversations");
   };
-  const [messengerSection, setMessengerSection] = useState("Conversation");
 
-  const [messageInput, setMessageInput] = useState("");
-  const handleMessageInput = (e: ChangeEvent<HTMLInputElement>) => {
-    setMessageInput(e.target.value);
+  const openConversation = (uid: string) => {
+    setConversationWith(uid);
+    setMessengerOpen(true);
+    setMessengerSection("Conversation");
   };
-  const handleMessageSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-  };
+
+
+  const [messengerSection, setMessengerSection] = useState<
+    "Conversation" | "Conversations"
+  >("Conversation");
+
+  const [conversationWith, setConversationWith] = useState("");
 
   return (
     <MessengerContext.Provider
-      value={{ messengerOpen, openMessenger, closeMessenger }}
+      value={{
+        messengerOpen,
+        openMessenger,
+        closeMessenger,
+        openConversation,
+      }}
     >
       <div
         style={{
@@ -66,34 +70,15 @@ export const MessengerProvider = ({ children }: { children: ReactNode }) => {
           <>
             {/* Conversation */}
             {messengerSection === "Conversation" && (
-              <div className="w-full h-full flex flex-col items-between justify-between">
-                <div className="grow overflow-y-scroll">
-                  <Message />
-                  <Message otherUser />
-                  <Message
-                    attachmentData={{
-                      type: "Video",
-                      url: "https://www.youtube.com/watch?v=o5q2Louzwxg",
-                    }}
-                  />
-                  <Message
-                    otherUser
-                    attachmentData={{
-                      type: "Image",
-                      url: "https://images.unsplash.com/photo-1667615983516-5e724e6fc348?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwyfHx8ZW58MHx8fHw%3D&auto=format&fit=crop&w=500&q=60",
-                    }}
-                  />
-                </div>
-                <MessageForm
-                  handleMessageInput={(e) => {}}
-                  handleMessageSubmit={(e) => {}}
-                  messageInput={""}
-                />
-              </div>
+              <ConversationSection
+                conversationWith={conversationWith}
+                setMessengerSection={setMessengerSection}
+              />
             )}
-
             {/* Conversations */}
-            {messengerSection === "Conversations" && <>Conversations</>}
+            {messengerSection === "Conversations" && (
+              <ConversationsSection setMessengerSection={setMessengerSection} />
+            )}
           </>
         )}
       </div>
@@ -106,10 +91,12 @@ const MessengerContext = createContext<{
   messengerOpen: boolean;
   openMessenger: () => void;
   closeMessenger: () => void;
+  openConversation: (uid: string) => void;
 }>({
   messengerOpen: false,
   openMessenger: () => {},
   closeMessenger: () => {},
+  openConversation: () => {},
 });
 export const useMessenger = () => useContext(MessengerContext);
 

@@ -1,25 +1,31 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from "react";
 import { useParams } from "react-router-dom";
-import { getPost } from "../services/posts";
+import { getPost, toggleLike, toggleShare } from "../services/posts";
 import { IUser, useAuth } from "./AuthContext";
 import { useSocket } from "./SocketContext";
+import useUsers from "./UsersContext";
 
 export interface IPost {
   id: string;
   title: string;
   description: string;
   body: string;
-  author: Partial<IUser>;
+  author: { id: string };
   comments?: IComment[];
   createdAt?: string;
   slug: string;
+  likedByMe?: boolean;
+  sharedByMe?: boolean;
+  likes: number;
+  shares: number;
 }
 
 export interface IComment {
@@ -27,7 +33,7 @@ export interface IComment {
   likedByMe: boolean;
   message: string;
   id: string;
-  parentId: string;
+  parentId: string | undefined;
   createdAt: string;
   user: IUser;
 }
@@ -42,6 +48,8 @@ const Context = createContext<{
   toggleLocalCommentLike: (id: string, addLike: boolean) => void;
   replyingTo: string;
   setReplyingTo: (to: string) => void;
+  handleLikeClicked: () => void;
+  handleShareClicked: () => void;
 }>({
   post: undefined,
   rootComments: [],
@@ -52,6 +60,8 @@ const Context = createContext<{
   toggleLocalCommentLike: () => {},
   replyingTo: "",
   setReplyingTo: () => {},
+  handleLikeClicked: () => {},
+  handleShareClicked: () => {},
 });
 
 export const usePost = () => useContext(Context);
@@ -60,6 +70,7 @@ export function PostProvider({ children }: { children: ReactNode }) {
   const { slug } = useParams();
   const { socket } = useSocket();
   const { user } = useAuth();
+  const { cacheUserData } = useUsers();
 
   const [status, setStatus] = useState("pending");
   const [error, setError] = useState("");
@@ -67,12 +78,34 @@ export function PostProvider({ children }: { children: ReactNode }) {
     id: "123",
     title: "post",
     body: "body",
-    author: { id: "123", name: "authorname" },
+    author: { id: "123" },
     comments: [],
     slug: "123",
     description: "",
+    likes: 0,
+    shares: 0,
+    likedByMe: false,
+    sharedByMe: false,
   });
   const [replyingTo, setReplyingTo] = useState("");
+
+  const handleLikeClicked = async () => {
+    try {
+      await toggleLike(post.id);
+      setPost((p) => ({ ...p, likedByMe: !p.likedByMe }));
+    } catch (e) {
+      setError(`${e}`);
+    }
+  };
+
+  const handleShareClicked = async () => {
+    try {
+      await toggleShare(post.id);
+      setPost((p) => ({ ...p, sharedByMe: !p.sharedByMe }));
+    } catch (e) {
+      setError(`${e}`);
+    }
+  };
 
   useEffect(() => {
     getPost(String(slug))
@@ -80,8 +113,9 @@ export function PostProvider({ children }: { children: ReactNode }) {
         setPost(post);
         setError("");
         setStatus("success");
+        cacheUserData(post.author.id);
         if (socket) {
-          socket.emit("openPost", String(slug));
+          socket.emit("open_post", String(slug));
         }
       })
       .catch((e) => {
@@ -89,48 +123,71 @@ export function PostProvider({ children }: { children: ReactNode }) {
         setError(`${e}`);
       });
     return () => {
-      if (socket) socket.emit("leavePost", String(slug));
+      if (socket) socket.emit("leave_post", String(slug));
     };
   }, [slug]);
 
+  const handleCommentAdded = useCallback(
+    (
+      message: string,
+      commentId: string,
+      parentId: string | undefined,
+      uid: string,
+      name: string
+    ) => {
+      if (uid === user?.id) return;
+      createLocalComment({
+        message,
+        likeCount: 0,
+        likedByMe: false,
+        id: commentId,
+        parentId: parentId,
+        createdAt: new Date().toISOString(),
+        user: {
+          id: uid,
+          name,
+        },
+      });
+      cacheUserData(uid);
+    },
+    []
+  );
+  const handleCommentUpdated = useCallback(
+    (message: string, commentId: string, uid: string) => {
+      if (uid === user?.id) return;
+      updateLocalComment(commentId, message);
+    },
+    []
+  );
+  const handleCommentDeleted = useCallback((commentId: string, uid: string) => {
+    if (uid === user?.id) return;
+    deleteLocalComment(commentId);
+  }, []);
+  const handleCommentLiked = useCallback((addLike: boolean, uid: string) => {
+    if (uid === user?.id) return;
+    toggleLocalCommentLike(uid, addLike);
+  }, []);
+
   useEffect(() => {
     if (!socket) return;
-    socket.on(
-      "commentAdded",
-      (message = "", commentId = "", parentId = "", uid = "", name = "") => {
-        if (uid === user?.id) return;
-        createLocalComment({
-          message,
-          likeCount: 0,
-          likedByMe: false,
-          id: commentId,
-          parentId: parentId || "",
-          createdAt: new Date().toISOString(),
-          user: {
-            id: uid,
-            name,
-          },
-        });
-      }
-    );
-    socket.on("commentUpdated", (message, commentId, uid) => {
-      if (uid === user?.id) return;
-    });
-    socket.on("commentDeleted", (commentId, uid) => {
-      if (uid === user?.id) return;
-    });
-    socket.on("commentLiked", (addLike, uid) => {
-      if (uid === user?.id) return;
-    });
+    socket.on("comment_added", handleCommentAdded);
+    socket.on("comment_updated", handleCommentUpdated);
+    socket.on("comment_deleted", handleCommentDeleted);
+    socket.on("comment_liked", handleCommentLiked);
+    return () => {
+      socket.off("comment_added", handleCommentAdded);
+      socket.off("comment_updated", handleCommentUpdated);
+      socket.off("comment_liked", handleCommentLiked);
+      socket.off("comment_deleted", handleCommentDeleted);
+    };
   }, [socket]);
 
   const [comments, setComments] = useState<IComment[]>([]);
   const commentsByParentId = useMemo(() => {
-    // any type here... dont know how to resolve this properly. doesn't actually matter anyway.
     const group: any = {};
     comments.forEach((comment) => {
-      group[comment.parentId] ||= [];
-      group[comment.parentId].push(comment);
+      group[String(comment.parentId)] ||= [];
+      group[String(comment.parentId)].push(comment);
     });
     return group;
   }, [comments]);
@@ -192,6 +249,8 @@ export function PostProvider({ children }: { children: ReactNode }) {
         updateLocalComment,
         deleteLocalComment,
         toggleLocalCommentLike,
+        handleLikeClicked,
+        handleShareClicked,
         replyingTo,
         setReplyingTo,
       }}

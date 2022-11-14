@@ -51,7 +51,6 @@ export default class PostsDAO {
         author: {
           select: {
             id: true,
-            name: true,
           },
         },
         likes: true,
@@ -96,7 +95,6 @@ export default class PostsDAO {
               user: {
                 select: {
                   id: true,
-                  name: true,
                 },
               },
               _count: { select: { likes: true } },
@@ -136,7 +134,6 @@ export default class PostsDAO {
               user: {
                 select: {
                   id: true,
-                  name: true,
                 },
               },
               _count: { select: { likes: true } },
@@ -236,7 +233,6 @@ export default class PostsDAO {
     parentId: string | undefined = undefined,
     name: string
   ) {
-    console.log("Adding comment " + message);
     const comment = await prisma.comment
       .create({
         data: {
@@ -249,7 +245,6 @@ export default class PostsDAO {
           user: {
             select: {
               id: true,
-              name: true,
             },
           },
           post: {

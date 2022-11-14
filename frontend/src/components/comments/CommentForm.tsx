@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { MdSend } from "react-icons/md";
 import { ImSpinner8 } from "react-icons/im";
@@ -11,6 +11,7 @@ export function CommentForm({
   autoFocus = false,
   initialValue = "",
   placeholder = "",
+  onClickOutside = () => {},
 }: {
   loading: boolean;
   error: string | undefined;
@@ -18,6 +19,7 @@ export function CommentForm({
   autoFocus?: boolean;
   initialValue?: string;
   placeholder?: string;
+  onClickOutside?: Function;
 }) {
   const [message, setMessage] = useState(initialValue);
 
@@ -25,6 +27,23 @@ export function CommentForm({
     e.preventDefault();
     onSubmit(message).then(() => setMessage(""));
   }
+
+  const [mouseInside, setMouseInside] = useState(false)
+
+  const onMouseEnter = () => setMouseInside(true)
+  const onMouseLeave = () => setMouseInside(false)
+
+  useEffect(() => {
+    const clicked = () => {
+      if(!mouseInside) {
+        onClickOutside()
+      }
+    }
+    document.addEventListener("mousedown", clicked)
+    return () => {
+      document.removeEventListener("mousedown", clicked)
+    }
+  }, [mouseInside])
 
   return (
     <form className="w-full mb-2 h-6 my-auto flex" onSubmit={handleSubmit}>
@@ -35,6 +54,8 @@ export function CommentForm({
           placeholder={placeholder}
           onChange={(e) => setMessage(e.target.value)}
           className="w-full"
+          onMouseEnter={() => onMouseEnter()}
+          onMouseLeave={() => onMouseLeave()}
         />
         <button
           aria-label="Submit"
@@ -42,9 +63,13 @@ export function CommentForm({
           type="submit"
           disabled={loading}
         >
-          {loading ? <ImSpinner8 className="animate-spin"/> : <MdSend className="text-2xl" />}
+          {loading ? (
+            <ImSpinner8 className="animate-spin" />
+          ) : (
+            <MdSend className="text-2xl" />
+          )}
         </button>
-        {error && <ErrorTip message={String(error)}/>}
+        {error && <ErrorTip message={String(error)} />}
       </div>
     </form>
   );

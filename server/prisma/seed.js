@@ -18,7 +18,12 @@ async function seed() {
       password: "$2a$12$KhAwjN8WzTUdYNmAjIN8nuM0XpIFhnfPCmPaimxH9YBr0pufFKBGq",
     },
   });
-
+  const TestAcc3 = await prisma.user.create({
+    data: {
+      name: "TestAcc3",
+      password: "$2a$12$KhAwjN8WzTUdYNmAjIN8nuM0XpIFhnfPCmPaimxH9YBr0pufFKBGq",
+    },
+  });
   const post1 = await prisma.post.create({
     data: {
       body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer placerat urna vel ante volutpat, ut elementum mi placerat. Phasellus varius nisi a nisl interdum, at ultrices ex tincidunt. Duis nec nunc vel urna ullamcorper eleifend ac id dolor. Phasellus vitae tortor ac metus laoreet rutrum. Aenean condimentum consequat elit, ut placerat massa mattis vitae. Vivamus dictum faucibus massa, eget euismod turpis pretium a. Aliquam rutrum rhoncus mi, eu tincidunt mauris placerat nec. Nunc sagittis libero sed facilisis suscipit. Curabitur nisi lacus, ullamcorper eu maximus quis, malesuada sit amet nisi. Proin dignissim, lacus vitae mattis fermentum, dui dolor feugiat turpis, ut euismod libero purus eget dui.",
@@ -28,10 +33,16 @@ async function seed() {
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer placerat urna vel ante volutpat, ut elementum mi placerat. Phasellus varius nisi a nisl interdum",
       tags: {
-        connectOrCreate: {
+        connectOrCreate: [{
           where: { name: "TestTag1" },
           create: { name: "TestTag1" },
-        },
+      },{
+        where: { name: "TestTag3" },
+        create: { name: "TestTag3" },
+      },{
+        where: { name: "TestTag4" },
+        create: { name: "TestTag4" },
+      }],
       },
     },
   });
@@ -44,10 +55,16 @@ async function seed() {
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer placerat urna vel ante volutpat, ut elementum mi placerat. Phasellus varius nisi a nisl interdum",
       tags: {
-        connectOrCreate: {
+        connectOrCreate: [{
           where: { name: "TestTag1" },
           create: { name: "TestTag1" },
-        },
+        },{
+          where: { name: "TestTag2" },
+          create: { name: "TestTag2" },
+        },{
+          where: { name: "TestTag3" },
+          create: { name: "TestTag3" },
+        }],
       },
     },
   });

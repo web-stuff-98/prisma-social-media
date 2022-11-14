@@ -1,4 +1,4 @@
-import { IconBtn } from "./IconBtn";
+import { IconBtn } from "../IconBtn";
 import { AiOutlineLike, AiFillLike } from "react-icons/ai";
 import { FaReply } from "react-icons/fa";
 import { IComment, usePost } from "../../context/PostContext";
@@ -12,6 +12,7 @@ import {
 import { CommentForm } from "./CommentForm";
 import { useAuth } from "../../context/AuthContext";
 import User from "../User";
+import useUsers from "../../context/UsersContext";
 
 export function Comment({
   id,
@@ -65,40 +66,36 @@ This function is from the web dev simplified video. It is supposed to be in the 
   const childComments = getReplies(id);
 
   const { user: currentUser } = useAuth();
-
   const { setReplyingTo, replyingTo } = usePost();
+  const { getUserData } =useUsers()
 
-  const onCommentReply = (message: string) => {
-    return createCommentFn
+  const onCommentReply = (message: string) =>
+    createCommentFn
       .execute({ postId: post?.id, message, parentId: id })
       .then((comment: IComment) => {
         if (replyingTo === id) setReplyingTo("");
         createLocalComment(comment);
       });
-  };
 
-  const onCommentUpdate = (message: string) => {
-    return updateCommentFn
+  const onCommentUpdate = (message: string) =>
+    updateCommentFn
       .execute({ postId: post?.id, message, id })
       .then((comment: IComment) => {
         setIsEditing(false);
         updateLocalComment(id, comment.message);
       });
-  };
 
-  const onCommentDelete = () => {
-    return deleteCommentFn
+  const onCommentDelete = () =>
+    deleteCommentFn
       .execute({ postId: post?.id, id })
       .then((comment: IComment) => deleteLocalComment(comment.id));
-  };
 
-  const onToggleCommentLike = () => {
-    return toggleCommentLikeFn
+  const onToggleCommentLike = () =>
+    toggleCommentLikeFn
       .execute({ id, postId: post?.id })
       .then(({ addLike }: { addLike: boolean }) =>
         toggleLocalCommentLike(id, addLike)
       );
-  };
 
   const [hideRepliesBarHover, setHideRepliesBarHover] = useState(false);
   const handleHideRepliesBarEnter = () => setHideRepliesBarHover(true);
@@ -115,7 +112,8 @@ This function is from the web dev simplified video. It is supposed to be in the 
             isEditing={isEditing}
             isDeleting={deleteCommentFn.loading}
             date={new Date(createdAt)}
-            user={user}
+            user={getUserData(user.id)}
+            uid={user.id}
           />
         </div>
         <div className="w-full flex items-center">
@@ -127,6 +125,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
               loading={updateCommentFn.loading}
               error={updateCommentFn.error}
               placeholder={"Edit comment..."}
+              onClickOutside={() => setIsEditing(false)}
             />
           ) : (
             <p className="flex my-auto leading-4 p-0 grow items-center">
@@ -167,6 +166,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
             loading={createCommentFn.loading}
             error={createCommentFn.error}
             placeholder="Reply to comment..."
+            onClickOutside={() => setReplyingTo("")}
           />
         </div>
       )}

@@ -29,34 +29,42 @@ const io = new socket_io_1.Server(server, {
     },
 });
 exports.io = io;
-app.use((0, cookie_parser_1.default)(process.env.COOKIE_SECRET));
-app.use(express_1.default.urlencoded({ extended: false }));
-app.use(express_1.default.json());
 app.use((0, cors_1.default)({
     origin: "http://localhost:3000",
     credentials: true,
 }));
+app.use((0, cookie_parser_1.default)(process.env.COOKIE_SECRET));
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true }));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 io.on("connection", (socket) => {
     const rawCookie = socket.handshake.headers.cookie;
     if (rawCookie) {
         try {
-            const decoded = jsonwebtoken_1.default.verify(rawCookie.replace("token=", ""), String(process.env.JWT_SECRET));
-            socket.data.user = decoded;
+            socket.data.user = jsonwebtoken_1.default.verify(rawCookie.replace("token=", ""), String(process.env.JWT_SECRET));
+            socket.join(socket.data.user.id);
+            socket.join(`inbox=${socket.data.user.id}`);
+            io.to(socket.data.user.id).emit("user_subscription_update", {
+                id: socket.data.user.id,
+                online: true,
+            });
+            console.log("emit online");
         }
         catch (e) {
             console.warn("User trying to connect to socket with malformed token : " + e);
             socket.disconnect();
         }
     }
-    socket.on("open_post", (slug) => {
-        console.log("opened post");
-        socket.join(slug);
+    else {
+        socket.data.user = undefined;
+    }
+    socket.on("subscribe_to_user", (uid) => {
+        console.log("sub");
+        socket.join(uid);
     });
-    socket.on("leave_post", (slug) => {
-        console.log("left post");
-        socket.leave(slug);
-    });
+    socket.on("unsubscribe_to_user", (uid) => socket.leave(uid));
+    socket.on("open_post", (slug) => socket.join(slug));
+    socket.on("leave_post", (slug) => socket.leave(slug));
     socket.on("private_message", (message, recipientId, hasAttachment) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         try {
@@ -66,12 +74,39 @@ io.on("connection", (socket) => {
             socket.emit("private_message_error", String(e));
         }
     }));
+    socket.on("private_message_update", (id, message) => __awaiter(void 0, void 0, void 0, function* () {
+        var _b;
+        try {
+            yield Messenger_dao_1.default.updateMessage(id, message, String((_b = socket.data.user) === null || _b === void 0 ? void 0 : _b.id));
+        }
+        catch (e) {
+            socket.emit("private_message_error", String(e));
+        }
+    }));
+    socket.on("private_message_delete", (id) => __awaiter(void 0, void 0, void 0, function* () {
+        var _c;
+        try {
+            yield Messenger_dao_1.default.deleteMessage(id, String((_c = socket.data.user) === null || _c === void 0 ? void 0 : _c.id));
+        }
+        catch (e) {
+            socket.emit("private_message_error", String(e));
+        }
+    }));
+    socket.on("disconnect", () => {
+        if (socket.data.user)
+            io.to(socket.data.user.id).emit("user_subscription_update", {
+                id: socket.data.user.id,
+                online: false,
+            });
+    });
 });
 const Posts_route_1 = __importDefault(require("./api/Posts.route"));
 const Users_route_1 = __importDefault(require("./api/Users.route"));
+const Messenger_route_1 = __importDefault(require("./api/Messenger.route"));
 const Messenger_dao_1 = __importDefault(require("./api/dao/Messenger.dao"));
 app.use("/api/posts", Posts_route_1.default);
 app.use("/api/users", Users_route_1.default);
+app.use("/api/messenger", Messenger_route_1.default);
 server.listen(process.env.PORT, () => {
     console.log(`Server listening on port ${process.env.PORT}`);
 });

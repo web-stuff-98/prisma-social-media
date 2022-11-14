@@ -7,6 +7,7 @@ YupPassword(Yup);
 
 import jwt from "jsonwebtoken";
 import UsersDAO from "../dao/Users.dao";
+import { io } from "../..";
 
 const loginValidateSchema = Yup.object().shape({
   username: Yup.string().required().max(100),
@@ -28,6 +29,15 @@ export default class UsersController {
       const user = await UsersDAO.getUserById(req.params.id);
       if (user) res.status(200).json(user);
       else res.status(404).json({ msg: "Not found" });
+    } catch (error) {
+      res.status(500).json({ msg: "Internal error" });
+    }
+  }
+
+  static async updateUser(req: Req, res: Res) {
+    try {
+      await UsersDAO.updateUser(String(req.user?.id), req.body);
+      res.status(200).end();
     } catch (error) {
       res.status(500).json({ msg: "Internal error" });
     }
@@ -106,10 +116,20 @@ export default class UsersController {
         sameSite: "strict",
       }
     );
+    if (user)
+      io.to(user.id).emit("user_subscription_update", {
+        id: user.id,
+        online: true,
+      });
     res.status(200).json(user).end();
   }
 
   static async logout(req: Req, res: Res) {
+    if (req.user)
+      io.to(req.user?.id).emit("user_subscription_update", {
+        id: req.user.id,
+        online: false,
+      });
     res.clearCookie("token").status(200).end();
   }
 

@@ -40,6 +40,7 @@ const yup_password_1 = __importDefault(require("yup-password"));
 (0, yup_password_1.default)(Yup);
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const Users_dao_1 = __importDefault(require("../dao/Users.dao"));
+const __1 = require("../..");
 const loginValidateSchema = Yup.object().shape({
     username: Yup.string().required().max(100),
     password: Yup.string().password().required(),
@@ -64,6 +65,18 @@ class UsersController {
                     res.status(200).json(user);
                 else
                     res.status(404).json({ msg: "Not found" });
+            }
+            catch (error) {
+                res.status(500).json({ msg: "Internal error" });
+            }
+        });
+    }
+    static updateUser(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Users_dao_1.default.updateUser(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body);
+                res.status(200).end();
             }
             catch (error) {
                 res.status(500).json({ msg: "Internal error" });
@@ -135,11 +148,22 @@ class UsersController {
                 httpOnly: true,
                 sameSite: "strict",
             });
+            if (user)
+                __1.io.to(user.id).emit("user_subscription_update", {
+                    id: user.id,
+                    online: true,
+                });
             res.status(200).json(user).end();
         });
     }
     static logout(req, res) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            if (req.user)
+                __1.io.to((_a = req.user) === null || _a === void 0 ? void 0 : _a.id).emit("user_subscription_update", {
+                    id: req.user.id,
+                    online: false,
+                });
             res.clearCookie("token").status(200).end();
         });
     }

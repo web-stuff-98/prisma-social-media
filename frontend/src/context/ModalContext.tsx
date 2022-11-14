@@ -13,6 +13,8 @@ interface IModalData {
   pen: boolean;
   err: boolean;
   msg: string;
+  confirmationCallback?: Function;
+  cancellationCallback?: Function;
 }
 
 const ModalContext = createContext<{
@@ -33,6 +35,8 @@ const ModalContext = createContext<{
  *  pen = something is pending / loading
  *  err = message is an error
  *  msg = message content
+ *  confirmationCallback = the function that you want invoked after the user confirms the confirmation message
+ *  cancellationCallback = the function that you want invoked after the user cancels the confirmation message
  *
  * "Message" modal type have an error, a loading spinner
  * or just a message on its own.
@@ -78,8 +82,27 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                   <>
                     <b className="text-center">{modalData.msg}</b>
                     <div className="w-full flex items-center justify-center">
-                      <button>Close</button>
-                      <button>Confirm</button>
+                      <button
+                        aria-label="Cancel"
+                        className="bg-rose-600"
+                        onClick={() => {
+                          if (modalData.cancellationCallback)
+                            modalData.cancellationCallback();
+                          closeModal();
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        aria-label="Confirm"
+                        onClick={() => {
+                          if (modalData.confirmationCallback)
+                            modalData.confirmationCallback();
+                          closeModal();
+                        }}
+                      >
+                        Confirm
+                      </button>
                     </div>
                   </>
                 )}
@@ -111,6 +134,8 @@ const defaultModalData = {
   msg: "Hello",
   err: false,
   pen: false,
+  confirmationCallback: () => {},
+  cancellationCallback: () => {},
 };
 
 const modalBackdropStyle: CSSProperties = {

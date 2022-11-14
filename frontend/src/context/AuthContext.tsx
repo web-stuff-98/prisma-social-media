@@ -1,10 +1,5 @@
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { useModal } from "./ModalContext";
 import { makeRequest } from "../services/makeRequest";
 
@@ -12,7 +7,7 @@ const AuthContext = createContext<{
   login: (username: string, password: string) => void;
   register: (username: string, password: string) => void;
   logout: () => void;
-  user: IUser | undefined;
+  user?: IUser;
 }>({
   login: () => {},
   logout: () => {},
@@ -23,6 +18,8 @@ const AuthContext = createContext<{
 export interface IUser {
   id: string;
   name: string;
+  online?: boolean;
+  pfp?: string;
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

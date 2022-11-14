@@ -15,6 +15,42 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const busboy_1 = __importDefault(require("busboy"));
 const Messenger_dao_1 = __importDefault(require("../dao/Messenger.dao"));
 class MessengerController {
+    static getConversations(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const users = yield Messenger_dao_1.default.getConversations(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).json(users).end();
+            }
+            catch (e) {
+                res.status(500).json({ msg: `${e}` });
+            }
+        });
+    }
+    static getConversation(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const messages = yield Messenger_dao_1.default.getConversation(req.params.uid, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).json(messages).end();
+            }
+            catch (e) {
+                res.status(500).json({ msg: `${e}` });
+            }
+        });
+    }
+    static deleteConversation(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Messenger_dao_1.default.deleteConversation(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.uid);
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(500).json({ msg: `${e}` });
+            }
+        });
+    }
     static uploadAttachment(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const bb = (0, busboy_1.default)({ headers: req.headers });
