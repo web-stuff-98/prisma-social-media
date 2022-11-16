@@ -7,9 +7,6 @@ const sharp_1 = __importDefault(require("sharp"));
 const has_1 = __importDefault(require("lodash/has"));
 const isBuffer_1 = __importDefault(require("lodash/isBuffer"));
 const buffer_1 = require("buffer");
-/**
- * Input can be base64 string, buffer or a blob
- */
 function imageProcessing(input, dimensions) {
     let image;
     const inputIsBuffer = (0, isBuffer_1.default)(input);

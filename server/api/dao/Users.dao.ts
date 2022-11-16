@@ -1,6 +1,4 @@
 import prisma from "../../utils/prisma";
-import prismaQueryRedisCache from "../../utils/prismaQueryRedisCache";
-
 import bcrypt from "bcrypt";
 import imageProcessing from "../../utils/imageProcessing";
 import { io } from "../..";

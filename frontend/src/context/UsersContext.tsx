@@ -62,7 +62,6 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!socket) return;
     socket.on("user_subscription_update", (data: Partial<IUser>) => {
-      console.log("Data : " + data);
       setUsers((p) => {
         let newUsers = p;
         const i = p.findIndex((u) => u.id === data.id);
@@ -158,7 +157,6 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const subscribeToUser = (uid: string) => {
     if (!socket) throw new Error("no socket");
     socket?.emit("subscribe_to_user", uid);
-    console.log("subbed");
   };
   const unsubscribeFromUser = (uid: string) =>
     socket?.emit("unsubscribe_to_user", uid);

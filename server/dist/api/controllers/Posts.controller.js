@@ -182,7 +182,6 @@ class PostsController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log(req.params);
                 const cmt = yield Posts_dao_1.default.deleteComment(req.params.commentId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 if (!cmt) {
                     return res.status(403).json({ msg: "Unauthorized" }).end();
@@ -196,11 +195,10 @@ class PostsController {
         });
     }
     static toggleCommentLike(req, res) {
-        var _a, _b;
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log(req.params.commentId, (_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-                const like = yield Posts_dao_1.default.toggleCommentLike(req.params.commentId, String((_b = req.user) === null || _b === void 0 ? void 0 : _b.id));
+                const like = yield Posts_dao_1.default.toggleCommentLike(req.params.commentId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 return res.status(200).json(like).end();
             }
             catch (e) {
@@ -210,11 +208,10 @@ class PostsController {
         });
     }
     static togglePostLike(req, res) {
-        var _a, _b;
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log(req.params.id, (_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-                const like = yield Posts_dao_1.default.togglePostLike(req.params.id, String((_b = req.user) === null || _b === void 0 ? void 0 : _b.id));
+                const like = yield Posts_dao_1.default.togglePostLike(req.params.id, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 return res.status(200).json(like).end();
             }
             catch (e) {

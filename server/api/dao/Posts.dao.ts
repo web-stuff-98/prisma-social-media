@@ -1,9 +1,6 @@
 import { CommentLike } from "@prisma/client";
 import prisma from "../../utils/prisma";
-import prismaQueryRedisCache from "../../utils/prismaQueryRedisCache";
-
 import crypto from "crypto";
-
 import { io } from "../..";
 
 const parsePost = async (post: any, uid?: string) => {
@@ -13,7 +10,6 @@ const parsePost = async (post: any, uid?: string) => {
       commentId: { in: post.comments.map((cmt: any) => cmt.id) },
     },
   });
-  console.log("UID + " + uid);
   return {
     ...post,
     tags: post.tags.map((tag: any) => tag.name),
@@ -58,7 +54,6 @@ export default class PostsDAO {
         tags: true,
       },
     });
-    console.log(uid);
     return posts.map((post) => {
       let likedByMe = false;
       let sharedByMe = false;
@@ -78,9 +73,8 @@ export default class PostsDAO {
   }
 
   static async getPostById(id: string, uid?: string | undefined) {
-    const post = await prismaQueryRedisCache(
-      `post:${id}`,
-      prisma.post.findUnique({
+    const post = await prisma.post
+      .findUnique({
         where: { id },
         include: {
           comments: {
@@ -110,16 +104,14 @@ export default class PostsDAO {
           likes: true,
           shares: true,
         },
-      }),
-      5
-    ).then(async (post) => parsePost(post, uid));
+      })
+      .then(async (post) => parsePost(post, uid));
     return post;
   }
 
   static async getPostBySlug(slug: string, uid?: string | undefined) {
-    const post = await prismaQueryRedisCache(
-      `post:${slug}`,
-      prisma.post.findUnique({
+    const post = await prisma.post
+      .findUnique({
         where: { slug },
         include: {
           comments: {
@@ -149,9 +141,8 @@ export default class PostsDAO {
           likes: true,
           shares: true,
         },
-      }),
-      5
-    ).then(async (post) => parsePost(post, uid));
+      })
+      .then(async (post) => parsePost(post, uid));
     return post;
   }
 
@@ -296,7 +287,6 @@ export default class PostsDAO {
       select: { userId: true, post: { select: { slug: true } } },
     });
     if (!userId || userId !== uid) return false;
-    console.log("Deleting comment " + commentId)
     io.to(slug).emit("comment_deleted", commentId, uid);
     return await prisma.comment.delete({
       where: { id: commentId },

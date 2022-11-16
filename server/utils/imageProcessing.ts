@@ -8,11 +8,7 @@ interface IDimensions {
   height: number
 }
 
-/**
- * Input can be base64 string, buffer or a blob
- */
-
-export default function imageProcessing(input: any, dimensions: IDimensions):Promise<string> {
+export default function imageProcessing(input: string | Buffer | Blob, dimensions: IDimensions):Promise<string> {
   let image: Sharp
   const inputIsBuffer = isBuffer(input)
   if (inputIsBuffer)

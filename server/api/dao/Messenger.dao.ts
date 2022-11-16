@@ -61,8 +61,11 @@ export default class MessengerDAO {
       msg.attachmentKey || undefined,
       msg.attachmentPending || undefined
     );
-    if(hasAttachment) {
-      io.to(`inbox=${senderId}`).emit("private_message_request_attachment_upload", msg.id)
+    if (hasAttachment) {
+      io.to(`inbox=${senderId}`).emit(
+        "private_message_request_attachment_upload",
+        msg.id
+      );
     }
   }
 
@@ -91,7 +94,7 @@ export default class MessengerDAO {
   }
 
   static async deleteMessage(id: string, uid: string) {
-    let msg;
+    let msg: PrivateMessage;
     try {
       msg = await prisma.privateMessage.findUniqueOrThrow({
         where: { id },
@@ -103,23 +106,58 @@ export default class MessengerDAO {
     await prisma.privateMessage.delete({
       where: { id },
     });
+    const s3 = new AWS.S3();
+    await new Promise<void>((resolve, reject) =>
+      s3.deleteObject(
+        {
+          Bucket: "prisma-socialmedia",
+          Key: String(msg.attachmentKey),
+        },
+        (err, data) => {
+          if (err) reject(err);
+          resolve();
+        }
+      )
+    );
     io.to(`inbox=${msg.recipientId}`).emit("private_message_delete", id);
     io.to(`inbox=${msg.senderId}`).emit("private_message_delete", id);
   }
 
   static async deleteConversation(senderId: string, recipientId: string) {
-    try {
-      await prisma.privateMessage.deleteMany({
-        where: { recipientId, senderId },
-      });
-    } catch (e) {
-      throw new Error(`${e}`);
+    io.to(`inbox=${recipientId}`).emit(
+      "private_conversation_deleted",
+      senderId
+    );
+    io.to(`inbox=${senderId}`).emit(
+      "private_conversation_deleted",
+      recipientId
+    );
+    const toDelete = await prisma.privateMessage.findMany({
+      where: { recipientId, senderId },
+      select: { attachmentKey: true },
+    });
+    const s3 = new AWS.S3();
+    for await (const msg of Array.from(toDelete)) {
+      return new Promise<void>((resolve, reject) =>
+        s3.deleteObject(
+          {
+            Bucket: "prisma-socialmedia",
+            Key: String(msg.attachmentKey),
+          },
+          (err, data) => {
+            if (err) reject(err);
+            resolve();
+          }
+        )
+      );
     }
+    await prisma.privateMessage.deleteMany({
+      where: { recipientId, senderId },
+    });
   }
 
   static async getConversations(uid: string) {
     try {
-      console.log("UID + " + uid);
       const sentMessages = await prisma.privateMessage.findMany({
         where: { senderId: uid },
       });
@@ -156,7 +194,7 @@ export default class MessengerDAO {
       const messages = sentMessages
         .concat(receivedMessages)
         .sort(
-          (msgA, msgB) => msgA.timestamp.getTime() - msgB.timestamp.getTime()
+          (msgA, msgB) => msgA.createdAt.getTime() - msgB.createdAt.getTime()
         );
       return messages;
     } catch (e) {
@@ -164,110 +202,130 @@ export default class MessengerDAO {
     }
   }
 
-  static async uploadAttachment(bb: Busboy, messageId: string, bytes: number) {
-    let message: PrivateMessage;
-    try {
-      message = await prisma.privateMessage.findUniqueOrThrow({
-        where: { id: messageId },
-      });
-    } catch (e) {
-      throw new Error("Could not find message to upload attachment for");
-    }
-    return new Promise<void>((resolve, reject) => {
+  static async getMessage(msgId: string) {
+    return await prisma.privateMessage.findUniqueOrThrow({
+      where: { id: msgId },
+    });
+  }
+
+  /**
+   * Breaks the design principle I know. Its because I couldn't get busboy.on("file")
+   * to fire from inside this file for some weird reason which i cannot figure out.
+   */
+  static async uploadAttachment(
+    stream: internal.Readable,
+    info: busboy.FileInfo,
+    message: PrivateMessage,
+    bytes: number
+  ): Promise<{ key: string; type: string; recipientId: string }> {
+    return new Promise((resolve, reject) => {
       let type: "Image" | "Video" | "File" = "File";
       const s3 = new AWS.S3();
       let p = 0;
-      bb.on(
-        "file",
-        (name: string, stream: internal.Readable, info: busboy.FileInfo) => {
-          if (info.mimeType.startsWith("video/mp4")) {
-            type = "Video";
-          } else if (
-            info.mimeType.startsWith("image/jpeg") ||
-            info.mimeType.startsWith("image/jpg") ||
-            info.mimeType.startsWith("image/png")
-          ) {
-            type = "Image";
-          }
-          const ext = String(mime.extension(info.mimeType));
-          const key = `${messageId}.${info.filename.replace(".", "")}.${ext}`;
-          console.log(key)
-          s3.upload(
-            {
-              Bucket: "prisma-socialmedia",
-              Key: key,
-              Body: stream,
-            },
-            (e: unknown, file: unknown) => {
-              if (e) failed(e);
-              success(key);
-            }
-          ).on("httpUploadProgress", (e: AWS.S3.ManagedUpload.Progress) => {
-            p++;
-            //only send progress updates every 5th event, otherwise its probably too many emits
-            if (p === 5) {
-              p = 0;
-              io.to(`inbox=${message.recipientId}`).emit(
-                "private_message_attachment_progress",
-                e.loaded / bytes,
-                messageId
-              );
-              io.to(`inbox=${message.senderId}`).emit(
-                "private_message_attachment_progress",
-                e.loaded / bytes,
-                messageId
-              );
-            }
-          });
-          bb.on("error", failed);
-          async function failed(e: unknown) {
-            console.error(e)
-            io.to(`inbox=${message.recipientId}`).emit(
-              "private_message_attachment_failed",
-              messageId
-            );
-            io.to(`inbox=${message.senderId}`).emit(
-              "private_message_attachment_failed",
-              messageId
-            );
-            await prisma.privateMessage.update({
-              where: { id: messageId },
-              data: {
-                attachmentError: true,
-                attachmentPending: false,
-              },
-            });
-            console.log("Error : " + e)
-            reject(e);
-          }
-          async function success(key: string) {
-            console.log("Success")
-            io.to(`inbox=${message.recipientId}`).emit(
-              "private_message_attachment_complete",
-              messageId,
-              type,
-              key
-            );
-            io.to(`inbox=${message.senderId}`).emit(
-              "private_message_attachment_complete",
-              messageId,
-              type,
-              key
-            );
-            console.log("Success")
-            await prisma.privateMessage.update({
-              where: { id: messageId },
-              data: {
-                attachmentError: false,
-                attachmentPending: false,
-                attachmentType: type,
-                attachmentKey: key,
-              },
-            });
-            resolve();
-          }
+      if (info.mimeType.startsWith("video/mp4")) {
+        type = "Video";
+      } else if (
+        info.mimeType.startsWith("image/jpeg") ||
+        info.mimeType.startsWith("image/jpg") ||
+        info.mimeType.startsWith("image/png")
+      ) {
+        type = "Image";
+      }
+      const hasExtension = info.filename.includes(".");
+      const ext = String(mime.extension(info.mimeType));
+      const key = `${message.id}.${
+        hasExtension ? info.filename.split(".")[0] : info.filename
+      }.${ext}`;
+      console.log(key);
+      s3.upload(
+        {
+          Bucket: "prisma-socialmedia",
+          Key: key,
+          Body: stream,
+        },
+        (e: unknown, file: unknown) => {
+          if (e) reject(e);
+          resolve({ key, type, recipientId: message.recipientId });
         }
-      );
+      ).on("httpUploadProgress", (e: AWS.S3.ManagedUpload.Progress) => {
+        p++;
+        //only send progress updates every 5th event, otherwise its probably too many emits
+        if (p === 5) {
+          p = 0;
+          io.to(`inbox=${message.recipientId}`).emit(
+            "private_message_attachment_progress",
+            e.loaded / bytes,
+            message.id
+          );
+          io.to(`inbox=${message.senderId}`).emit(
+            "private_message_attachment_progress",
+            e.loaded / bytes,
+            message.id
+          );
+        }
+      });
     });
+  }
+
+  static async attachmentError(
+    senderId: string,
+    recipientId: string,
+    messageId: string
+  ) {
+    try {
+      io.to(`inbox=${recipientId}`).emit(
+        "private_message_attachment_failed",
+        messageId
+      );
+      io.to(`inbox=${senderId}`).emit(
+        "private_message_attachment_failed",
+        messageId
+      );
+      await prisma.privateMessage.update({
+        where: { id: messageId },
+        data: {
+          attachmentError: true,
+          attachmentPending: false,
+        },
+      });
+    } catch (e) {
+      console.warn(e);
+      throw new Error("Internal error handling error :-(");
+    }
+  }
+
+  static async attachmentComplete(
+    senderId: string,
+    recipientId: string,
+    messageId: string,
+    type: string,
+    key: string
+  ) {
+    try {
+      io.to(`inbox=${recipientId}`).emit(
+        "private_message_attachment_complete",
+        messageId,
+        type,
+        key
+      );
+      io.to(`inbox=${senderId}`).emit(
+        "private_message_attachment_complete",
+        messageId,
+        type,
+        key
+      );
+      await prisma.privateMessage.update({
+        where: { id: messageId },
+        data: {
+          attachmentError: false,
+          attachmentPending: false,
+          attachmentType: type,
+          attachmentKey: key,
+        },
+      });
+    } catch (e) {
+      console.warn(e);
+      throw new Error("Internal error handling error :-(");
+    }
   }
 }

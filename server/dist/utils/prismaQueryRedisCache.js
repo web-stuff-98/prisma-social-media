@@ -1,13 +1,12 @@
 "use strict";
 /**
- * Not sure why i am using Redis cache
+ * Caches prisma query results using redis cache and a custom keyname, either gets the value from
+ * redis or gets the value by running the prisma query if its not cached already.
+ * Not being used anymore
  *
  * queryName = The keyname you want to use to cache the data returned by your prisma query
  * queryPrisma = Your prisma query promise
  * expiration = Key expiration time in seconds, if you leave null the cached value will last forever
- *
- * Returns the data either from the redis cache, or from your query if the cache is not there.
- * caches the result from the query using the keyname provided.
  */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -42,6 +41,6 @@ exports.default = (queryName, queryPrisma, expiration = undefined) => __awaiter(
         }
     }
     catch (e) {
-        throw new Error(e);
+        throw new Error(`${e}`);
     }
 });

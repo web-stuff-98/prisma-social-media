@@ -5,5 +5,5 @@ export default async (uid: string) => {
   for (const socket of sockets) {
     if (socket.data.user.id === uid) return socket;
   }
-  throw new Error(`Could not find socket for user ${uid}`);
+  throw new Error(`Could not find socket for UID ${uid} - they are probably not logged in`);
 };

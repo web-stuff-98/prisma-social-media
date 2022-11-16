@@ -146,7 +146,6 @@ export default class PostsController {
 
   static async deleteComment(req: Req, res: Res) {
     try {
-      console.log(req.params)
       const cmt = await PostsDAO.deleteComment(
         req.params.commentId,
         String(req.user?.id)
@@ -163,7 +162,6 @@ export default class PostsController {
 
   static async toggleCommentLike(req: Req, res: Res) {
     try {
-      console.log(req.params.commentId, req.user?.id);
       const like = await PostsDAO.toggleCommentLike(
         req.params.commentId,
         String(req.user?.id)
@@ -177,7 +175,6 @@ export default class PostsController {
 
   static async togglePostLike(req: Req, res: Res) {
     try {
-      console.log(req.params.id, req.user?.id);
       const like = await PostsDAO.togglePostLike(
         req.params.id,
         String(req.user?.id)

@@ -10,8 +10,11 @@ const deleteConversation = (uid: string) =>
     method: "DELETE",
   });
 const uploadAttachment = (msgId: string, bytes: number, file: File) => {
-  let data = new FormData()
+  var data = new FormData()
+  if(!file) throw new Error("No file!")
   data.append("file", file)
+  data.append("twat", "fuck")
+  console.log(data)
   makeRequest(`/api/messenger/attachment/${msgId}/${bytes}`, {
     withCredentials: true,
     method:"POST",

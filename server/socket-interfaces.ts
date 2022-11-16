@@ -33,6 +33,7 @@ export interface ServerToClientEvents {
   private_message_update: (id: string, message: string) => void;
   private_message_delete: (id: string) => void;
   private_message_request_attachment_upload: (id:string) => void;
+  private_conversation_deleted: (conversationWith: string) => void;
 
   user_subscription_update: (data: {
     id: string;

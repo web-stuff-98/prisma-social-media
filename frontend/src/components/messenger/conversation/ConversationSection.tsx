@@ -17,6 +17,8 @@ export interface IMessage {
   attachmentPending?: boolean;
   attachmentError?: boolean;
   attachmentProgress?: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export default function ConversationSection({
@@ -54,8 +56,8 @@ export default function ConversationSection({
     if (e.target.files?.length === 0) return;
     //@ts-ignore
     const f = Array.from(e.target.files!)[0];
-    console.log(f)
-    if(!f) return
+    console.log(f);
+    if (!f) return;
     //@ts-ignore
     file.current = f;
   };
@@ -78,6 +80,7 @@ export default function ConversationSection({
 
     socket.on("private_message", handleMessage);
     socket.on("private_message_delete", handleMessageDelete);
+    socket.on("private_conversation_deleted", handleConversationDeleted);
     socket.on("private_message_update", handleMessageUpdate);
     socket.on(
       "private_message_attachment_complete",
@@ -111,6 +114,7 @@ export default function ConversationSection({
         "private_message_request_attachment_upload",
         handleUploadAttachment
       );
+      socket.off("private_conversation_deleted", handleConversationDeleted);
     };
   }, [socket]);
 
@@ -138,6 +142,8 @@ export default function ConversationSection({
           attachmentType,
           attachmentPending,
           attachmentProgress: attachmentProgress || 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ]);
       messagesBottomRef.current?.scrollIntoView({ behavior: "auto" });
@@ -145,27 +151,36 @@ export default function ConversationSection({
     []
   );
 
-  const handleUploadAttachment = useCallback(async (id: string) => {
-    try {
-      setResMsg({ msg: "", err: false, pen: true });
-      if(!file.current) throw new Error("No file selected")
-      await uploadAttachment(id, file.current.size, file.current);
-      setResMsg({ msg: "", err: false, pen: false });
-    } catch (e) {
-      console.log("error : " + e)
-      setResMsg({ msg: `${e}`, err: true, pen: false });
-    }
-  }, [file]);
+  const handleUploadAttachment = useCallback(
+    async (id: string) => {
+      try {
+        setResMsg({ msg: "", err: false, pen: true });
+        if (!file.current) throw new Error("No file selected");
+        await uploadAttachment(id, file.current.size, file.current);
+        setResMsg({ msg: "", err: false, pen: false });
+      } catch (e) {
+        setResMsg({ msg: `${e}`, err: true, pen: false });
+      }
+    },
+    [file]
+  );
 
   const handleMessageDelete = useCallback((id: string) => {
     setMessages((p) => [...p.filter((msg) => msg.id !== id)]);
+  }, []);
+
+  const handleConversationDeleted = useCallback((sender: string) => {
+    if (conversationWith === sender) {
+      setMessengerSection("Conversations");
+    }
+    setMessages((p) => [...p.filter((msg) => msg.senderId !== sender)]);
   }, []);
 
   const handleMessageUpdate = useCallback((id: string, message: string) => {
     setMessages((p) => {
       let newMsgs = p;
       const i = newMsgs.findIndex((msg) => msg.id === id);
-      newMsgs[i].message = message;
+      newMsgs[i] = { ...newMsgs[i], message, updatedAt: new Date() };
       return [...newMsgs];
     });
   }, []);
@@ -226,6 +241,8 @@ export default function ConversationSection({
             id={msg.id}
             senderId={msg.senderId}
             otherUser={msg.senderId !== user?.id}
+            createdAt={msg.createdAt}
+            updatedAt={msg.updatedAt}
           />
         ))}
         <span ref={messagesBottomRef} />

@@ -98,8 +98,6 @@ model PostShare {
 
 model PrivateMessage {
   message   String
-  timestamp DateTime @default(now())
-
   id String @id @default(cuid())
 
   sender      User   @relation(name: "sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
@@ -112,6 +110,9 @@ model PrivateMessage {
   attachmentPending Boolean?
   attachmentError   Boolean?
   attachmentKey     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([senderId])
 }

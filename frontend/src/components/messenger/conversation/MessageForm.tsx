@@ -31,7 +31,7 @@ export default function MessageForm({
         aria-label="Select attachment"
         onClick={() => fileInputRef.current?.click()}
       >
-        <AiFillFileAdd className={`text-2xl ${file ? "text-green-500" : ""}`} />
+        <AiFillFileAdd className={`text-md ${file ? "text-green-500" : ""}`} />
       </button>
       <input onChange={handleFileInput} id="file" name="file" ref={fileInputRef} type="file" className="hidden"/>
       <input

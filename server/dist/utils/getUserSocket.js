@@ -16,5 +16,5 @@ exports.default = (uid) => __awaiter(void 0, void 0, void 0, function* () {
         if (socket.data.user.id === uid)
             return socket;
     }
-    throw new Error(`Could not find socket for user ${uid}`);
+    throw new Error(`Could not find socket for UID ${uid} - they are probably not logged in`);
 });

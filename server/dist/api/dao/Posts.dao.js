@@ -24,7 +24,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const prisma_1 = __importDefault(require("../../utils/prisma"));
-const prismaQueryRedisCache_1 = __importDefault(require("../../utils/prismaQueryRedisCache"));
 const crypto_1 = __importDefault(require("crypto"));
 const __1 = require("../..");
 const parsePost = (post, uid) => __awaiter(void 0, void 0, void 0, function* () {
@@ -34,7 +33,6 @@ const parsePost = (post, uid) => __awaiter(void 0, void 0, void 0, function* () 
             commentId: { in: post.comments.map((cmt) => cmt.id) },
         },
     });
-    console.log("UID + " + uid);
     return Object.assign(Object.assign({}, post), { tags: post.tags.map((tag) => tag.name), likedByMe: post.likes.find((like) => like.userId === uid)
             ? true
             : false, sharedByMe: post.shares.find((share) => share.userId === uid)
@@ -66,7 +64,6 @@ class PostsDAO {
                     tags: true,
                 },
             });
-            console.log(uid);
             return posts.map((post) => {
                 let likedByMe = false;
                 let sharedByMe = false;
@@ -81,7 +78,8 @@ class PostsDAO {
     }
     static getPostById(id, uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            const post = yield (0, prismaQueryRedisCache_1.default)(`post:${id}`, prisma_1.default.post.findUnique({
+            const post = yield prisma_1.default.post
+                .findUnique({
                 where: { id },
                 include: {
                     comments: {
@@ -111,13 +109,15 @@ class PostsDAO {
                     likes: true,
                     shares: true,
                 },
-            }), 5).then((post) => __awaiter(this, void 0, void 0, function* () { return parsePost(post, uid); }));
+            })
+                .then((post) => __awaiter(this, void 0, void 0, function* () { return parsePost(post, uid); }));
             return post;
         });
     }
     static getPostBySlug(slug, uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            const post = yield (0, prismaQueryRedisCache_1.default)(`post:${slug}`, prisma_1.default.post.findUnique({
+            const post = yield prisma_1.default.post
+                .findUnique({
                 where: { slug },
                 include: {
                     comments: {
@@ -147,7 +147,8 @@ class PostsDAO {
                     likes: true,
                     shares: true,
                 },
-            }), 5).then((post) => __awaiter(this, void 0, void 0, function* () { return parsePost(post, uid); }));
+            })
+                .then((post) => __awaiter(this, void 0, void 0, function* () { return parsePost(post, uid); }));
             return post;
         });
     }
@@ -262,7 +263,6 @@ class PostsDAO {
             });
             if (!userId || userId !== uid)
                 return false;
-            console.log("Deleting comment " + commentId);
             __1.io.to(slug).emit("comment_deleted", commentId, uid);
             return yield prisma_1.default.comment.delete({
                 where: { id: commentId },

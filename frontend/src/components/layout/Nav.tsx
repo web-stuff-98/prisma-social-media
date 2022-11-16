@@ -61,8 +61,6 @@ export default function Nav() {
             </button>
           )}
         </div>
-        Visible : {JSON.stringify(visibleUsers)}
-        | Disappeared : {JSON.stringify(disappearedUsers)}
       </div>
     </nav>
   );

@@ -53,17 +53,54 @@ class MessengerController {
     }
     static uploadAttachment(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const bb = (0, busboy_1.default)({ headers: req.headers });
-            req.pipe(bb);
+            /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
+            inside the Messenger DAO for some reason. It doesn't make any sense because it worked in my
+            other project (webrtc-chat-js). I gave up after wasting my time trying for 3 days.
+            It will have to remain messy, which doesn't actually matter because it works fine. */
+            let message;
             try {
-                yield Messenger_dao_1.default.uploadAttachment(bb, req.params.msgId, Number(req.params.bytes));
-                res.writeHead(200, { Connection: "close" });
-                res.end();
+                message = yield Messenger_dao_1.default.getMessage(req.params.msgId);
             }
-            catch (e) {
+            catch (error) {
+                res
+                    .status(400)
+                    .json({ msg: "Could not find message to upload attachment for" });
+            }
+            const bb = (0, busboy_1.default)({
+                headers: req.headers,
+                limits: { files: 1, fields: 0, fileSize: 500000000 },
+            });
+            req.pipe(bb);
+            let gotFile = false;
+            let successData = { key: "", type: "", recipientId: "" };
+            bb.on("file", (name, stream, info) => __awaiter(this, void 0, void 0, function* () {
+                gotFile = true;
+                try {
+                    successData = yield Messenger_dao_1.default.uploadAttachment(stream, info, message, Number(req.params.bytes));
+                }
+                catch (e) {
+                    req.unpipe(bb);
+                    yield Messenger_dao_1.default.attachmentError(message.senderId, message.recipientId, message.id);
+                    res.status(400).json({ msg: `${e}` });
+                }
+            }));
+            bb.on("finish", () => __awaiter(this, void 0, void 0, function* () {
+                if (!gotFile) {
+                    yield Messenger_dao_1.default.attachmentError(message.senderId, message.recipientId, message.id);
+                    res.status(400).json({ msg: "No file sent" });
+                }
+                else {
+                    yield Messenger_dao_1.default.attachmentComplete(message.senderId, successData.recipientId, req.params.msgId, successData.type, successData.key);
+                    res.writeHead(201, { Connection: "close" });
+                    res.end();
+                }
+            }));
+            bb.on("error", (e) => __awaiter(this, void 0, void 0, function* () {
+                console.warn(`${e}`);
+                yield Messenger_dao_1.default.attachmentError(message.senderId, message.recipientId, message.id);
                 req.unpipe(bb);
-                res.status(400).json({ msg: `${e}` });
-            }
+                res.status(500).json({ msg: "Internal error" });
+            }));
         });
     }
 }

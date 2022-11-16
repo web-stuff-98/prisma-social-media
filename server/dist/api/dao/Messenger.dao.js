@@ -8,6 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -88,26 +95,57 @@ class MessengerDAO {
             yield prisma_1.default.privateMessage.delete({
                 where: { id },
             });
+            const s3 = new aws_1.default.S3();
+            yield new Promise((resolve, reject) => s3.deleteObject({
+                Bucket: "prisma-socialmedia",
+                Key: String(msg.attachmentKey),
+            }, (err, data) => {
+                if (err)
+                    reject(err);
+                resolve();
+            }));
             __1.io.to(`inbox=${msg.recipientId}`).emit("private_message_delete", id);
             __1.io.to(`inbox=${msg.senderId}`).emit("private_message_delete", id);
         });
     }
     static deleteConversation(senderId, recipientId) {
+        var e_1, _a;
         return __awaiter(this, void 0, void 0, function* () {
+            __1.io.to(`inbox=${recipientId}`).emit("private_conversation_deleted", senderId);
+            __1.io.to(`inbox=${senderId}`).emit("private_conversation_deleted", recipientId);
+            const toDelete = yield prisma_1.default.privateMessage.findMany({
+                where: { recipientId, senderId },
+                select: { attachmentKey: true },
+            });
+            const s3 = new aws_1.default.S3();
             try {
-                yield prisma_1.default.privateMessage.deleteMany({
-                    where: { recipientId, senderId },
-                });
+                for (var _b = __asyncValues(Array.from(toDelete)), _c; _c = yield _b.next(), !_c.done;) {
+                    const msg = _c.value;
+                    return new Promise((resolve, reject) => s3.deleteObject({
+                        Bucket: "prisma-socialmedia",
+                        Key: String(msg.attachmentKey),
+                    }, (err, data) => {
+                        if (err)
+                            reject(err);
+                        resolve();
+                    }));
+                }
             }
-            catch (e) {
-                throw new Error(`${e}`);
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) yield _a.call(_b);
+                }
+                finally { if (e_1) throw e_1.error; }
             }
+            yield prisma_1.default.privateMessage.deleteMany({
+                where: { recipientId, senderId },
+            });
         });
     }
     static getConversations(uid) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log("UID + " + uid);
                 const sentMessages = yield prisma_1.default.privateMessage.findMany({
                     where: { senderId: uid },
                 });
@@ -145,7 +183,7 @@ class MessengerDAO {
                 });
                 const messages = sentMessages
                     .concat(receivedMessages)
-                    .sort((msgA, msgB) => msgA.timestamp.getTime() - msgB.timestamp.getTime());
+                    .sort((msgA, msgB) => msgA.createdAt.getTime() - msgB.createdAt.getTime());
                 return messages;
             }
             catch (e) {
@@ -153,87 +191,93 @@ class MessengerDAO {
             }
         });
     }
-    static uploadAttachment(bb, messageId, bytes) {
+    static getMessage(msgId) {
         return __awaiter(this, void 0, void 0, function* () {
-            let message;
-            try {
-                message = yield prisma_1.default.privateMessage.findUniqueOrThrow({
-                    where: { id: messageId },
-                });
-            }
-            catch (e) {
-                throw new Error("Could not find message to upload attachment for");
-            }
+            return yield prisma_1.default.privateMessage.findUniqueOrThrow({
+                where: { id: msgId },
+            });
+        });
+    }
+    /**
+     * Breaks the design principle I know. Its because I couldn't get busboy.on("file")
+     * to fire from inside this file for some weird reason which i cannot figure out.
+     */
+    static uploadAttachment(stream, info, message, bytes) {
+        return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
                 let type = "File";
                 const s3 = new aws_1.default.S3();
                 let p = 0;
-                bb.on("file", (name, stream, info) => {
-                    if (info.mimeType.startsWith("video/mp4")) {
-                        type = "Video";
-                    }
-                    else if (info.mimeType.startsWith("image/jpeg") ||
-                        info.mimeType.startsWith("image/jpg") ||
-                        info.mimeType.startsWith("image/png")) {
-                        type = "Image";
-                    }
-                    const ext = String(mime_types_1.default.extension(info.mimeType));
-                    const key = `${messageId}.${info.filename.replace(".", "")}.${ext}`;
-                    console.log(key);
-                    s3.upload({
-                        Bucket: "prisma-socialmedia",
-                        Key: key,
-                        Body: stream,
-                    }, (e, file) => {
-                        if (e)
-                            failed(e);
-                        success(key);
-                    }).on("httpUploadProgress", (e) => {
-                        p++;
-                        //only send progress updates every 5th event, otherwise its probably too many emits
-                        if (p === 5) {
-                            p = 0;
-                            __1.io.to(`inbox=${message.recipientId}`).emit("private_message_attachment_progress", e.loaded / bytes, messageId);
-                            __1.io.to(`inbox=${message.senderId}`).emit("private_message_attachment_progress", e.loaded / bytes, messageId);
-                        }
-                    });
-                    bb.on("error", failed);
-                    function failed(e) {
-                        return __awaiter(this, void 0, void 0, function* () {
-                            console.error(e);
-                            __1.io.to(`inbox=${message.recipientId}`).emit("private_message_attachment_failed", messageId);
-                            __1.io.to(`inbox=${message.senderId}`).emit("private_message_attachment_failed", messageId);
-                            yield prisma_1.default.privateMessage.update({
-                                where: { id: messageId },
-                                data: {
-                                    attachmentError: true,
-                                    attachmentPending: false,
-                                },
-                            });
-                            console.log("Error : " + e);
-                            reject(e);
-                        });
-                    }
-                    function success(key) {
-                        return __awaiter(this, void 0, void 0, function* () {
-                            console.log("Success");
-                            __1.io.to(`inbox=${message.recipientId}`).emit("private_message_attachment_complete", messageId, type, key);
-                            __1.io.to(`inbox=${message.senderId}`).emit("private_message_attachment_complete", messageId, type, key);
-                            console.log("Success");
-                            yield prisma_1.default.privateMessage.update({
-                                where: { id: messageId },
-                                data: {
-                                    attachmentError: false,
-                                    attachmentPending: false,
-                                    attachmentType: type,
-                                    attachmentKey: key,
-                                },
-                            });
-                            resolve();
-                        });
+                if (info.mimeType.startsWith("video/mp4")) {
+                    type = "Video";
+                }
+                else if (info.mimeType.startsWith("image/jpeg") ||
+                    info.mimeType.startsWith("image/jpg") ||
+                    info.mimeType.startsWith("image/png")) {
+                    type = "Image";
+                }
+                const hasExtension = info.filename.includes(".");
+                const ext = String(mime_types_1.default.extension(info.mimeType));
+                const key = `${message.id}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
+                console.log(key);
+                s3.upload({
+                    Bucket: "prisma-socialmedia",
+                    Key: key,
+                    Body: stream,
+                }, (e, file) => {
+                    if (e)
+                        reject(e);
+                    resolve({ key, type, recipientId: message.recipientId });
+                }).on("httpUploadProgress", (e) => {
+                    p++;
+                    //only send progress updates every 5th event, otherwise its probably too many emits
+                    if (p === 5) {
+                        p = 0;
+                        __1.io.to(`inbox=${message.recipientId}`).emit("private_message_attachment_progress", e.loaded / bytes, message.id);
+                        __1.io.to(`inbox=${message.senderId}`).emit("private_message_attachment_progress", e.loaded / bytes, message.id);
                     }
                 });
             });
+        });
+    }
+    static attachmentError(senderId, recipientId, messageId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                __1.io.to(`inbox=${recipientId}`).emit("private_message_attachment_failed", messageId);
+                __1.io.to(`inbox=${senderId}`).emit("private_message_attachment_failed", messageId);
+                yield prisma_1.default.privateMessage.update({
+                    where: { id: messageId },
+                    data: {
+                        attachmentError: true,
+                        attachmentPending: false,
+                    },
+                });
+            }
+            catch (e) {
+                console.warn(e);
+                throw new Error("Internal error handling error :-(");
+            }
+        });
+    }
+    static attachmentComplete(senderId, recipientId, messageId, type, key) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                __1.io.to(`inbox=${recipientId}`).emit("private_message_attachment_complete", messageId, type, key);
+                __1.io.to(`inbox=${senderId}`).emit("private_message_attachment_complete", messageId, type, key);
+                yield prisma_1.default.privateMessage.update({
+                    where: { id: messageId },
+                    data: {
+                        attachmentError: false,
+                        attachmentPending: false,
+                        attachmentType: type,
+                        attachmentKey: key,
+                    },
+                });
+            }
+            catch (e) {
+                console.warn(e);
+                throw new Error("Internal error handling error :-(");
+            }
         });
     }
 }

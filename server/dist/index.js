@@ -48,7 +48,6 @@ io.on("connection", (socket) => {
                 id: socket.data.user.id,
                 online: true,
             });
-            console.log("emit online");
         }
         catch (e) {
             console.warn("User trying to connect to socket with malformed token : " + e);
@@ -59,7 +58,6 @@ io.on("connection", (socket) => {
         socket.data.user = undefined;
     }
     socket.on("subscribe_to_user", (uid) => {
-        console.log("sub");
         socket.join(uid);
     });
     socket.on("unsubscribe_to_user", (uid) => socket.leave(uid));
@@ -67,6 +65,7 @@ io.on("connection", (socket) => {
     socket.on("leave_post", (slug) => socket.leave(slug));
     socket.on("private_message", (message, recipientId, hasAttachment) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
+        console.log("private message : " + recipientId);
         try {
             yield Messenger_dao_1.default.sendMessage(message, hasAttachment, recipientId, String((_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.id));
         }
