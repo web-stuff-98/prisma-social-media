@@ -40,26 +40,22 @@ export default class MessengerController {
 
   static async uploadAttachment(req: Req, res: Res) {
     /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
-    inside the Messenger DAO for some reason. It doesn't make any sense because it worked in my
-    other project (webrtc-chat-js). I gave up after wasting my time trying for 3 days.
-    It will have to remain messy, which doesn't actually matter because it works fine. */
+    inside the Messenger DAO for some reason. I wrote the same code in my other project and it
+    worked on the first try (webrtc-chat-js). I gave up after trying for 3 days and I don't care
+    anymore because it doesn't make sense and I can't fix it */
     let message: PrivateMessage;
     try {
       message = await MessengerDAO.getMessage(req.params.msgId);
-    } catch (error) {
-      res
-        .status(400)
-        .json({ msg: "Could not find message to upload attachment for" });
+    } catch (e) {
+      res.status(400).json({ msg: "Could not find message for attachment" });
     }
     const bb = Busboy({
       headers: req.headers,
       limits: { files: 1, fields: 0, fileSize: 500000000 },
     });
     req.pipe(bb);
-    let gotFile = false;
-    let successData = { key: "", type: "", recipientId: "" };
     bb.on("file", async (name, stream, info) => {
-      gotFile = true;
+      let successData = { key: "", type: "" };
       try {
         successData = await MessengerDAO.uploadAttachment(
           stream,
@@ -73,39 +69,46 @@ export default class MessengerController {
           message.senderId,
           message.recipientId,
           message.id
-        );
-        res.status(400).json({ msg: `${e}` });
+        )
+          .then(() => res.status(400).json({ msg: `${e}` }))
+          .catch((e) =>
+            res
+              .status(500)
+              .json({ msg: `${e}` })
+              .end()
+          );
       }
-    });
-    bb.on("finish", async () => {
-      if (!gotFile) {
-        await MessengerDAO.attachmentError(
-          message.senderId,
-          message.recipientId,
-          message.id
-        );
-        res.status(400).json({ msg: "No file sent" });
-      } else {
-        await MessengerDAO.attachmentComplete(
-          message.senderId,
-          successData.recipientId,
-          req.params.msgId,
-          successData.type,
-          successData.key
-        );
-        res.writeHead(201, { Connection: "close" });
-        res.end();
-      }
+      await MessengerDAO.attachmentComplete(
+        message.senderId,
+        message.recipientId,
+        req.params.msgId,
+        successData.type,
+        successData.key
+      )
+        .then(() => {
+          res.writeHead(201, { Connection: "close" });
+          res.end();
+        })
+        .catch((e) => {
+          req.unpipe(bb)
+          res.status(500).json({ msg: "Internal error" })
+        })
     });
     bb.on("error", async (e: unknown) => {
-      console.warn(`${e}`);
       await MessengerDAO.attachmentError(
         message.senderId,
         message.recipientId,
         message.id
-      );
-      req.unpipe(bb);
-      res.status(500).json({ msg: "Internal error" });
+      )
+        .then(() => res.status(400).json({ msg: `${e}` }))
+        .catch((e) =>
+          res
+            .status(500)
+            .json({ msg: `${e}` })
+            .end()
+        ).finally(() =>
+          req.unpipe(bb)
+        )
     });
   }
 }

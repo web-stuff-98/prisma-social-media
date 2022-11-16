@@ -65,7 +65,6 @@ io.on("connection", (socket) => {
     socket.on("leave_post", (slug) => socket.leave(slug));
     socket.on("private_message", (message, recipientId, hasAttachment) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
-        console.log("private message : " + recipientId);
         try {
             yield Messenger_dao_1.default.sendMessage(message, hasAttachment, recipientId, String((_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.id));
         }

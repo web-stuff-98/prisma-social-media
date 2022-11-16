@@ -163,6 +163,7 @@ class MessengerDAO {
                 }
                 const users = yield prisma_1.default.user.findMany({
                     where: { id: { in: uids } },
+                    select: { id: true }
                 });
                 return users;
             }
@@ -219,7 +220,6 @@ class MessengerDAO {
                 const hasExtension = info.filename.includes(".");
                 const ext = String(mime_types_1.default.extension(info.mimeType));
                 const key = `${message.id}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
-                console.log(key);
                 s3.upload({
                     Bucket: "prisma-socialmedia",
                     Key: key,
@@ -227,11 +227,11 @@ class MessengerDAO {
                 }, (e, file) => {
                     if (e)
                         reject(e);
-                    resolve({ key, type, recipientId: message.recipientId });
+                    resolve({ key, type });
                 }).on("httpUploadProgress", (e) => {
                     p++;
-                    //only send progress updates every 5th event, otherwise its probably too many emits
-                    if (p === 5) {
+                    //only send progress updates every 3rd event, otherwise it's probably too many emits
+                    if (p === 3) {
                         p = 0;
                         __1.io.to(`inbox=${message.recipientId}`).emit("private_message_attachment_progress", e.loaded / bytes, message.id);
                         __1.io.to(`inbox=${message.senderId}`).emit("private_message_attachment_progress", e.loaded / bytes, message.id);

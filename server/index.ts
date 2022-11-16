@@ -68,7 +68,6 @@ io.on("connection", (socket) => {
   socket.on("leave_post", (slug) => socket.leave(slug));
 
   socket.on("private_message", async (message, recipientId, hasAttachment) => {
-    console.log("private message : " + recipientId)
     try {
       await MessengerDAO.sendMessage(
         message,
