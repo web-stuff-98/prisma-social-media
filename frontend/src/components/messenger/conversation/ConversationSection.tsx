@@ -143,15 +143,6 @@ export default function ConversationSection({
     setMessages((p) => [...p.filter((msg) => msg.senderId !== sender)]);
   }, []);
 
-  const handleMessageUpdate = useCallback((id: string, message: string) => {
-    setMessages((p) => {
-      let newMsgs = p;
-      const i = newMsgs.findIndex((msg) => msg.id === id);
-      newMsgs[i] = { ...newMsgs[i], message, updatedAt: new Date() };
-      return [...newMsgs];
-    });
-  }, []);
-
   const handleMessageAttachmentComplete = useCallback(
     (messageId: string, type: string, key: string) => {
       setMessages((p) => {
@@ -202,7 +193,7 @@ export default function ConversationSection({
 
   return (
     <div className="w-full h-full flex flex-col items-between justify-between">
-      <div className="relative overflow-y-scroll">
+      <div className="relative overflow-y-scroll grow">
         {messages.map((msg) => (
           <Message
             {...msg}
@@ -210,7 +201,7 @@ export default function ConversationSection({
             otherUser={msg.senderId !== user?.id}
           />
         ))}
-        <span ref={messagesBottomRef} />
+        <span ref={messagesBottomRef} className="w-full"/>
       </div>
       {/*resMsg.err && (
         <span className="bg-rose-600 text-white flex items-center p-1">

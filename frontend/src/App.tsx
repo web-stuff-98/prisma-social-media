@@ -5,21 +5,24 @@ import { ModalProvider } from "./context/ModalContext";
 import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
 import { UsersProvider } from "./context/UsersContext";
+import { UserdropdownProvider } from "./context/UserdropdownContext";
 
 function App() {
   return (
     <InterfaceProvider>
-        <SocketProvider>
+      <SocketProvider>
         <UsersProvider>
           <ModalProvider>
-            <AuthProvider>
-              <MessengerProvider>
-                <Layout />
-              </MessengerProvider>
-            </AuthProvider>
+            <UserdropdownProvider>
+              <AuthProvider>
+                <MessengerProvider>
+                  <Layout />
+                </MessengerProvider>
+              </AuthProvider>
+            </UserdropdownProvider>
           </ModalProvider>
-      </UsersProvider>
-        </SocketProvider>
+        </UsersProvider>
+      </SocketProvider>
     </InterfaceProvider>
   );
 }

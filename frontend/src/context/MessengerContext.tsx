@@ -148,7 +148,7 @@ const MessengerContext = createContext<{
 export const useMessenger = () => useContext(MessengerContext);
 
 const messengerModalStyle: CSSProperties = {
-  zIndex: "100",
+  zIndex: "99",
   position: "absolute",
   overflow: "hidden",
 };

@@ -17,6 +17,7 @@ import useOnScreen from "../hooks/useOnscreen";
 import useUsers from "../context/UsersContext";
 import { useInterface } from "../context/InterfaceContext";
 import { sendPrivateMessage } from "../services/chat";
+import { useUserdropdown } from "../context/UserdropdownContext";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -48,7 +49,7 @@ export default function User({
   reverse = false,
   overridePfpOnClick = undefined,
   overridePfpBase64 = "",
-  pfpCursor
+  pfpCursor,
 }: {
   date?: Date;
   user?: IUser;
@@ -67,12 +68,12 @@ export default function User({
   reverse?: boolean;
   overridePfpOnClick?: Function;
   overridePfpBase64?: string;
-  pfpCursor?:boolean
+  pfpCursor?: boolean;
 }) {
-  const { socket } = useSocket();
+  const { openUserdropdown } = useUserdropdown();
   const { user: currentUser } = useAuth();
   const { cacheUserData } = useUsers();
-  const { state:iState } = useInterface()
+  const { state: iState } = useInterface();
 
   const { userEnteredView, userLeftView } = useUsers();
 
@@ -109,38 +110,6 @@ export default function User({
     );
   };
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [cursorInDropdown, setCursorInDropdown] = useState(false);
-  const [messageDropdown, setMessageDropdown] = useState(false);
-  useEffect(() => {
-    const clicked = () => {
-      if (!cursorInDropdown) {
-        setDropdownOpen(false);
-        setMessageDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", clicked);
-    return () => {
-      document.removeEventListener("mousedown", clicked);
-    };
-  }, [cursorInDropdown]);
-  const [directMessageInput, setDirectMessageInput] = useState("");
-  const handleDirectMessage = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (socket) {
-      /*socket?.emit(
-        "private_message",
-        directMessageInput,
-        String(user?.id),
-        false
-      );*/
-      await sendPrivateMessage(directMessageInput, String(user?.id), false)
-      setDirectMessageInput("");
-      setMessageDropdown(false);
-      setDropdownOpen(false);
-    }
-  };
-
   return (
     <div
       ref={containerRef}
@@ -173,58 +142,26 @@ export default function User({
                 backgroundImage: `url(${overridePfpBase64})`,
               }
             : {
-              backgroundImage: `url(${user?.pfp || (iState.darkMode ? "./pfp_dark.png" : "./pfp.png")})`
-            }),
-            backgroundPosition:"center",
-            backgroundSize:"cover"
+                backgroundImage: `url(${
+                  user?.pfp ||
+                  (iState.darkMode ? "./pfp_dark.png" : "./pfp.png")
+                })`,
+              }),
+          backgroundPosition: "center",
+          backgroundSize: "cover",
         }}
         onClick={() => {
           if (overridePfpOnClick) {
             return overridePfpOnClick();
           }
           if (currentUser)
-            if (user?.id !== currentUser?.id) setDropdownOpen(true);
+            if (user?.id !== currentUser?.id) openUserdropdown(uid);
         }}
         className={`${date ? "w-10 h-10" : "w-8 h-8"} bg-gray-500 relative ${
-          ((currentUser && user?.id !== currentUser?.id) || pfpCursor) && "cursor-pointer"
+          ((currentUser && user?.id !== currentUser?.id) || pfpCursor) &&
+          "cursor-pointer"
         } rounded-full shadow-md`}
       >
-        {dropdownOpen && (
-          <div
-            onMouseEnter={() => setCursorInDropdown(true)}
-            onMouseLeave={() => setCursorInDropdown(false)}
-            style={{ bottom: "0", left: "0", zIndex: "99" }}
-            className="bg-white rounded border absolute flex flex-col text-xs whitespace-nowrap"
-          >
-            {messageDropdown ? (
-              <form
-                className="p-1 flex items-center shadow-lg"
-                onSubmit={handleDirectMessage}
-              >
-                <input
-                  value={directMessageInput}
-                  autoFocus
-                  placeholder="Your message"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setDirectMessageInput(e.target.value)
-                  }
-                  type="text"
-                />
-                <button type="submit" className="bg-transparent px-0 pl-1">
-                  <MdSend className="text-xl px-0 py-0" />
-                </button>
-              </form>
-            ) : (
-              <button
-                onClick={() => setMessageDropdown(true)}
-                aria-label="Direct message"
-                className="cursor-pointer bg-transparent p-1 px-2 hover:bg-gray-100"
-              >
-                Direct message
-              </button>
-            )}
-          </div>
-        )}
         {user?.online && (
           <span
             style={{
@@ -263,7 +200,11 @@ export default function User({
       )}
       <div className="leading-3 mt-0.5 px-1">
         {user && (
-          <h1 className={`font-bold ${date ? "text-sm":"text-xs"} pb-0.5 leading-3 whitespace-nowrap`}>
+          <h1
+            className={`font-bold ${
+              date ? "text-sm" : "text-xs"
+            } pb-0.5 leading-3 whitespace-nowrap`}
+          >
             {by && "By "}
             {user?.name}
           </h1>
