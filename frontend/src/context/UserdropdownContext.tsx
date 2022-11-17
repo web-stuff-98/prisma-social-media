@@ -42,7 +42,9 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
 
   const directMessageSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    sendPrivateMessage(messageInput, uid, false).catch((e) => setErr(`${e}`));
+    sendPrivateMessage(messageInput, uid, false)
+      .then(() => closeUserDropdown())
+      .catch((e) => setErr(`${e}`));
   };
 
   const closeUserDropdown = () => {

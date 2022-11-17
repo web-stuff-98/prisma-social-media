@@ -53,7 +53,7 @@ export default function MessageForm({
         <button className="px-1 pl-0" type="submit" aria-label="Send message">
           <MdSend className="text-2xl" />
         </button>
-        <button className="px-2" type="submit" aria-label="Send message">
+        <button className="px-2" type="button" aria-label="Send message">
           <RiWebcamFill className="text-2xl"/>
         </button>
       </div>
