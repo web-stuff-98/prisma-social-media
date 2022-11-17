@@ -3,7 +3,9 @@ import { useCallback, useEffect, useState } from "react";
 //https://usehooks.com/useAsync/
 
 const useAsync = (asyncFunction: Function, immediate = true) => {
-  const [status, setStatus] = useState("idle");
+  const [status, setStatus] = useState<
+    "idle" | "pending" | "error" | "success"
+  >("idle");
   const [value, setValue] = useState(null);
   const [error, setError] = useState(null);
 
@@ -13,11 +15,11 @@ const useAsync = (asyncFunction: Function, immediate = true) => {
     setError(null);
 
     return asyncFunction()
-      .then((response:any) => {
+      .then((response: any) => {
         setValue(response);
         setStatus("success");
       })
-      .catch((error:any) => {
+      .catch((error: any) => {
         setError(error);
         setStatus("error");
       });

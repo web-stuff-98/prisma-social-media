@@ -32,17 +32,21 @@ model Tag {
 }
 
 model User {
-  id               String           @id @default(uuid())
-  name             String           @unique
-  password         String
-  posts            Post[]
-  comments         Comment[]
-  commentLikes     CommentLike[]
-  postLikes        PostLike[]
-  postShares       PostShare[]
-  sentMessages     PrivateMessage[] @relation("sentMessages")
-  receivedMessages PrivateMessage[] @relation("receivedMessages")
-  pfp              Pfp?
+  id                     String           @id @default(uuid())
+  name                   String           @unique
+  password               String
+  posts                  Post[]
+  comments               Comment[]
+  commentLikes           CommentLike[]
+  postLikes              PostLike[]
+  postShares             PostShare[]
+  sentPrivateMessages    PrivateMessage[] @relation("sentPrivateMessages")
+  receivedPrivateMessage PrivateMessage[] @relation("receivedPrivateMessage")
+  pfp                    Pfp?
+  sentRoomMessage        RoomMessage[]    @relation("sentRoomMessages")
+  rooms                  Room[]
+  joinedRooms            Room[]           @relation("roomMember")
+  bannedRooms            Room[]           @relation("roomBanned")
 }
 
 model Pfp {
@@ -97,13 +101,49 @@ model PostShare {
 }
 
 model PrivateMessage {
-  message   String
-  id String @id @default(cuid())
+  message String
+  id      String @id @default(cuid())
 
-  sender      User   @relation(name: "sentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  recipient   User   @relation(name: "receivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender      User   @relation(name: "sentPrivateMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient   User   @relation(name: "receivedPrivateMessage", fields: [recipientId], references: [id], onDelete: Cascade)
   senderId    String
   recipientId String
+
+  hasAttachment     Boolean  @default(false)
+  attachmentType    String?
+  attachmentPending Boolean?
+  attachmentError   Boolean?
+  attachmentKey     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([senderId])
+}
+
+model Room {
+  id   String @id @default(cuid())
+  name String
+
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId String
+
+  members User[] @relation(name: "roomMember")
+  banned  User[] @relation(name: "roomBanned")
+
+  createdAt DateTime      @default(now())
+  messages  RoomMessage[]
+}
+
+model RoomMessage {
+  message String
+  id      String @id @default(cuid())
+
+  sender   User   @relation(name: "sentRoomMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId String
+
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId String
 
   hasAttachment     Boolean  @default(false)
   attachmentType    String?

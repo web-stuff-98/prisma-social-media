@@ -18,7 +18,7 @@ import tailwindConfig from "tailwindcss/defaultConfig";
 type Breakpoint = "sm" | "md" | "lg" | "xl";
 interface State {
   breakPoint: Breakpoint;
-  darkMode: false;
+  darkMode: boolean;
 }
 
 const InterfaceContext = createContext<{

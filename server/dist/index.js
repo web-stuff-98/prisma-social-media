@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -57,39 +48,10 @@ io.on("connection", (socket) => {
     else {
         socket.data.user = undefined;
     }
-    socket.on("subscribe_to_user", (uid) => {
-        socket.join(uid);
-    });
+    socket.on("subscribe_to_user", (uid) => socket.join(uid));
     socket.on("unsubscribe_to_user", (uid) => socket.leave(uid));
     socket.on("open_post", (slug) => socket.join(slug));
     socket.on("leave_post", (slug) => socket.leave(slug));
-    socket.on("private_message", (message, recipientId, hasAttachment) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a;
-        try {
-            yield Messenger_dao_1.default.sendMessage(message, hasAttachment, recipientId, String((_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.id));
-        }
-        catch (e) {
-            socket.emit("private_message_error", String(e));
-        }
-    }));
-    socket.on("private_message_update", (id, message) => __awaiter(void 0, void 0, void 0, function* () {
-        var _b;
-        try {
-            yield Messenger_dao_1.default.updateMessage(id, message, String((_b = socket.data.user) === null || _b === void 0 ? void 0 : _b.id));
-        }
-        catch (e) {
-            socket.emit("private_message_error", String(e));
-        }
-    }));
-    socket.on("private_message_delete", (id) => __awaiter(void 0, void 0, void 0, function* () {
-        var _c;
-        try {
-            yield Messenger_dao_1.default.deleteMessage(id, String((_c = socket.data.user) === null || _c === void 0 ? void 0 : _c.id));
-        }
-        catch (e) {
-            socket.emit("private_message_error", String(e));
-        }
-    }));
     socket.on("disconnect", () => {
         if (socket.data.user)
             io.to(socket.data.user.id).emit("user_subscription_update", {
@@ -100,11 +62,10 @@ io.on("connection", (socket) => {
 });
 const Posts_route_1 = __importDefault(require("./api/Posts.route"));
 const Users_route_1 = __importDefault(require("./api/Users.route"));
-const Messenger_route_1 = __importDefault(require("./api/Messenger.route"));
-const Messenger_dao_1 = __importDefault(require("./api/dao/Messenger.dao"));
+const Chat_route_1 = __importDefault(require("./api/Chat.route"));
 app.use("/api/posts", Posts_route_1.default);
 app.use("/api/users", Users_route_1.default);
-app.use("/api/messenger", Messenger_route_1.default);
+app.use("/api/chat", Chat_route_1.default);
 server.listen(process.env.PORT, () => {
     console.log(`Server listening on port ${process.env.PORT}`);
 });

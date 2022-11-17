@@ -17,6 +17,7 @@ export interface IPost {
   id: string;
   title: string;
   description: string;
+  tags: string[];
   body: string;
   author: { id: string };
   comments?: IComment[];
@@ -79,6 +80,7 @@ export function PostProvider({ children }: { children: ReactNode }) {
     title: "post",
     body: "body",
     author: { id: "123" },
+    tags: [],
     comments: [],
     slug: "123",
     description: "",

@@ -8,6 +8,10 @@ import useUsers from "../../../context/UsersContext";
 import User from "../../User";
 import ProgressBar from "../../ProgressBar";
 import { ImDownload3 } from "react-icons/im";
+import {
+  deletePrivateMessage,
+  updatePrivateMessage,
+} from "../../../services/chat";
 
 /**
  * attachmentData = {
@@ -16,30 +20,30 @@ import { ImDownload3 } from "react-icons/im";
  * }
  */
 
-export interface IAttachmentData {
-  url: string;
-  type: "Video" | "Image" | "File";
-  progress: number;
-  failed: boolean;
-  complete: boolean;
-}
-
 export default function Message({
   otherUser = false,
-  attachmentData,
   message,
   id,
   senderId,
+  hasAttachment = false,
+  attachmentType,
+  attachmentKey,
+  attachmentError,
+  attachmentProgress,
   createdAt,
-  updatedAt
+  updatedAt,
 }: {
   otherUser?: boolean;
-  attachmentData?: IAttachmentData;
+  attachmentType?: string;
+  attachmentKey?: string;
+  attachmentError?: boolean;
+  attachmentProgress?: number;
+  hasAttachment: boolean;
   message: string;
   id: string;
   senderId: string;
-  createdAt: Date,
-  updatedAt: Date
+  createdAt: Date;
+  updatedAt: Date;
 }) {
   const { getUserData } = useUsers();
   const { socket } = useSocket();
@@ -63,9 +67,7 @@ export default function Message({
   return (
     <div
       aria-label={otherUser ? "Other users message" : "Your message"}
-      onMouseEnter={() => setCursorInsideInput(true)}
-      onMouseLeave={() => setCursorInsideInput(false)}
-      className={`p-0.5 mb-2 flex ${
+      className={`p-0.5 mb-4 flex ${
         otherUser ? "flex-row-reverse text-right" : ""
       } items-start`}
     >
@@ -75,21 +77,14 @@ export default function Message({
       </div>
       {/* message content & attachment */}
       <div className="gap-1 grow flex flex-col my-auto px-1">
-        {attachmentData && attachmentData.type === "Image" && (
-          <div
-            style={{
-              backgroundImage: `url(${attachmentData.url})`,
-              backgroundPosition: otherUser ? "right" : "left",
-              backgroundSize: "contain",
-              backgroundRepeat: "no-repeat",
-            }}
-            className={`w-full h-24 ${otherUser ? "pr-2" : "pl-2"}`}
-          />
-        )}
         {isEditing ? (
-          <div className="flex items-center justify-center">
+          <div
+            onMouseEnter={() => setCursorInsideInput(true)}
+            onMouseLeave={() => setCursorInsideInput(false)}
+            className="flex items-center justify-center"
+          >
             <textarea
-            className="grow"
+              className="grow"
               aria-label="Edit comment input"
               value={messageEditInput}
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) =>
@@ -97,10 +92,11 @@ export default function Message({
               }
             />
             <button
-            className="px-0 pl-2 bg-transparent"
+              className="px-0 pl-2 bg-transparent"
               aria-label="Update message"
               onClick={() => {
-                socket?.emit("private_message_update", id, messageEditInput);
+                updatePrivateMessage(id, messageEditInput);
+                /*socket?.emit("private_message_update", id, messageEditInput);*/
                 setIsEditing(false);
               }}
             >
@@ -110,19 +106,34 @@ export default function Message({
         ) : (
           <p className={`leading-3 text-xs my-auto h-full`}>{message}</p>
         )}
-        {attachmentData && attachmentData.type === "Video" && (
-          <div className={`overflow-hidden rounded`}>
-            <ReactPlayer width={"100%"} height={100} url={attachmentData.url} />
+        {hasAttachment && attachmentType === "Image" && (
+          <img
+            src={`https://d2gt89ey9qb5n6.cloudfront.net/${attachmentKey}`}
+            className={"drop-shadow rounded-md mx-auto w-fit h-fit"}
+          />
+        )}
+        {hasAttachment && attachmentType === "Video" && (
+          <div className={`overflow-hidden drop-shadow rounded-md grow`}>
+            <ReactPlayer
+              controls
+              width={"100%"}
+              height={"auto"}
+              url={`https://d2gt89ey9qb5n6.cloudfront.net/${attachmentKey}`}
+            />
           </div>
         )}
-        {attachmentData && !attachmentData.complete && !attachmentData.failed && (
-          <div className="px-1">
-            <ProgressBar percent={attachmentData?.progress} />
-          </div>
-        )}
-        {attachmentData && attachmentData.type === "File" && (
-          <button
+        {typeof attachmentProgress === "number" &&
+          !hasAttachment &&
+          !attachmentError && (
+            <div className="px-1">
+              <ProgressBar percent={attachmentProgress * 100} />
+            </div>
+          )}
+        {hasAttachment && attachmentType === "File" && (
+          <a
             aria-label="Download attachment"
+            download
+            href={`https://d2gt89ey9qb5n6.cloudfront.net/${attachmentKey}`}
             className={`px-0 ${
               otherUser ? "pr-1" : "pl-1"
             } bg-transparent flex ${
@@ -130,7 +141,7 @@ export default function Message({
             } text-xs items-center gap-1 text-gray-400 hover:text-black`}
           >
             <ImDownload3 className="text-lg" /> download attachment
-          </button>
+          </a>
         )}
       </div>
       {/* edit & delete icons */}
@@ -152,7 +163,8 @@ export default function Message({
           {!isEditing && (
             <button
               onClick={() => {
-                socket?.emit("private_message_delete", id);
+                deletePrivateMessage(id);
+                /*socket?.emit("private_message_delete", id);*/
               }}
               className="px-0 bg-transparent"
               aria-label={isEditing ? "Submit change" : "Delete message"}

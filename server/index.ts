@@ -59,44 +59,10 @@ io.on("connection", (socket) => {
     socket.data.user = undefined;
   }
 
-  socket.on("subscribe_to_user", (uid) => {
-    socket.join(uid);
-  });
+  socket.on("subscribe_to_user", (uid) => socket.join(uid));
   socket.on("unsubscribe_to_user", (uid) => socket.leave(uid));
-
   socket.on("open_post", (slug) => socket.join(slug));
   socket.on("leave_post", (slug) => socket.leave(slug));
-
-  socket.on("private_message", async (message, recipientId, hasAttachment) => {
-    try {
-      await MessengerDAO.sendMessage(
-        message,
-        hasAttachment,
-        recipientId,
-        String(socket.data.user?.id)
-      );
-    } catch (e) {
-      socket.emit("private_message_error", String(e));
-    }
-  });
-  socket.on("private_message_update", async (id, message) => {
-    try {
-      await MessengerDAO.updateMessage(
-        id,
-        message,
-        String(socket.data.user?.id)
-      );
-    } catch (e) {
-      socket.emit("private_message_error", String(e));
-    }
-  });
-  socket.on("private_message_delete", async (id) => {
-    try {
-      await MessengerDAO.deleteMessage(id, String(socket.data.user?.id));
-    } catch (e) {
-      socket.emit("private_message_error", String(e));
-    }
-  });
 
   socket.on("disconnect", () => {
     if (socket.data.user)
@@ -109,18 +75,17 @@ io.on("connection", (socket) => {
 
 import Posts from "./api/Posts.route";
 import Users from "./api/Users.route";
-import Messenger from "./api/Messenger.route";
+import Chat from "./api/Chat.route";
 import {
   ClientToServerEvents,
   InterServerEvents,
   ServerToClientEvents,
   SocketData,
 } from "./socket-interfaces";
-import MessengerDAO from "./api/dao/Messenger.dao";
 
 app.use("/api/posts", Posts);
 app.use("/api/users", Users);
-app.use("/api/messenger", Messenger);
+app.use("/api/chat", Chat);
 
 server.listen(process.env.PORT, () => {
   console.log(`Server listening on port ${process.env.PORT}`);

@@ -33,16 +33,20 @@ async function seed() {
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer placerat urna vel ante volutpat, ut elementum mi placerat. Phasellus varius nisi a nisl interdum",
       tags: {
-        connectOrCreate: [{
-          where: { name: "TestTag1" },
-          create: { name: "TestTag1" },
-      },{
-        where: { name: "TestTag3" },
-        create: { name: "TestTag3" },
-      },{
-        where: { name: "TestTag4" },
-        create: { name: "TestTag4" },
-      }],
+        connectOrCreate: [
+          {
+            where: { name: "TestTag1" },
+            create: { name: "TestTag1" },
+          },
+          {
+            where: { name: "TestTag3" },
+            create: { name: "TestTag3" },
+          },
+          {
+            where: { name: "TestTag4" },
+            create: { name: "TestTag4" },
+          },
+        ],
       },
     },
   });
@@ -55,17 +59,28 @@ async function seed() {
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer placerat urna vel ante volutpat, ut elementum mi placerat. Phasellus varius nisi a nisl interdum",
       tags: {
-        connectOrCreate: [{
-          where: { name: "TestTag1" },
-          create: { name: "TestTag1" },
-        },{
-          where: { name: "TestTag2" },
-          create: { name: "TestTag2" },
-        },{
-          where: { name: "TestTag3" },
-          create: { name: "TestTag3" },
-        }],
+        connectOrCreate: [
+          {
+            where: { name: "TestTag1" },
+            create: { name: "TestTag1" },
+          },
+          {
+            where: { name: "TestTag2" },
+            create: { name: "TestTag2" },
+          },
+          {
+            where: { name: "TestTag3" },
+            create: { name: "TestTag3" },
+          },
+        ],
       },
+    },
+  });
+
+  const room1 = await prisma.room.create({
+    data: {
+      authorId: TestAcc1.id,
+      name: "Example room",
     },
   });
 

@@ -4,16 +4,12 @@ import User from "../../User";
 import { useState, useEffect } from "react";
 
 import { RiDeleteBin4Fill, RiMessage2Fill } from "react-icons/ri";
-import { getConversations } from "../../../services/messenger";
+import { getConversations, deleteConversation } from "../../../services/chat";
 import { IUser } from "../../../context/AuthContext";
 import { useMessenger } from "../../../context/MessengerContext";
 import useUsers from "../../../context/UsersContext";
 
-export default function ConversationsSection({
-  setMessengerSection,
-}: {
-  setMessengerSection: Function;
-}) {
+export default function ConversationsSection() {
   const { openConversation } = useMessenger();
   const { getUserData } = useUsers();
 
@@ -49,6 +45,7 @@ export default function ConversationsSection({
           />
           <div className="flex flex-col gap-2 cursor-pointer">
             <IconBtn
+              onClick={() => deleteConversation(user.id)}
               aria-label="Delete conversation with user"
               color="text-rose-600"
               Icon={RiDeleteBin4Fill}

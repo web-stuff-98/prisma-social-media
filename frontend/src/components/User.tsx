@@ -16,6 +16,7 @@ import { MdSend } from "react-icons/md";
 import useOnScreen from "../hooks/useOnscreen";
 import useUsers from "../context/UsersContext";
 import { useInterface } from "../context/InterfaceContext";
+import { sendPrivateMessage } from "../services/chat";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -127,12 +128,13 @@ export default function User({
   const handleDirectMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (socket) {
-      socket?.emit(
+      /*socket?.emit(
         "private_message",
         directMessageInput,
         String(user?.id),
         false
-      );
+      );*/
+      await sendPrivateMessage(directMessageInput, String(user?.id), false)
       setDirectMessageInput("");
       setMessageDropdown(false);
       setDropdownOpen(false);

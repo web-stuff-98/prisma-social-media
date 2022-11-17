@@ -1,14 +1,15 @@
-import { MdSend } from "react-icons/md";
+import { MdSend, MdVideoCall, MdVideoCameraBack } from "react-icons/md";
 import { AiOutlineMenuFold, AiFillFileAdd } from "react-icons/ai";
 
-import { useRef } from "react"
+import { useRef } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import { BiWebcam } from "react-icons/bi";
+import { RiWebcamFill } from "react-icons/ri";
 
 export default function MessageForm({
   handleMessageInput,
   handleFileInput,
   handleMessageSubmit,
-  handleBackClicked,
   file,
   messageInput,
 }: {
@@ -16,10 +17,9 @@ export default function MessageForm({
   handleMessageInput: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileInput: (e: ChangeEvent<HTMLInputElement>) => void;
   handleMessageSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  handleBackClicked: () => void;
-  file?: File
+  file?: File;
 }) {
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <form
       onSubmit={handleMessageSubmit}
@@ -31,9 +31,16 @@ export default function MessageForm({
         aria-label="Select attachment"
         onClick={() => fileInputRef.current?.click()}
       >
-        <AiFillFileAdd className={`text-md ${file ? "text-green-500" : ""}`} />
+        <AiFillFileAdd className={`text-lg ${file ? "text-green-500" : ""}`} />
       </button>
-      <input onChange={handleFileInput} id="file" name="file" ref={fileInputRef} type="file" className="hidden"/>
+      <input
+        onChange={handleFileInput}
+        id="file"
+        name="file"
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+      />
       <input
         onChange={handleMessageInput}
         value={messageInput}
@@ -46,13 +53,8 @@ export default function MessageForm({
         <button className="px-1 pl-0" type="submit" aria-label="Send message">
           <MdSend className="text-2xl" />
         </button>
-        <button
-          onClick={handleBackClicked}
-          className="px-1"
-          type="button"
-          aria-label="Back"
-        >
-          <AiOutlineMenuFold className="text-2xl" />
+        <button className="px-2" type="submit" aria-label="Send message">
+          <RiWebcamFill className="text-2xl"/>
         </button>
       </div>
     </form>
