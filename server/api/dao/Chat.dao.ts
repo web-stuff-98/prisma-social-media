@@ -8,6 +8,8 @@ import mime from "mime-types";
 import AWS from "../../utils/aws";
 import { io } from "../..";
 import { PrivateMessage, Room, RoomMessage, User } from "@prisma/client";
+import isUserInRoom from "../../utils/isUserInRoom";
+import getUserSocket from "../../utils/getUserSocket";
 
 export default class MessengerDAO {
   static async searchUser(name: string) {
@@ -419,6 +421,7 @@ export default class MessengerDAO {
       where: { id: roomId },
       select: { id: true },
     });
+    io.emit("room_deleted", id);
     return id;
   }
 
@@ -436,7 +439,7 @@ export default class MessengerDAO {
       select: { _count: true },
     });
     if (usersRooms.length > 8) throw new Error("Max 8 rooms");
-    return await prisma.room.create({
+    const room = await prisma.room.create({
       data: {
         authorId,
         name,
@@ -448,6 +451,7 @@ export default class MessengerDAO {
         createdAt: true,
       },
     });
+    io.emit("room_created", room.id, room.name, authorId);
   }
 
   static async joinRoom(roomId: string, uid: string) {
@@ -471,6 +475,9 @@ export default class MessengerDAO {
       where: { id: roomId },
       data: { members: { connect: { id: uid } } },
     });
+    io.to(`room=${roomId}`).emit("room_user_joined", uid);
+    const usersSocket = await getUserSocket(uid);
+    if (usersSocket) usersSocket.join(`room=${roomId}`);
   }
 
   static async banUser(roomId: string, bannedUid: string, bannerUid: string) {
@@ -497,6 +504,9 @@ export default class MessengerDAO {
         members: { disconnect: { id: bannedUid } },
       },
     });
+    io.to(`room=${roomId}`).emit("room_user_banned", bannedUid);
+    const usersSocket = await getUserSocket(bannedUid);
+    if (usersSocket) usersSocket.leave(`room=${roomId}`);
   }
 
   static async kickUser(roomId: string, kickedUid: string, kickerUid: string) {
@@ -524,6 +534,9 @@ export default class MessengerDAO {
         members: { disconnect: { id: kickedUid } },
       },
     });
+    io.to(`room=${roomId}`).emit("room_user_kicked", kickedUid);
+    const usersSocket = await getUserSocket(kickedUid);
+    if (usersSocket) usersSocket.leave(`room=${roomId}`);
   }
 
   static async leaveRoom(roomId: string, uid: string) {
@@ -544,11 +557,16 @@ export default class MessengerDAO {
     if (!room.members.includes({ id: uid }))
       throw new Error("You cannot leave a room that you aren't already in");
     if (room.banned.includes({ id: uid }))
-      throw new Error("You cannot leave a room which you are already banned from");
+      throw new Error(
+        "You cannot leave a room which you are already banned from"
+      );
     await prisma.room.update({
       where: { id: roomId },
       data: { members: { disconnect: { id: uid } } },
     });
+    io.to(`room=${roomId}`).emit("room_user_left", uid);
+    const usersSocket = await getUserSocket(uid);
+    if (usersSocket) usersSocket.leave(`room=${roomId}`);
   }
 
   static async getRoomMessage(msgId: string) {

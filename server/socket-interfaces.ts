@@ -11,6 +11,7 @@ export interface ServerToClientEvents {
   comment_updated: (message: string, commentId: string, uid: string) => void;
   comment_deleted: (commentId: string, uid: string) => void;
   comment_liked: (addLike: boolean, uid: string) => void;
+  
   private_message: (id: string, data: PrivateMessage) => void;
   private_message_attachment_progress: (progress: number, id: string) => void;
   private_message_attachment_failed: (id: string) => void;
@@ -60,11 +61,6 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   open_post: (slug: string) => void;
   leave_post: (slug: string) => void;
-
-  /*room_message: (message: string, hasAttachment: boolean) => void;
-  room_message_error: (error: string) => void;
-  room_message_update: (id: string, message: string) => void;
-  room_message_delete: (id: string) => void;*/
 
   subscribe_to_user: (uid: string) => void;
   unsubscribe_to_user: (uid: string) => void;

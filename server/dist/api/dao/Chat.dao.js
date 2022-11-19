@@ -23,6 +23,7 @@ const prisma_1 = __importDefault(require("../../utils/prisma"));
 const mime_types_1 = __importDefault(require("mime-types"));
 const aws_1 = __importDefault(require("../../utils/aws"));
 const __1 = require("../..");
+const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
 class MessengerDAO {
     static searchUser(name) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -398,6 +399,7 @@ class MessengerDAO {
                 where: { id: roomId },
                 select: { id: true },
             });
+            __1.io.emit("room_deleted", id);
             return id;
         });
     }
@@ -417,7 +419,7 @@ class MessengerDAO {
             });
             if (usersRooms.length > 8)
                 throw new Error("Max 8 rooms");
-            return yield prisma_1.default.room.create({
+            const room = yield prisma_1.default.room.create({
                 data: {
                     authorId,
                     name,
@@ -429,6 +431,7 @@ class MessengerDAO {
                     createdAt: true,
                 },
             });
+            __1.io.emit("room_created", room.id, room.name, authorId);
         });
     }
     static joinRoom(roomId, uid) {
@@ -453,6 +456,10 @@ class MessengerDAO {
                 where: { id: roomId },
                 data: { members: { connect: { id: uid } } },
             });
+            __1.io.to(`room=${roomId}`).emit("room_user_joined", uid);
+            const usersSocket = yield (0, getUserSocket_1.default)(uid);
+            if (usersSocket)
+                usersSocket.join(`room=${roomId}`);
         });
     }
     static banUser(roomId, bannedUid, bannerUid) {
@@ -480,6 +487,10 @@ class MessengerDAO {
                     members: { disconnect: { id: bannedUid } },
                 },
             });
+            __1.io.to(`room=${roomId}`).emit("room_user_banned", bannedUid);
+            const usersSocket = yield (0, getUserSocket_1.default)(bannedUid);
+            if (usersSocket)
+                usersSocket.leave(`room=${roomId}`);
         });
     }
     static kickUser(roomId, kickedUid, kickerUid) {
@@ -508,6 +519,10 @@ class MessengerDAO {
                     members: { disconnect: { id: kickedUid } },
                 },
             });
+            __1.io.to(`room=${roomId}`).emit("room_user_kicked", kickedUid);
+            const usersSocket = yield (0, getUserSocket_1.default)(kickedUid);
+            if (usersSocket)
+                usersSocket.leave(`room=${roomId}`);
         });
     }
     static leaveRoom(roomId, uid) {
@@ -534,6 +549,10 @@ class MessengerDAO {
                 where: { id: roomId },
                 data: { members: { disconnect: { id: uid } } },
             });
+            __1.io.to(`room=${roomId}`).emit("room_user_left", uid);
+            const usersSocket = yield (0, getUserSocket_1.default)(uid);
+            if (usersSocket)
+                usersSocket.leave(`room=${roomId}`);
         });
     }
     static getRoomMessage(msgId) {
