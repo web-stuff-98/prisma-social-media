@@ -10,11 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const __1 = require("..");
-exports.default = (uid) => __awaiter(void 0, void 0, void 0, function* () {
+exports.default = (uid, roomId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const sockets = yield __1.io.fetchSockets();
-    for (const socket of sockets) {
-        if (socket.data.user.id === uid)
-            return socket;
-    }
-    return undefined;
+    const socket = sockets.find((s) => s.data.user.id === uid);
+    return socket ? (_a = __1.io.sockets.adapter.socketRooms(socket.id)) === null || _a === void 0 ? void 0 : _a.has(`room=${roomId}`) : false;
 });
