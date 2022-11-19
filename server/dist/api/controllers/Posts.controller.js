@@ -58,6 +58,18 @@ class PostsController {
             }
         });
     }
+    static getPopularPosts(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const posts = yield Posts_dao_1.default.getPopularPosts((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+                res.status(200).json(posts);
+            }
+            catch (e) {
+                res.status(500).json({ msg: "Internal error" });
+            }
+        });
+    }
     static getPostById(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {

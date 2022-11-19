@@ -23,7 +23,7 @@ export default function MessageForm({
   return (
     <form
       onSubmit={handleMessageSubmit}
-      className="w-full border-t h-10 py-1 flex items-center justify-between"
+      className="w-full border-t dark:border-zinc-800 h-10 py-1 flex items-center justify-between"
     >
       <button
         type="button"
@@ -47,7 +47,7 @@ export default function MessageForm({
         id="message"
         name="message"
         type="text"
-        className="grow mx-1 rounded-sm border px-1"
+        className="grow mx-1 rounded-sm border dark:border-zinc-800 px-1"
       />
       <div className="flex my-auto items-center">
         <button className="px-1 pl-0" type="submit" aria-label="Send message">

@@ -16,9 +16,11 @@ const parsePost = async (post: any, uid?: string) => {
     likedByMe: post.likes.find((like: any) => like.userId === uid)
       ? true
       : false,
+    likes: post.likes.length,
     sharedByMe: post.shares.find((share: any) => share.userId === uid)
       ? true
       : false,
+    shares: post.shares.length,
     comments: post.comments.map((cmt: any) => {
       const { _count, ...commentFields } = cmt;
       return {
@@ -37,6 +39,42 @@ const parsePost = async (post: any, uid?: string) => {
 
 export default class PostsDAO {
   static async getPosts(uid?: string) {
+    const posts = await prisma.post.findMany({
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        createdAt: true,
+        description: true,
+        author: {
+          select: {
+            id: true,
+          },
+        },
+        likes: true,
+        shares: true,
+        tags: true,
+      },
+    });
+    return posts.map((post) => {
+      let likedByMe = false;
+      let sharedByMe = false;
+      likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
+      sharedByMe = post.shares.find((share) => share.userId === uid)
+        ? true
+        : false;
+      return {
+        ...post,
+        likes: post.likes.length,
+        shares: post.shares.length,
+        tags: post.tags.map((tag) => tag.name),
+        likedByMe,
+        sharedByMe,
+      };
+    });
+  }
+
+  static async getPopularPosts(uid?: string) {
     const posts = await prisma.post.findMany({
       select: {
         id: true,
@@ -91,13 +129,11 @@ export default class PostsDAO {
                   id: true,
                 },
               },
-              _count: { select: { likes: true } },
             },
           },
           author: {
             select: {
               id: true,
-              name: true,
             },
           },
           tags: true,
@@ -128,13 +164,11 @@ export default class PostsDAO {
                   id: true,
                 },
               },
-              _count: { select: { likes: true } },
             },
           },
           author: {
             select: {
               id: true,
-              name: true,
             },
           },
           tags: true,

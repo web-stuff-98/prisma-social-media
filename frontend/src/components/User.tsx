@@ -4,19 +4,9 @@ import { AiOutlineLike, AiFillLike } from "react-icons/ai";
 import { IUser, useAuth } from "../context/AuthContext";
 import { BsShare, BsShareFill } from "react-icons/bs";
 
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import type {
-  FormEvent,
-  ChangeEvent,
-  MutableRefObject,
-  RefObject,
-} from "react";
-import { useSocket } from "../context/SocketContext";
-import { MdSend } from "react-icons/md";
-import useOnScreen from "../hooks/useOnscreen";
+import { useRef, useLayoutEffect } from "react";
 import useUsers from "../context/UsersContext";
 import { useInterface } from "../context/InterfaceContext";
-import { sendPrivateMessage } from "../services/chat";
 import { useUserdropdown } from "../context/UserdropdownContext";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -43,7 +33,9 @@ export default function User({
   onLikeClick,
   onShareClick,
   liked,
+  likes = 0,
   shared,
+  shares = 0,
   isEditing,
   isDeleting,
   reverse = false,
@@ -62,7 +54,9 @@ export default function User({
   onLikeClick?: () => void;
   onShareClick?: () => void;
   liked?: boolean;
+  likes?: number;
   shared?: boolean;
+  shares?: number;
   isEditing?: boolean;
   isDeleting?: boolean;
   reverse?: boolean;
@@ -100,7 +94,7 @@ export default function User({
   const renderDateTime = (dateString: string) => {
     return (
       <div
-        className={`flex flex-col pb-1 text-xs leading-3 ${
+        className={`flex tracking-tighter flex-col text-xs leading-3 ${
           reverse ? "items-end" : "items-start"
         }`}
       >
@@ -127,12 +121,26 @@ export default function User({
             onClick={onLikeClick}
             Icon={liked ? AiFillLike : AiOutlineLike}
             aria-label={liked ? "Unlike" : "Like"}
-          />
+          >
+            {likes > 0 && <div
+              style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
+              className="absolute text-sm drop-shadow-md text-green-500 leading-3 tracking-tighter"
+            >
+              {likes}
+            </div>}
+          </IconBtn>
           <IconBtn
             onClick={onShareClick}
             Icon={shared ? BsShareFill : BsShare}
-            aria-label="Delete"
-          />
+            aria-label="Share"
+          >
+            {shares > 0 && <div
+              style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
+              className="absolute text-sm drop-shadow-md text-green-500 leading-3 tracking-tighter"
+            >
+              {shares}
+            </div>}
+          </IconBtn>
         </div>
       )}
       <div
@@ -157,16 +165,15 @@ export default function User({
           if (currentUser)
             if (user?.id !== currentUser?.id) openUserdropdown(uid);
         }}
-        className={`${date ? "w-10 h-10" : "w-8 h-8"} bg-gray-500 relative ${
+        className={`${date ? "w-10 h-10" : "w-8 h-8"} relative ${
           ((currentUser && user?.id !== currentUser?.id) || pfpCursor) &&
           "cursor-pointer"
-        } rounded-full shadow-md`}
+        } rounded-full border border-black dark:border-zinc-600 shadow-md`}
       >
         {user?.online && (
           <span
             style={{
               width: "0.5rem",
-              border: "1px solid black",
               height: "0.5rem",
               bottom: 0,
               right: 0,
@@ -203,7 +210,7 @@ export default function User({
           <h1
             className={`font-bold ${
               date ? "text-sm" : "text-xs"
-            } pb-0.5 leading-3 whitespace-nowrap`}
+            } leading-3 tracking-tight whitespace-nowrap`}
           >
             {by && "By "}
             {user?.name}

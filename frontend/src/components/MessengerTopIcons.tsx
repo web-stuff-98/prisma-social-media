@@ -7,7 +7,7 @@ export default function MessengerTopIcons() {
   return (
     <div
     style={{top:"0"}}
-      className="w-full bg-stone-900 border-b h-6 flex justify-end items-center absolute"
+      className="w-full bg-zinc-800 border-b dark:border-zinc-800 h-6 flex justify-end items-center absolute"
     >
             <button
             disabled={messengerSection === "Menu"}

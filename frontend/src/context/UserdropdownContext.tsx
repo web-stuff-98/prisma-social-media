@@ -10,6 +10,7 @@ import type { ReactNode, ChangeEvent, FormEvent } from "react";
 import { MdError, MdSend } from "react-icons/md";
 import { BsFillChatRightFill } from "react-icons/bs";
 import { AiFillPlusSquare } from "react-icons/ai";
+import { CgProfile } from "react-icons/cg";
 import { ImBlocked } from "react-icons/im";
 import { sendPrivateMessage } from "../services/chat";
 import useScrollbarSize from "react-scrollbar-size";
@@ -37,7 +38,6 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
 
   const openUserdropdown = (uid: string) => {
     setUid(uid);
-    setCursorInside(true);
   };
 
   const directMessageSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -112,7 +112,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
           onMouseLeave={() => setCursorInside(false)}
           aria-label="User dropdown"
           style={{ left: clickPos.left, top: clickPos.top, zIndex: 100 }}
-          className="bg-white fixed border rounded shadow-md p-1"
+          className="bg-foreground text-white dark:bg-darkmodeForeground fixed border dark:border-zinc-800 rounded shadow-md p-1"
         >
           {err ? (
             <div className="text-rose-500 flex items-center gap-1 text-xs pr-0.5 drop-shadow">
@@ -130,6 +130,14 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                   >
                     <BsFillChatRightFill className="text-md" />
                     Chat
+                  </button>
+                  <button
+                    className="text-xs rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
+                    aria-label="Block"
+                    onClick={() => blockUser()}
+                  >
+                    <CgProfile className="text-md" />
+                    Profile
                   </button>
                   <button
                     className="text-xs rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
@@ -155,6 +163,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                   onSubmit={directMessageSubmit}
                 >
                   <input
+                    autoFocus
                     value={messageInput}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setMessageInput(e.target.value)
@@ -162,12 +171,13 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                     placeholder="Direct message..."
                     required
                     type="text"
+                    className="text-black dark:text-white"
                   />
                   <button
                     aria-label="Send direct message"
                     className="bg-transparent px-0 pl-1 text-xl"
                   >
-                    <MdSend />
+                    <MdSend className="text-black dark:text-white" />
                   </button>
                 </form>
               )}

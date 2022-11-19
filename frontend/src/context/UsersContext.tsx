@@ -92,7 +92,6 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     (uid: string) => {
       try {
         const u = users.find((u) => u.id === uid);
-        if (!u) throw new Error("Could not find user data for : " + uid);
         return u;
       } catch (e) {
         console.warn(`${e}`);

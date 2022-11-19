@@ -108,6 +108,7 @@ class ChatController {
             worked on the first try (webrtc-chat-js). I gave up after trying for 3 days and I don't care
             anymore because it doesn't make sense and I can't fix it */
             let message;
+            let gotFile = false;
             try {
                 message = yield Chat_dao_1.default.getPrivateMessage(req.params.msgId);
             }
@@ -121,6 +122,7 @@ class ChatController {
             req.pipe(bb);
             bb.on("file", (name, stream, info) => __awaiter(this, void 0, void 0, function* () {
                 let successData = { key: "", type: "" };
+                gotFile = true;
                 try {
                     successData = yield Chat_dao_1.default.uploadConversationAttachment(stream, info, message, Number(req.params.bytes));
                 }
@@ -142,6 +144,12 @@ class ChatController {
                     req.unpipe(bb);
                     res.status(500).json({ msg: "Internal error" });
                 });
+            }));
+            bb.on("finish", () => __awaiter(this, void 0, void 0, function* () {
+                if (!gotFile) {
+                    yield Chat_dao_1.default.conversationAttachmentError(message.senderId, message.recipientId, message.id);
+                    res.status(400).json({ msg: "No file!" });
+                }
             }));
             bb.on("error", (e) => __awaiter(this, void 0, void 0, function* () {
                 yield Chat_dao_1.default.conversationAttachmentError(message.senderId, message.recipientId, message.id)
@@ -244,6 +252,7 @@ class ChatController {
             worked on the first try (webrtc-chat-js). I gave up after trying for 3 days and I don't care
             anymore because it doesn't make sense and I can't fix it */
             let message;
+            let gotFile = false;
             try {
                 message = yield Chat_dao_1.default.getRoomMessage(req.params.msgId);
             }
@@ -257,6 +266,7 @@ class ChatController {
             req.pipe(bb);
             bb.on("file", (name, stream, info) => __awaiter(this, void 0, void 0, function* () {
                 let successData = { key: "", type: "" };
+                gotFile = true;
                 try {
                     successData = yield Chat_dao_1.default.uploadRoomAttachment(stream, info, message, Number(req.params.bytes));
                 }
@@ -278,6 +288,12 @@ class ChatController {
                     req.unpipe(bb);
                     res.status(500).json({ msg: "Internal error" });
                 });
+            }));
+            bb.on("finish", () => __awaiter(this, void 0, void 0, function* () {
+                if (!gotFile) {
+                    yield Chat_dao_1.default.roomAttachmentError(message.roomId, message.id);
+                    res.status(400).json({ msg: "No file!" });
+                }
             }));
             bb.on("error", (e) => __awaiter(this, void 0, void 0, function* () {
                 yield Chat_dao_1.default.roomAttachmentError(message.roomId, message.id)

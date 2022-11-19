@@ -14,12 +14,13 @@ import { useSocket } from "../../../context/SocketContext";
 import { useAuth } from "../../../context/AuthContext";
 import { MdError } from "react-icons/md";
 import { useMessenger } from "../../../context/MessengerContext";
+import { ImSpinner8 } from "react-icons/im";
 
 export interface IMessage {
   id: string;
   message: string;
   senderId: string;
-  recipientId?: string; //recipientId doesn't actually exist for messages retrieved from getConversations, but this needs to be in the interface so that messages from other users can be filtered out because the event will still receive messages from other users
+  recipientId?: string; //recipientId doesn't actually exist for messages retrieved from getConversations (it might though now I'm not sure)
   hasAttachment: boolean;
   attachmentType?: string;
   attachmentKey?: string;
@@ -48,7 +49,7 @@ export default function ConversationSection({
     "private_message",
     (a: IMessage, b: IMessage) => {
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    },
+    }
   );
 
   const { socket } = useSocket();
@@ -67,14 +68,16 @@ export default function ConversationSection({
       file ? true : false
     );
   };
-  const file = useRef<File>();
+  const [file, setFile] = useState<File>();
+  const fileRef = useRef<File>()
   const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log(e.target.files)
     if (e.target.files?.length === 0) return;
-    //@ts-ignore
-    const f = Array.from(e.target.files!)[0];
+    const f = e.target?.files![0];
+    console.log(`F : ` + f)
     if (!f) return;
-    //@ts-ignore
-    file.current = f;
+    setFile(f);
+    fileRef.current = f
   };
 
   useEffect(() => {
@@ -118,23 +121,13 @@ export default function ConversationSection({
     };
   }, [socket]);
 
-  const handleUploadConversationAttachment = useCallback(
-    async (id: string) => {
-      try {
-        //setResMsg({ msg: "", err: false, pen: true });
-        if (!file.current) throw new Error("No file selected");
-        await uploadPrivateMessageAttachment(
-          id,
-          file.current.size,
-          file.current
-        );
-        //setResMsg({ msg: "", err: false, pen: false });
-      } catch (e) {
-        //setResMsg({ msg: `${e}`, err: true, pen: false });
-      }
-    },
-    [file]
-  );
+  const handleUploadConversationAttachment = useCallback(async (id: string) => {
+    console.log("Upload attachment for : " + id + " | File : " + fileRef.current);
+    try {
+      if (!fileRef.current) throw new Error("No file selected");
+      await uploadPrivateMessageAttachment(id, fileRef.current.size, fileRef.current).then(() => setFile(undefined));
+    } catch (e) {}
+  }, [file]);
 
   const handleConversationDeleted = useCallback((sender: string) => {
     if (conversationWith === sender) {
@@ -178,39 +171,45 @@ export default function ConversationSection({
 
   const handleMessageAttachmentProgress = useCallback(
     (progress: number, messageId: string) => {
+      console.log("PROGRESS : " + progress + " | MSGID : " + messageId)
       setMessages((p) => {
         let newMsgs = p;
         const i = newMsgs.findIndex((msg) => msg.id === messageId);
         newMsgs[i] = {
           ...newMsgs[i],
-          attachmentProgress: Math.max(5, progress),
+          attachmentProgress: Math.max(0.05, progress),
         };
         return [...newMsgs];
       });
     },
-    []
+    [messages]
   );
 
   return (
-    <div className="w-full h-full flex flex-col items-between justify-between">
-      <div className="relative overflow-y-scroll grow">
-        {messages.map((msg) => (
-          <Message
-            {...msg}
-            key={msg.id}
-            otherUser={msg.senderId !== user?.id}
-          />
-        ))}
-        <span ref={messagesBottomRef} className="w-full"/>
-      </div>
-      {/*resMsg.err && (
-        <span className="bg-rose-600 text-white flex items-center p-1">
-          <MdError className="text-3xl" />
-          {resMsg.err}
-        </span>
-      )*/}
+    <div style={{maxHeight:"50vh"}} className="w-full h-full flex flex-col items-between justify-between">
+      {status === "success" && (
+        <div className="relative overflow-y-scroll flex flex-col gap-2 grow">
+          {messages.map((msg) => (
+            <Message
+              {...msg}
+              key={msg.id}
+              otherUser={msg.senderId !== user?.id}
+            />
+          ))}
+          <span ref={messagesBottomRef} className="w-full" />
+        </div>
+      )}
+      {status === "pending" && (
+        <ImSpinner8 className="mx-auto my-auto animate-spin text-2xl" />
+      )}
+      {status === "error" && (
+        <div className="flex flex-col gap-2 text-rose-600 gap-2 text-center">
+          <MdError />
+          {error}
+        </div>
+      )}
       <MessageForm
-        file={file.current}
+        file={file}
         handleFileInput={handleFileInput}
         handleMessageInput={handleMessageInput}
         handleMessageSubmit={handleMessageSubmit}

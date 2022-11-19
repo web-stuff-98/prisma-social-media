@@ -35,9 +35,9 @@ const parsePost = (post, uid) => __awaiter(void 0, void 0, void 0, function* () 
     });
     return Object.assign(Object.assign({}, post), { tags: post.tags.map((tag) => tag.name), likedByMe: post.likes.find((like) => like.userId === uid)
             ? true
-            : false, sharedByMe: post.shares.find((share) => share.userId === uid)
+            : false, likes: post.likes.length, sharedByMe: post.shares.find((share) => share.userId === uid)
             ? true
-            : false, comments: post.comments.map((cmt) => {
+            : false, shares: post.shares.length, comments: post.comments.map((cmt) => {
             const { _count } = cmt, commentFields = __rest(cmt, ["_count"]);
             return Object.assign(Object.assign({}, commentFields), { likedByMe: usersCommentLikes.length > 0
                     ? usersCommentLikes.find((like) => like.commentId === cmt.id)
@@ -46,6 +46,37 @@ const parsePost = (post, uid) => __awaiter(void 0, void 0, void 0, function* () 
 });
 class PostsDAO {
     static getPosts(uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const posts = yield prisma_1.default.post.findMany({
+                select: {
+                    id: true,
+                    slug: true,
+                    title: true,
+                    createdAt: true,
+                    description: true,
+                    author: {
+                        select: {
+                            id: true,
+                        },
+                    },
+                    likes: true,
+                    shares: true,
+                    tags: true,
+                },
+            });
+            return posts.map((post) => {
+                let likedByMe = false;
+                let sharedByMe = false;
+                likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
+                sharedByMe = post.shares.find((share) => share.userId === uid)
+                    ? true
+                    : false;
+                return Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
+                    sharedByMe });
+            });
+        });
+    }
+    static getPopularPosts(uid) {
         return __awaiter(this, void 0, void 0, function* () {
             const posts = yield prisma_1.default.post.findMany({
                 select: {
@@ -96,13 +127,11 @@ class PostsDAO {
                                     id: true,
                                 },
                             },
-                            _count: { select: { likes: true } },
                         },
                     },
                     author: {
                         select: {
                             id: true,
-                            name: true,
                         },
                     },
                     tags: true,
@@ -134,13 +163,11 @@ class PostsDAO {
                                     id: true,
                                 },
                             },
-                            _count: { select: { likes: true } },
                         },
                     },
                     author: {
                         select: {
                             id: true,
-                            name: true,
                         },
                     },
                     tags: true,

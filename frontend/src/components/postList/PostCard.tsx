@@ -19,12 +19,19 @@ export default function PostCard({
   const handleShareIconClicked = () => handleToggleShare(post.id);
 
   return (
-    <article className="bg-white pointer text-center rounded-sm shadow-md border">
-      <h3 className="text-2xl font-bold">{post.title}</h3>
-      <p className="mb-1">{post.description}</p>
-      <div aria-label="Tags" className="flex gap-2 w-full wrap items-center justify-center my-2">
+    <article
+      className="bg-foreground border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-6"
+    >
+      <h3 className="text-2xl font-bold leading-5">{post.title}</h3>
+      <p className="mb-1 leading-4 tracking-tight">
+        {post.description}
+      </p>
+      <div
+        aria-label="Tags"
+        className="flex gap-2 w-full wrap items-center justify-center my-1 mb-4"
+      >
         {post.tags.map((tag) => (
-          <span className="bg-stone-800 cursor-pointer shadow-md border border-black border-black text-white rounded-sm uppercase font-bold text-xs px-2 py-0.5">
+          <span key={tag} className="bg-zinc-700 cursor-pointer shadow-md border border-black dark:border-zinc-600 text-white rounded uppercase font-bold text-xs px-1.5 py-0.5">
             {tag}
           </span>
         ))}
@@ -33,7 +40,9 @@ export default function PostCard({
         <User
           likeShareIcons
           liked={post.likedByMe}
+          likes={post.likes}
           shared={post.sharedByMe}
+          shares={post.shares}
           date={new Date(String(post.createdAt))}
           onLikeClick={handleLikeIconClicked}
           onShareClick={handleShareIconClicked}
@@ -44,7 +53,7 @@ export default function PostCard({
       </span>
       <span
         onClick={() => navigate(`/posts/${post.slug}`)}
-        className="italic text-xs py-2 cursor-pointer"
+        className="italic text-xs cursor-pointer"
       >
         Read more...
       </span>

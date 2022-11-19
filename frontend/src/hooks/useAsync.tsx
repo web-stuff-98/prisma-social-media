@@ -25,9 +25,6 @@ const useAsync = (asyncFunction: Function, immediate = true) => {
       });
   }, [asyncFunction]);
 
-  // Call execute if we want to fire it right away.
-  // Otherwise execute can be called later, such as
-  // in an onClick handler.
   useEffect(() => {
     if (immediate) {
       execute();

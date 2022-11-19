@@ -300,14 +300,16 @@ export default class MessengerDAO {
         }
       ).on("httpUploadProgress", (e: AWS.S3.ManagedUpload.Progress) => {
         p++;
-        //only send progress updates every 3rd event, otherwise it's probably too many emits
-        if (p === 3) {
+        //only send progress updates every 2nd event, otherwise it's probably too many emits
+        if (p === 2) {
           p = 0;
+          console.log("PROGRESS EMIT TO " + message.recipientId)
           io.to(`inbox=${message.recipientId}`).emit(
             "private_message_attachment_progress",
             e.loaded / bytes,
             message.id
           );
+          console.log("PROGRESS EMIT TO " + message.senderId)
           io.to(`inbox=${message.senderId}`).emit(
             "private_message_attachment_progress",
             e.loaded / bytes,
@@ -488,8 +490,8 @@ export default class MessengerDAO {
         }
       ).on("httpUploadProgress", (e: AWS.S3.ManagedUpload.Progress) => {
         p++;
-        //only send progress updates every 3rd event, otherwise it's probably too many emits
-        if (p === 3) {
+        //only send progress updates every 2nd event, otherwise it's probably too many emits
+        if (p === 2) {
           p = 0;
           io.to(`room=${message.roomId}`).emit(
             "room_message_attachment_progress",

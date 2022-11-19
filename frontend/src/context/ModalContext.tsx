@@ -35,8 +35,8 @@ const ModalContext = createContext<{
  *  pen = something is pending / loading
  *  err = message is an error
  *  msg = message content
- *  confirmationCallback = the function that you want invoked after the user confirms the confirmation message
- *  cancellationCallback = the function that you want invoked after the user cancels the confirmation message
+ *  confirmationCallback = the asynchronous promise invoked after confirmation
+ *  cancellationCallback = your cancellation function
  *
  * "Message" modal type have an error, a loading spinner
  * or just a message on its own.
@@ -95,9 +95,9 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                       </button>
                       <button
                         aria-label="Confirm"
-                        onClick={() => {
+                        onClick={async () => {
                           if (modalData.confirmationCallback)
-                            modalData.confirmationCallback();
+                            return await modalData.confirmationCallback;
                           closeModal();
                         }}
                       >

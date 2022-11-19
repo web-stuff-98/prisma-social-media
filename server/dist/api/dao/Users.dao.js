@@ -36,12 +36,7 @@ class UsersDAO {
                 select: { id: true, name: true, pfp: { select: { base64: true } } },
             });
             const out = user
-                ? {
-                    id: user.id,
-                    name: user.name,
-                    pfp: (_a = user.pfp) === null || _a === void 0 ? void 0 : _a.base64,
-                }
-                : undefined;
+                ? Object.assign({ id: user.id, name: user.name }, (((_a = user.pfp) === null || _a === void 0 ? void 0 : _a.base64) ? { pfp: user.pfp.base64 } : {})) : undefined;
             return out;
         });
     }
@@ -62,12 +57,7 @@ class UsersDAO {
                 },
             });
             const out = findQ[0]
-                ? {
-                    id: findQ[0].id,
-                    name: findQ[0].name,
-                    pfp: (_a = findQ[0].pfp) === null || _a === void 0 ? void 0 : _a.base64,
-                }
-                : undefined;
+                ? Object.assign({ id: findQ[0].id, name: findQ[0].name }, (((_a = findQ[0].pfp) === null || _a === void 0 ? void 0 : _a.base64) ? { pfp: findQ[0].pfp.base64 } : {})) : undefined;
             return out || undefined;
         });
     }

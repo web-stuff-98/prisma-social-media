@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500&display=swap');
+
 @layer base {
     h1 {
       @apply text-2xl;
@@ -13,21 +15,26 @@
     input, textarea {
         @apply bg-transparent;
         @apply border;
+        @apply dark:border-zinc-800;
         @apply px-1;
         @apply text-xs;
         @apply rounded;
         @apply py-1;
+        @apply dark:text-white;
     }
 
     input:focus, textarea:focus {
         @apply outline-none;
         @apply border-black;
+        @apply dark:border-white;
     }
 
     button {
         @apply px-3;
         @apply rounded;
         @apply bg-rose-500;
+        @apply dark:text-white; 
+        @apply font-bold;
     }
 
     p {

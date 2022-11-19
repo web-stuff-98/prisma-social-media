@@ -128,7 +128,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
               onClickOutside={() => setIsEditing(false)}
             />
           ) : (
-            <p className="flex my-auto leading-4 p-0 grow items-center">
+            <p className="flex my-auto leading-4 tracking-tight text-xs p-0 grow items-center">
               {message}
             </p>
           )}

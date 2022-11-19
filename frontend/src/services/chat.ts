@@ -90,7 +90,7 @@ const updatePrivateMessage = (messageId: string, message: string) =>
       message,
     },
   });
-const uploadPrivateMessageAttachment = (
+const uploadPrivateMessageAttachment = async (
   msgId: string,
   bytes: number,
   file: File

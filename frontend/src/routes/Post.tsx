@@ -15,7 +15,7 @@ export default function Post() {
     handleShareClicked,
   } = usePost();
 
-  const { getUserData } = useUsers()
+  const { getUserData } = useUsers();
 
   const postComment = (message: string) =>
     createComment({ postId: String(post?.id), message }).then(
@@ -24,12 +24,12 @@ export default function Post() {
 
   return (
     <>
-      <h1 className="text-4xl my-4 text-left font-bold">{post?.title}</h1>
-      <div className="flex border-b items-center py-2 my-2">
+      <h1 className="text-4xl mt-4 text-center font-bold">{post?.title}</h1>
+      <div className="flex dark:border-zinc-800 items-center pb-2 my-2">
         <p className="text-lg leading-5 mr-4">{post?.description}</p>
         <div className="my-2 w-fit">
           <User
-          uid={String(post?.author.id)}
+            uid={String(post?.author.id)}
             likeShareIcons
             liked={post?.likedByMe}
             shared={post?.sharedByMe}
@@ -42,7 +42,25 @@ export default function Post() {
           />
         </div>
       </div>
-      <div className="prose prose-sm max-w-none">
+      <div
+        className="prose prose-sm
+                  dark:prose-headings:text-white
+                  dark:prose-headings:font-bold
+                  dark:prose-lead:text-white
+                  dark:prose-p:text-white
+                  dark:prose-blockquote:text-white
+                  dark:prose-li:text-white
+                  dark:prose-strong:text-white
+                  dark:prose-figure:text-white
+                  dark:prose-figcaption:text-white
+                  dark:prose-table:text-white
+                  dark:prose-tr:text-white
+                  dark:prose-th:text-white
+                  dark:prose-td:text-white
+                  prose-a:text-indigo-500
+                  prose-a:font-bold
+      max-w-none"
+      >
         <ReactMarkdown>{String(post?.body)}</ReactMarkdown>
       </div>
       <section className="w-full mt-6">

@@ -2,12 +2,17 @@ import User from "../components/User";
 import { useAuth } from "../context/AuthContext";
 import useUsers from "../context/UsersContext";
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { updateUser } from "../services/users";
+
+import { RiSettings4Fill } from "react-icons/ri";
+import { useModal } from "../context/ModalContext";
 
 export default function Settings() {
   const { user } = useAuth();
   const { getUserData, cacheUserData } = useUsers();
+  const { setData: setModalData } = useModal();
 
   const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: false });
 
@@ -37,8 +42,11 @@ export default function Settings() {
 
   const hiddenPfpInput = useRef<HTMLInputElement>(null);
   return (
-    <>
-      <h1 className="text-center mt-6 py-2">Settings</h1>
+    <div className="w-full flex flex-col">
+      <div className="flex mt-6 gap-2 items-center justify-center text-center">
+        <RiSettings4Fill className="text-3xl" />
+        <h1 className="text-center py-2 font-extrabold">Settings</h1>
+      </div>
       <input
         type="file"
         className="hidden"
@@ -47,14 +55,17 @@ export default function Settings() {
       />
       {user && (
         <User
-        pfpCursor={true}
+          pfpCursor={true}
           overridePfpOnClick={() => hiddenPfpInput.current?.click()}
           overridePfpBase64={base64}
           uid={String(user?.id)}
           user={getUserData(String(user?.id))}
         />
       )}
-      <p className="text-center">Click on your profile picture to update it</p>
-    </>
+      <p className="text-center">
+        Click on your profile picture to select a new one, then press confirm to
+        update it.
+      </p>
+    </div>
   );
 }

@@ -47,13 +47,13 @@ export default function SearchUsers() {
       </div>
       <form
         onSubmit={handleSearchSubmit}
-        className="w-full h-10 border-t flex items-center justify-between"
+        className="w-full h-10 border-t dark:border-zinc-800 flex items-center justify-between"
       >
         <input
           id="Search input"
           name="Search input"
           value={searchInput}
-          className="grow mx-1 rounded-sm border px-1"
+          className="grow mx-1 rounded-sm border dark:border-zinc-800 px-1"
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setSearchInput(e.target.value)
           }

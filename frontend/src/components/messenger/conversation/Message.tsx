@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import type { ChangeEvent } from "react";
 import { RiDeleteBin4Fill, RiEditBoxFill } from "react-icons/ri";
-import { MdScheduleSend } from "react-icons/md";
+import { MdError, MdScheduleSend } from "react-icons/md";
 import ReactPlayer from "react-player";
-import { useSocket } from "../../../context/SocketContext";
 import useUsers from "../../../context/UsersContext";
 import User from "../../User";
 import ProgressBar from "../../ProgressBar";
@@ -30,6 +29,7 @@ export default function Message({
   attachmentKey,
   attachmentError,
   attachmentProgress,
+  attachmentPending,
   createdAt,
   updatedAt,
 }: {
@@ -38,6 +38,7 @@ export default function Message({
   attachmentKey?: string;
   attachmentError?: boolean;
   attachmentProgress?: number;
+  attachmentPending?: boolean;
   hasAttachment: boolean;
   message: string;
   id: string;
@@ -46,7 +47,6 @@ export default function Message({
   updatedAt: Date;
 }) {
   const { getUserData } = useUsers();
-  const { socket } = useSocket();
 
   const [isEditing, setIsEditing] = useState(false);
   const [cursorInsideInput, setCursorInsideInput] = useState(false);
@@ -64,16 +64,27 @@ export default function Message({
     };
   }, [cursorInsideInput]);
 
+  const updateMessage = () => {
+    if (messageEditInput !== message)
+      updatePrivateMessage(id, messageEditInput);
+    setIsEditing(false);
+  };
+
   return (
     <div
       aria-label={otherUser ? "Other users message" : "Your message"}
-      className={`p-0.5 mb-4 flex ${
+      className={`p-0.5 flex ${
         otherUser ? "flex-row-reverse text-right" : ""
       } items-start`}
     >
       {/* username, pfp & date */}
       <div className="p-1">
-        <User reverse={otherUser} uid={senderId} user={getUserData(senderId)} />
+        <User
+          reverse={otherUser}
+          date={new Date(createdAt)}
+          uid={senderId}
+          user={getUserData(senderId)}
+        />
       </div>
       {/* message content & attachment */}
       <div className="gap-1 grow flex flex-col my-auto px-1">
@@ -94,11 +105,7 @@ export default function Message({
             <button
               className="px-0 pl-2 bg-transparent"
               aria-label="Update message"
-              onClick={() => {
-                updatePrivateMessage(id, messageEditInput);
-                /*socket?.emit("private_message_update", id, messageEditInput);*/
-                setIsEditing(false);
-              }}
+              onClick={() => updateMessage()}
             >
               <MdScheduleSend className="text-lg drop-shadow" />
             </button>
@@ -123,12 +130,18 @@ export default function Message({
           </div>
         )}
         {typeof attachmentProgress === "number" &&
-          !hasAttachment &&
+          attachmentPending &&
           !attachmentError && (
             <div className="px-1">
               <ProgressBar percent={attachmentProgress * 100} />
             </div>
           )}
+        {attachmentError && (
+          <div style={{filter:"opacity(0.333)"}} className={`text-rose-600 font-bold tracking-tight text-xs flex ${otherUser ? "flex-row-reverse justify-end" : "justify-start"} items-center gap-0.5`}>
+            <MdError className="text-2xl" />
+            Error uploading attachment
+          </div>
+        )}
         {hasAttachment && attachmentType === "File" && (
           <a
             aria-label="Download attachment"
@@ -138,7 +151,7 @@ export default function Message({
               otherUser ? "pr-1" : "pl-1"
             } bg-transparent flex ${
               otherUser ? "flex-row-reverse" : ""
-            } text-xs items-center gap-1 text-gray-400 hover:text-black`}
+            } text-xs items-center gap-1 text-gray-400 hover:text-black dark:hover:text-white`}
           >
             <ImDownload3 className="text-lg" /> download attachment
           </a>

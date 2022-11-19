@@ -12,6 +12,7 @@ import UsersChatrooms from "../components/messenger/usersChatrooms/UsersChatroom
 import { getRooms } from "../services/chat";
 import { useSocket } from "./SocketContext";
 import useScrollbarSize from "react-scrollbar-size";
+import Rooms from "../components/messenger/rooms/Rooms";
 
 export type MessengerSection =
   | "Menu"
@@ -90,9 +91,11 @@ export const MessengerProvider = ({ children }: { children: ReactNode }) => {
           right: `calc(${scrollBarWidth}px + 0.125rem)`,
           bottom: `calc(${scrollBarWidth}px + 0.125rem)`,
         }}
-        className={`mx-auto relative ${
-          messengerOpen ? "bg-white border" : "bg-transparent"
-        } rounded p-3 shadow-xl`}
+        className={`mx-auto font-rubik dark:text-white relative ${
+          messengerOpen
+            ? "bg-foreground dark:bg-darkmodeForeground border dark:border-zinc-800"
+            : "bg-transparent"
+        } rounded p-3 ${messengerOpen ? "shadow-xl" : ""}`}
       >
         {/* close messenger icon tray / open messenger icon */}
         {messengerOpen ? (
@@ -101,7 +104,7 @@ export const MessengerProvider = ({ children }: { children: ReactNode }) => {
           <button className="px-0 bg-transparent" aria-label="Open messenger">
             <BsFillChatRightFill
               onClick={() => openMessenger()}
-              className="text-3xl cursor-pointer text-black drop-shadow"
+              className="text-3xl cursor-pointer text-black dark:text-white drop-shadow"
             />
           </button>
         )}
@@ -119,6 +122,8 @@ export const MessengerProvider = ({ children }: { children: ReactNode }) => {
             )}
             {/* Conversations */}
             {messengerSection === "Conversations" && <ConversationsSection />}
+            {/* Find & create rooms */}
+            {messengerSection === "Chatrooms" && <Rooms />}
           </>
         )}
         {/*<VideoChatWindow />*/}
@@ -155,14 +160,14 @@ const messengerModalStyle: CSSProperties = {
 
 const messengerOpenStyle: CSSProperties = {
   width: "min(22.5pc, calc(100vw - 1rem))",
-  height: "min(30pc, calc(100vh - 1rem))",
+  height: "min(fit-content, 30pc, calc(100vh - 1rem - 70rem))",
   padding: "0",
   paddingTop: "1.5rem",
 };
 
 const messengerClosedStyle: CSSProperties = {
-  width: "fit-content",
-  height: "fit-content",
+  width: "min(22.5pc, fit-content)",
+  height: "min(30pc, fit-content)",
   bottom: "0",
   right: "0",
 };

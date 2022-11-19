@@ -21,13 +21,13 @@ export function IconBtn({
       onClick={() => {
         if (onClick) onClick();
       }}
-      className={`flex px-0 bg-transparent items-center ${
+      className={`flex px-0 bg-transparent relative items-center ${
         isActive ? "icon-btn-active" : ""
       } ${color || ""}`}
       {...props}
     >
       <span className={`${children != null ? "mr-0.5" : ""}`}>
-        <Icon />
+        <Icon className={color?.includes("text") ? color : ""}/>
       </span>
       {children}
     </button>

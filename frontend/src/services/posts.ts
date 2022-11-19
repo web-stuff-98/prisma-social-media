@@ -2,6 +2,7 @@ import { IPost } from "../context/PostContext";
 import { makeRequest } from "./makeRequest";
 
 const getPosts = () => makeRequest("/api/posts", { withCredentials: true });
+const getPopularPosts = () => makeRequest("/api/posts/popular", { withCredentials: true });
 const getPost = (slug: string) =>
   makeRequest(`/api/posts/${slug}`, { withCredentials: true });
 const createPost = (data: IPost) =>
@@ -23,4 +24,4 @@ const toggleShare = (id: string) =>
     withCredentials: true,
   });
 
-export { getPost, getPosts, toggleLike, toggleShare, createPost, updatePost };
+export { getPost, getPosts, getPopularPosts, toggleLike, toggleShare, createPost, updatePost };

@@ -60,7 +60,7 @@ export default function Editor() {
     <>
       {!resMsg.pen ? (
           <form onSubmit={formik.handleSubmit} className="w-full flex flex-col gap-2 mt-2">
-            <label className="mx-auto text-2xl" htmlFor="title">
+            <label className="mx-auto text-md" htmlFor="title">
               Title
             </label>
             <input
@@ -71,7 +71,7 @@ export default function Editor() {
               onChange={formik.handleChange}
               value={formik.values.title}
             />
-            <label className="mx-auto text-2xl" htmlFor="description">
+            <label className="mx-auto text-md" htmlFor="description">
               Description
             </label>
             <input
@@ -82,7 +82,7 @@ export default function Editor() {
               onChange={formik.handleChange}
               value={formik.values.description}
             />
-            <label className="mx-auto text-2xl" htmlFor="tags">
+            <label className="mx-auto text-md" htmlFor="tags">
               Tags
             </label>
             <input
@@ -92,7 +92,7 @@ export default function Editor() {
               onChange={formik.handleChange}
               value={formik.values.tags}
             />
-            <label className="mx-auto text-2xl" htmlFor="body">
+            <label className="mx-auto text-md" htmlFor="body">
               Body
             </label>
             <textarea

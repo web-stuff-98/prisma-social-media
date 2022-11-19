@@ -23,6 +23,15 @@ export default class PostsController {
     }
   }
 
+  static async getPopularPosts(req:Req, res:Res) {
+    try {
+      const posts = await PostsDAO.getPopularPosts(req.user?.id);
+      res.status(200).json(posts);
+    } catch (e) {
+      res.status(500).json({ msg: "Internal error" });
+    }
+  }
+
   static async getPostById(req: Req, res: Res) {
     try {
       const post = await PostsDAO.getPostById(req.params.id, req.user?.id);

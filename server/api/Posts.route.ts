@@ -4,6 +4,7 @@ import PostsController from "./controllers/Posts.controller";
 const router = express.Router();
 
 router.route("/").get(withUser, PostsController.getPosts);
+router.route("/popular").get(withUser, PostsController.getPopularPosts);
 router.route("/").post(authMiddleware, PostsController.createPost);
 router.route("/:slug").put(authMiddleware, PostsController.updatePost);
 router.route("/:slug").get(withUser, PostsController.getPostBySlug);

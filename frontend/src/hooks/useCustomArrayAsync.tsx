@@ -73,7 +73,7 @@ const useCustomArrayAsync = (
     );
   }, []);
   const handleItemUpdated = useCallback((id: string, data: any) => {
-    console.log("Item updated")
+    console.log("Item updated : " + JSON.stringify(data))
     setValue((p) => {
       let newVal = p;
       const i = p.findIndex((item) => item.id === id);
@@ -84,7 +84,7 @@ const useCustomArrayAsync = (
         ),
       ];
     });
-  }, []);
+  }, [value]);
   const handleItemDeleted = useCallback((id: string) => {
     setValue((p) => [
       ...(sortFunction

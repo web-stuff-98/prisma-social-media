@@ -23,7 +23,7 @@ export default class UsersDAO {
       ? {
           id: user.id,
           name: user.name,
-          pfp: user.pfp?.base64,
+          ...(user.pfp?.base64 ? { pfp: user.pfp.base64 } : {}),
         }
       : undefined;
     return out;
@@ -47,7 +47,7 @@ export default class UsersDAO {
       ? {
           id: findQ[0].id,
           name: findQ[0].name,
-          pfp: findQ[0].pfp?.base64,
+          ...(findQ[0].pfp?.base64 ? { pfp: findQ[0].pfp.base64 } : {}),
         }
       : undefined;
     return out || undefined;

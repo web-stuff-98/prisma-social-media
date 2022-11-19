@@ -43,7 +43,7 @@ export default class ChatController {
   }
   static async deletePrivateMessage(req: Req, res: Res) {
     try {
-      console.log("DELETE MESSAGE CONTROLLER")
+      console.log("DELETE MESSAGE CONTROLLER");
       await ChatDAO.deletePrivateMessage(
         req.body.messageId,
         String(req.user?.id)
@@ -87,6 +87,7 @@ export default class ChatController {
     worked on the first try (webrtc-chat-js). I gave up after trying for 3 days and I don't care
     anymore because it doesn't make sense and I can't fix it */
     let message: PrivateMessage;
+    let gotFile = false;
     try {
       message = await ChatDAO.getPrivateMessage(req.params.msgId);
     } catch (e) {
@@ -99,6 +100,7 @@ export default class ChatController {
     req.pipe(bb);
     bb.on("file", async (name, stream, info) => {
       let successData = { key: "", type: "" };
+      gotFile = true;
       try {
         successData = await ChatDAO.uploadConversationAttachment(
           stream,
@@ -136,6 +138,16 @@ export default class ChatController {
           req.unpipe(bb);
           res.status(500).json({ msg: "Internal error" });
         });
+    });
+    bb.on("finish", async () => {
+      if (!gotFile) {
+        await ChatDAO.conversationAttachmentError(
+          message.senderId,
+          message.recipientId,
+          message.id
+        );
+        res.status(400).json({ msg: "No file!" });
+      }
     });
     bb.on("error", async (e: unknown) => {
       await ChatDAO.conversationAttachmentError(
@@ -224,6 +236,7 @@ export default class ChatController {
     worked on the first try (webrtc-chat-js). I gave up after trying for 3 days and I don't care
     anymore because it doesn't make sense and I can't fix it */
     let message: RoomMessage;
+    let gotFile = false;
     try {
       message = await ChatDAO.getRoomMessage(req.params.msgId);
     } catch (e) {
@@ -236,6 +249,7 @@ export default class ChatController {
     req.pipe(bb);
     bb.on("file", async (name, stream, info) => {
       let successData = { key: "", type: "" };
+      gotFile = true;
       try {
         successData = await ChatDAO.uploadRoomAttachment(
           stream,
@@ -268,6 +282,15 @@ export default class ChatController {
           req.unpipe(bb);
           res.status(500).json({ msg: "Internal error" });
         });
+    });
+    bb.on("finish", async () => {
+      if (!gotFile) {
+        await ChatDAO.roomAttachmentError(
+          message.roomId,
+          message.id
+        );
+        res.status(400).json({ msg: "No file!" });
+      }
     });
     bb.on("error", async (e: unknown) => {
       await ChatDAO.roomAttachmentError(message.roomId, message.id)
