@@ -175,7 +175,7 @@ class ChatController {
                 res.status(200).json(users).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -186,7 +186,7 @@ class ChatController {
                 res.status(200).json(messages).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -208,13 +208,14 @@ class ChatController {
                 res.status(201).json(room);
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
     static updateRoom(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            //This DAO function is not finished.
             try {
                 if (req.body.name) {
                     const foundRoom = yield Chat_dao_1.default.getRoomByName(req.body.name);
@@ -229,7 +230,7 @@ class ChatController {
                 }
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -241,7 +242,55 @@ class ChatController {
                 res.status(200).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static joinRoom(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.joinRoom(req.params.roomId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static leaveRoom(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.leaveRoom(req.params.roomId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static banUser(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.banUser(req.params.roomId, req.params.banUid, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static kickUser(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.kickUser(req.params.roomId, req.params.kickUid, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }

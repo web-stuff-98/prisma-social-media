@@ -133,6 +133,8 @@ model Room {
 
   createdAt DateTime      @default(now())
   messages  RoomMessage[]
+
+  public Boolean @default(true)
 }
 
 model RoomMessage {

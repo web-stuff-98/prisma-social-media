@@ -413,6 +413,7 @@ class MessengerDAO {
                 throw new Error("You already have a room by that name");
             const usersRooms = yield prisma_1.default.room.findMany({
                 where: { authorId },
+                select: { _count: true },
             });
             if (usersRooms.length > 8)
                 throw new Error("Max 8 rooms");
@@ -420,12 +421,118 @@ class MessengerDAO {
                 data: {
                     authorId,
                     name,
+                    members: { connect: { id: authorId } },
                 },
                 select: {
                     id: true,
                     name: true,
                     createdAt: true,
                 },
+            });
+        });
+    }
+    static joinRoom(roomId, uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let room;
+            room = yield prisma_1.default.room
+                .findUniqueOrThrow({
+                where: { id: roomId },
+                include: {
+                    banned: { select: { id: true } },
+                    members: { select: { id: true } },
+                },
+            })
+                .catch((e) => {
+                throw new Error("Room does not exist");
+            });
+            if (!room.public)
+                throw new Error("You need an invitation to join this room");
+            if (room.banned.includes({ id: uid }))
+                throw new Error("You are banned from this room");
+            yield prisma_1.default.room.update({
+                where: { id: roomId },
+                data: { members: { connect: { id: uid } } },
+            });
+        });
+    }
+    static banUser(roomId, bannedUid, bannerUid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let room;
+            room = yield prisma_1.default.room
+                .findUniqueOrThrow({
+                where: { id: roomId },
+                include: {
+                    banned: { select: { id: true } },
+                    members: { select: { id: true } },
+                },
+            })
+                .catch((e) => {
+                throw new Error("Room does not exist");
+            });
+            if (room.authorId !== bannerUid)
+                throw new Error("Only the rooms owner can ban other users");
+            if (room.banned.includes({ id: bannedUid }))
+                throw new Error("You have already banned this user");
+            yield prisma_1.default.room.update({
+                where: { id: roomId },
+                data: {
+                    banned: { connect: { id: bannedUid } },
+                    members: { disconnect: { id: bannedUid } },
+                },
+            });
+        });
+    }
+    static kickUser(roomId, kickedUid, kickerUid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let room;
+            room = yield prisma_1.default.room
+                .findUniqueOrThrow({
+                where: { id: roomId },
+                include: {
+                    banned: { select: { id: true } },
+                    members: { select: { id: true } },
+                },
+            })
+                .catch((e) => {
+                throw new Error("Room does not exist");
+            });
+            if (room.authorId !== kickerUid)
+                throw new Error("Only the rooms owner can kick other users");
+            if (!room.members.includes({ id: kickedUid }))
+                throw new Error("The user you want to kick isn't joined to the room");
+            if (room.banned.includes({ id: kickedUid }))
+                throw new Error("That user is already banned from the room");
+            yield prisma_1.default.room.update({
+                where: { id: roomId },
+                data: {
+                    members: { disconnect: { id: kickedUid } },
+                },
+            });
+        });
+    }
+    static leaveRoom(roomId, uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let room;
+            room = yield prisma_1.default.room
+                .findUniqueOrThrow({
+                where: { id: roomId },
+                include: {
+                    banned: { select: { id: true } },
+                    members: { select: { id: true } },
+                },
+            })
+                .catch((e) => {
+                throw new Error("Room does not exist");
+            });
+            if (room.authorId === uid)
+                throw new Error("You cannot leave a room that you own");
+            if (!room.members.includes({ id: uid }))
+                throw new Error("You cannot leave a room that you aren't already in");
+            if (room.banned.includes({ id: uid }))
+                throw new Error("You cannot leave a room which you are already banned from");
+            yield prisma_1.default.room.update({
+                where: { id: roomId },
+                data: { members: { disconnect: { id: uid } } },
             });
         });
     }

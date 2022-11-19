@@ -7,7 +7,7 @@ import mime from "mime-types";
 
 import AWS from "../../utils/aws";
 import { io } from "../..";
-import { PrivateMessage, Room, RoomMessage } from "@prisma/client";
+import { PrivateMessage, Room, RoomMessage, User } from "@prisma/client";
 
 export default class MessengerDAO {
   static async searchUser(name: string) {
@@ -303,13 +303,13 @@ export default class MessengerDAO {
         //only send progress updates every 2nd event, otherwise it's probably too many emits
         if (p === 2) {
           p = 0;
-          console.log("PROGRESS EMIT TO " + message.recipientId)
+          console.log("PROGRESS EMIT TO " + message.recipientId);
           io.to(`inbox=${message.recipientId}`).emit(
             "private_message_attachment_progress",
             e.loaded / bytes,
             message.id
           );
-          console.log("PROGRESS EMIT TO " + message.senderId)
+          console.log("PROGRESS EMIT TO " + message.senderId);
           io.to(`inbox=${message.senderId}`).emit(
             "private_message_attachment_progress",
             e.loaded / bytes,
@@ -433,18 +433,121 @@ export default class MessengerDAO {
       throw new Error("You already have a room by that name");
     const usersRooms = await prisma.room.findMany({
       where: { authorId },
+      select: { _count: true },
     });
     if (usersRooms.length > 8) throw new Error("Max 8 rooms");
     return await prisma.room.create({
       data: {
         authorId,
         name,
+        members: { connect: { id: authorId } },
       },
       select: {
         id: true,
         name: true,
         createdAt: true,
       },
+    });
+  }
+
+  static async joinRoom(roomId: string, uid: string) {
+    let room;
+    room = await prisma.room
+      .findUniqueOrThrow({
+        where: { id: roomId },
+        include: {
+          banned: { select: { id: true } },
+          members: { select: { id: true } },
+        },
+      })
+      .catch((e) => {
+        throw new Error("Room does not exist");
+      });
+    if (!room.public)
+      throw new Error("You need an invitation to join this room");
+    if (room.banned.includes({ id: uid }))
+      throw new Error("You are banned from this room");
+    await prisma.room.update({
+      where: { id: roomId },
+      data: { members: { connect: { id: uid } } },
+    });
+  }
+
+  static async banUser(roomId: string, bannedUid: string, bannerUid: string) {
+    let room;
+    room = await prisma.room
+      .findUniqueOrThrow({
+        where: { id: roomId },
+        include: {
+          banned: { select: { id: true } },
+          members: { select: { id: true } },
+        },
+      })
+      .catch((e) => {
+        throw new Error("Room does not exist");
+      });
+    if (room.authorId !== bannerUid)
+      throw new Error("Only the rooms owner can ban other users");
+    if (room.banned.includes({ id: bannedUid }))
+      throw new Error("You have already banned this user");
+    await prisma.room.update({
+      where: { id: roomId },
+      data: {
+        banned: { connect: { id: bannedUid } },
+        members: { disconnect: { id: bannedUid } },
+      },
+    });
+  }
+
+  static async kickUser(roomId: string, kickedUid: string, kickerUid: string) {
+    let room;
+    room = await prisma.room
+      .findUniqueOrThrow({
+        where: { id: roomId },
+        include: {
+          banned: { select: { id: true } },
+          members: { select: { id: true } },
+        },
+      })
+      .catch((e) => {
+        throw new Error("Room does not exist");
+      });
+    if (room.authorId !== kickerUid)
+      throw new Error("Only the rooms owner can kick other users");
+    if (!room.members.includes({ id: kickedUid }))
+      throw new Error("The user you want to kick isn't joined to the room");
+    if (room.banned.includes({ id: kickedUid }))
+      throw new Error("That user is already banned from the room");
+    await prisma.room.update({
+      where: { id: roomId },
+      data: {
+        members: { disconnect: { id: kickedUid } },
+      },
+    });
+  }
+
+  static async leaveRoom(roomId: string, uid: string) {
+    let room;
+    room = await prisma.room
+      .findUniqueOrThrow({
+        where: { id: roomId },
+        include: {
+          banned: { select: { id: true } },
+          members: { select: { id: true } },
+        },
+      })
+      .catch((e) => {
+        throw new Error("Room does not exist");
+      });
+    if (room.authorId === uid)
+      throw new Error("You cannot leave a room that you own");
+    if (!room.members.includes({ id: uid }))
+      throw new Error("You cannot leave a room that you aren't already in");
+    if (room.banned.includes({ id: uid }))
+      throw new Error("You cannot leave a room which you are already banned from");
+    await prisma.room.update({
+      where: { id: roomId },
+      data: { members: { disconnect: { id: uid } } },
     });
   }
 

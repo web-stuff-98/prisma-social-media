@@ -175,17 +175,19 @@ export default class ChatController {
       const users = await ChatDAO.getRooms();
       res.status(200).json(users).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async getRoom(req: Req, res: Res) {
     try {
       const messages = await ChatDAO.getRoomById(req.params.roomId);
       res.status(200).json(messages).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async createRoom(req: Req, res: Res) {
     try {
       const { name } = req.body;
@@ -201,10 +203,12 @@ export default class ChatController {
       const room = await ChatDAO.createRoom(name, String(req.user?.id));
       res.status(201).json(room);
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async updateRoom(req: Req, res: Res) {
+    //This DAO function is not finished.
     try {
       if (req.body.name) {
         const foundRoom = await ChatDAO.getRoomByName(req.body.name);
@@ -219,17 +223,63 @@ export default class ChatController {
         }
       }
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async deleteRoom(req: Req, res: Res) {
     try {
       await ChatDAO.deleteRoom(req.params.roomId, String(req.user?.id));
       res.status(200).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
+  static async joinRoom(req: Req, res: Res) {
+    try {
+      await ChatDAO.joinRoom(req.params.roomId, String(req.user?.id));
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async leaveRoom(req:Req, res:Res) {
+    try {
+      await ChatDAO.leaveRoom(req.params.roomId, String(req.user?.id));
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async banUser(req: Req, res: Res) {
+    try {
+      await ChatDAO.banUser(
+        req.params.roomId,
+        req.params.banUid,
+        String(req.user?.id)
+      );
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async kickUser(req:Req, res:Res) {
+    try {
+      await ChatDAO.kickUser(
+        req.params.roomId,
+        req.params.kickUid,
+        String(req.user?.id)
+      );
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
   static async uploadRoomMessageAttachment(req: Req, res: Res) {
     /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
     inside the Chat DAO for some reason. I wrote the same code in my other project and it
@@ -285,10 +335,7 @@ export default class ChatController {
     });
     bb.on("finish", async () => {
       if (!gotFile) {
-        await ChatDAO.roomAttachmentError(
-          message.roomId,
-          message.id
-        );
+        await ChatDAO.roomAttachmentError(message.roomId, message.id);
         res.status(400).json({ msg: "No file!" });
       }
     });

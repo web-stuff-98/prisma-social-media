@@ -10,31 +10,31 @@ export default function Rooms() {
     } catch (e) {}
   };
 
-  const [searchInput, setSearchInput] = useState("");
+  const [input, setInput] = useState("");
 
   return (
     <>
       <form
         onSubmit={handleSubmit}
-        className="w-full h-10 border-t dark:border-zinc-800 flex items-center justify-between"
+        className="w-full p-1 border-t dark:border-zinc-800 flex items-center justify-between"
       >
         <input
-          id="Search input"
-          name="Search input"
-          value={searchInput}
-          className="grow mx-1 rounded-sm border dark:border-zinc-800 px-1"
+          id="Join/Create input"
+          name="Join/Create input"
+          value={input}
+          className="grow rounded-sm border dark:border-zinc-800 px-1 mr-1"
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setSearchInput(e.target.value)
+            setInput(e.target.value)
           }
-          aria-label="Search/Create room"
+          aria-label="Join/Create room"
           type="text"
-          placeholder="Search/Create room..."
+          placeholder="Join/Create room..."
           required
         />
         <button
-          aria-label="Submit search"
+          aria-label="Submit"
           type="submit"
-          className="text-2xl bg-transparent px-0 pr-2"
+          className="text-2xl bg-transparent px-0 pr-1"
         >
           <MdSend />
         </button>
