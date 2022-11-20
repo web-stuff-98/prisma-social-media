@@ -481,7 +481,7 @@ export default class ChatDAO {
       });
     if (!room.public)
       throw new Error("You need an invitation to join this room");
-      console.log(JSON.stringify(room.banned))
+    console.log(JSON.stringify(room.banned));
     if (room.banned.find((banned) => banned.id === uid))
       throw new Error("You are banned from this room");
     await prisma.room.update({
@@ -514,7 +514,7 @@ export default class ChatDAO {
     });
     const usersSocket = await getUserSocket(uid);
     if (usersSocket) usersSocket.join(`room=${roomId}`);
-    console.log("JOINED")
+    console.log("JOINED");
   }
 
   static async banUser(roomId: string, bannedUid: string, bannerUid: string) {
@@ -533,7 +533,7 @@ export default class ChatDAO {
       });
     if (room.authorId !== bannerUid)
       throw new Error("Only the rooms owner can ban other users");
-      if (room.banned.find((banned) => banned.id === bannedUid))
+    if (room.banned.find((banned) => banned.id === bannedUid))
       throw new Error("You have already banned this user");
     await prisma.room.update({
       where: { id: roomId },
@@ -590,9 +590,9 @@ export default class ChatDAO {
       });
     if (room.authorId !== kickerUid)
       throw new Error("Only the rooms owner can kick other users");
-    if (!room.members.includes({ id: kickedUid }))
+    if (!room.members.find((u) => u.id === kickedUid))
       throw new Error("The user you want to kick isn't joined to the room");
-      if (room.banned.find((banned) => banned.id === kickedUid))
+    if (room.banned.find((banned) => banned.id === kickedUid))
       throw new Error("That user is already banned from the room");
     await prisma.room.update({
       where: { id: roomId },
@@ -647,9 +647,9 @@ export default class ChatDAO {
       });
     if (room.authorId === uid)
       throw new Error("You cannot leave a room that you own");
-    if (!room.members.includes({ id: uid }))
+    if (!room.members.find((u) => u.id === uid))
       throw new Error("You cannot leave a room that you aren't already in");
-      if (room.banned.find((banned) => banned.id === uid))
+    if (room.banned.find((banned) => banned.id === uid))
       throw new Error(
         "You cannot leave a room which you are already banned from"
       );

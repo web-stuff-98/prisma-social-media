@@ -580,7 +580,7 @@ class ChatDAO {
             });
             if (room.authorId !== kickerUid)
                 throw new Error("Only the rooms owner can kick other users");
-            if (!room.members.includes({ id: kickedUid }))
+            if (!room.members.find((u) => u.id === kickedUid))
                 throw new Error("The user you want to kick isn't joined to the room");
             if (room.banned.find((banned) => banned.id === kickedUid))
                 throw new Error("That user is already banned from the room");
@@ -639,7 +639,7 @@ class ChatDAO {
             });
             if (room.authorId === uid)
                 throw new Error("You cannot leave a room that you own");
-            if (!room.members.includes({ id: uid }))
+            if (!room.members.find((u) => u.id === uid))
                 throw new Error("You cannot leave a room that you aren't already in");
             if (room.banned.find((banned) => banned.id === uid))
                 throw new Error("You cannot leave a room which you are already banned from");
