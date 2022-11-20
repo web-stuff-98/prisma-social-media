@@ -15,7 +15,7 @@
     input, textarea {
         @apply bg-transparent;
         @apply border;
-        @apply dark:border-zinc-800;
+        @apply dark:border-stone-800;
         @apply px-1;
         @apply text-xs;
         @apply rounded;

@@ -124,7 +124,7 @@ export default function User({
           >
             {likes > 0 && <div
               style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
-              className="absolute text-sm drop-shadow-md text-green-500 leading-3 tracking-tighter"
+              className="absolute text-sm drop-shadow-md leading-3 tracking-tighter"
             >
               {likes}
             </div>}
@@ -136,7 +136,7 @@ export default function User({
           >
             {shares > 0 && <div
               style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
-              className="absolute text-sm drop-shadow-md text-green-500 leading-3 tracking-tighter"
+              className="absolute text-sm drop-shadow-md leading-3 tracking-tighter"
             >
               {shares}
             </div>}

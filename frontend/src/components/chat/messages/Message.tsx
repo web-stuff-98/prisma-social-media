@@ -10,6 +10,8 @@ import { ImDownload3 } from "react-icons/im";
 import {
   deletePrivateMessage,
   updatePrivateMessage,
+  updateRoomMessage,
+  deleteRoomMessage,
 } from "../../../services/chat";
 
 /**
@@ -32,6 +34,7 @@ export default function Message({
   attachmentPending,
   createdAt,
   updatedAt,
+  isRoomMessage,
 }: {
   otherUser?: boolean;
   attachmentType?: string;
@@ -45,6 +48,7 @@ export default function Message({
   senderId: string;
   createdAt: Date;
   updatedAt: Date;
+  isRoomMessage?: boolean;
 }) {
   const { getUserData } = useUsers();
 
@@ -66,7 +70,9 @@ export default function Message({
 
   const updateMessage = () => {
     if (messageEditInput !== message)
-      updatePrivateMessage(id, messageEditInput);
+      isRoomMessage
+        ? updateRoomMessage(id, messageEditInput)
+        : updatePrivateMessage(id, messageEditInput);
     setIsEditing(false);
   };
 
@@ -137,7 +143,12 @@ export default function Message({
             </div>
           )}
         {attachmentError && (
-          <div style={{filter:"opacity(0.333)"}} className={`text-rose-600 font-bold tracking-tight text-xs flex ${otherUser ? "flex-row-reverse justify-end" : "justify-start"} items-center gap-0.5`}>
+          <div
+            style={{ filter: "opacity(0.333)" }}
+            className={`text-rose-600 font-bold tracking-tight text-xs flex ${
+              otherUser ? "flex-row-reverse justify-end" : "justify-start"
+            } items-center gap-0.5`}
+          >
             <MdError className="text-2xl" />
             Error uploading attachment
           </div>
@@ -176,7 +187,9 @@ export default function Message({
           {!isEditing && (
             <button
               onClick={() => {
-                deletePrivateMessage(id);
+                isRoomMessage
+                  ? deleteRoomMessage(id)
+                  : deletePrivateMessage(id);
                 /*socket?.emit("private_message_delete", id);*/
               }}
               className="px-0 bg-transparent"

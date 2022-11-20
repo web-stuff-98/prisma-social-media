@@ -24,7 +24,7 @@ const mime_types_1 = __importDefault(require("mime-types"));
 const aws_1 = __importDefault(require("../../utils/aws"));
 const __1 = require("../..");
 const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
-class MessengerDAO {
+class ChatDAO {
     static searchUser(name) {
         return __awaiter(this, void 0, void 0, function* () {
             /*
@@ -71,11 +71,8 @@ class MessengerDAO {
     //Conversations(priate messaging)
     static sendPrivateMessage(message, hasAttachment, recipientId, senderId) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (recipientId === senderId) {
-                console.log("SEND MESSAGE THROW ERROR");
+            if (recipientId === senderId)
                 throw new Error("You cannot message yourself");
-            }
-            console.log("SEND MESSAGE");
             const msg = hasAttachment
                 ? yield prisma_1.default.privateMessage.create({
                     data: {
@@ -390,6 +387,21 @@ class MessengerDAO {
             });
         });
     }
+    static getRoomMessages(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let room;
+            try {
+                room = yield prisma_1.default.room.findUniqueOrThrow({
+                    where: { id },
+                    select: { messages: true },
+                });
+            }
+            catch (e) {
+                throw new Error("Room does not exist");
+            }
+            return room.messages;
+        });
+    }
     static deleteRoom(roomId, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             const matchingRoom = yield prisma_1.default.room.findFirst({
@@ -439,6 +451,7 @@ class MessengerDAO {
     static joinRoom(roomId, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             let room;
+            console.log("JOIN ROOM : " + roomId);
             room = yield prisma_1.default.room
                 .findUniqueOrThrow({
                 where: { id: roomId },
@@ -467,6 +480,8 @@ class MessengerDAO {
     static banUser(roomId, bannedUid, bannerUid) {
         return __awaiter(this, void 0, void 0, function* () {
             let room;
+            if (bannedUid === bannerUid)
+                throw new Error("You cannot ban yourself");
             room = yield prisma_1.default.room
                 .findUniqueOrThrow({
                 where: { id: roomId },
@@ -498,6 +513,8 @@ class MessengerDAO {
     static kickUser(roomId, kickedUid, kickerUid) {
         return __awaiter(this, void 0, void 0, function* () {
             let room;
+            if (kickedUid === kickerUid)
+                throw new Error("You cannot kick yourself");
             room = yield prisma_1.default.room
                 .findUniqueOrThrow({
                 where: { id: roomId },
@@ -547,10 +564,6 @@ class MessengerDAO {
                 throw new Error("You cannot leave a room that you aren't already in");
             if (room.banned.includes({ id: uid }))
                 throw new Error("You cannot leave a room which you are already banned from");
-            yield prisma_1.default.room.update({
-                where: { id: roomId },
-                data: { members: { disconnect: { id: uid } } },
-            });
             __1.io.to(`room=${roomId}`).emit("room_user_left", uid);
             const usersSocket = yield (0, getUserSocket_1.default)(uid);
             if (usersSocket)
@@ -562,6 +575,102 @@ class MessengerDAO {
             return yield prisma_1.default.roomMessage.findUniqueOrThrow({
                 where: { id: msgId },
             });
+        });
+    }
+    static sendRoomMessage(message, hasAttachment, senderId, roomId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const msg = hasAttachment
+                ? yield prisma_1.default.roomMessage.create({
+                    data: {
+                        message,
+                        senderId,
+                        roomId,
+                        hasAttachment: true,
+                        attachmentPending: true,
+                    },
+                })
+                : yield prisma_1.default.roomMessage.create({
+                    data: {
+                        message,
+                        senderId,
+                        roomId,
+                        hasAttachment: false,
+                        attachmentError: false,
+                        attachmentPending: false,
+                    },
+                });
+            __1.io.to(`room=${roomId}`).emit("room_message", msg.id, {
+                id: msg.id,
+                roomId,
+                message: msg.message,
+                senderId: msg.senderId,
+                hasAttachment: msg.hasAttachment,
+                attachmentPending: msg.attachmentPending || null,
+                attachmentKey: msg.attachmentKey || null,
+                attachmentError: msg.attachmentError || null,
+                attachmentType: msg.attachmentType || null,
+                createdAt: msg.createdAt,
+                updatedAt: msg.updatedAt,
+            });
+            if (hasAttachment) {
+                __1.io.to(`room=${roomId}`).emit("room_message_request_attachment_upload", msg.id);
+            }
+        });
+    }
+    static updateRoomMessage(id, message, uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let msg;
+            console.log("Update message : " + id);
+            try {
+                msg = yield prisma_1.default.roomMessage.findUniqueOrThrow({
+                    where: { id },
+                });
+            }
+            catch (e) {
+                throw new Error("Message does not exist");
+            }
+            if (msg.senderId !== uid)
+                throw new Error("Unauthorized");
+            yield prisma_1.default.roomMessage.update({
+                where: { id },
+                data: {
+                    message,
+                },
+            });
+            __1.io.to(`room=${msg.roomId}`).emit("room_message_update", id, {
+                message,
+            });
+        });
+    }
+    static deleteRoomMessage(id, uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let msg;
+            console.log("Delete message : " + id);
+            try {
+                msg = yield prisma_1.default.roomMessage.findUniqueOrThrow({
+                    where: { id },
+                });
+            }
+            catch (e) {
+                throw new Error("Message does not exist");
+            }
+            if (msg.senderId !== uid)
+                throw new Error("Unauthorized");
+            if (msg.hasAttachment) {
+                const s3 = new aws_1.default.S3();
+                yield new Promise((resolve, reject) => s3.deleteObject({
+                    Bucket: "prisma-socialmedia",
+                    Key: String(msg.attachmentKey),
+                }, (err, data) => {
+                    if (err)
+                        reject(err);
+                    resolve();
+                }));
+            }
+            yield prisma_1.default.roomMessage.delete({
+                where: { id },
+            });
+            __1.io.to(`room=${msg.roomId}`).emit("room_message_delete", id);
         });
     }
     static uploadRoomAttachment(stream, info, message, bytes) {
@@ -640,4 +749,4 @@ class MessengerDAO {
         });
     }
 }
-exports.default = MessengerDAO;
+exports.default = ChatDAO;

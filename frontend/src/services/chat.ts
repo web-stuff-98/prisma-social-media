@@ -68,7 +68,7 @@ const updateRoomMessage = (messageId: string, message: string) =>
       message,
     },
   });
-const uploadRoomMessageAttachment = (
+const uploadRoomMessageAttachment = async (
   msgId: string,
   bytes: number,
   file: File
@@ -101,16 +101,20 @@ const sendPrivateMessage = (
     },
   });
 const deletePrivateMessage = (messageId: string) =>
-  makeRequest(`/api/chat/conversation/message/${messageId}`, {
+  makeRequest(`/api/chat/conversation/message`, {
     method: "DELETE",
     withCredentials: true,
+    data: {
+      messageId
+    }
   });
 const updatePrivateMessage = (messageId: string, message: string) =>
-  makeRequest(`/api/chat/conversation/message/${messageId}`, {
+  makeRequest(`/api/chat/conversation/message`, {
     method: "PUT",
     withCredentials: true,
     data: {
       message,
+      messageId
     },
   });
 const uploadPrivateMessageAttachment = async (
@@ -136,6 +140,10 @@ const searchUsers = (name: string) =>
     method: "POST",
   });
 const getRooms = () => makeRequest(`/api/chat/room`, { withCredentials: true });
+const getRoom = (roomId: string) =>
+  makeRequest(`/api/chat/room/${roomId}`, { withCredentials: true });
+  const getRoomMessages = (roomId: string) =>
+  makeRequest(`/api/chat/room/${roomId}/messages`, { withCredentials: true });
 
 export {
   getConversations,
@@ -151,6 +159,8 @@ export {
   deleteRoomMessage,
   searchUsers,
   getRooms,
+  getRoom,
+  getRoomMessages,
   joinRoom,
   leaveRoom,
   kickUserFromRoom,

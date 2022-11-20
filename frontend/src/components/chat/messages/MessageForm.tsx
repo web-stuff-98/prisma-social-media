@@ -1,9 +1,8 @@
-import { MdSend, MdVideoCall, MdVideoCameraBack } from "react-icons/md";
-import { AiOutlineMenuFold, AiFillFileAdd } from "react-icons/ai";
+import { MdSend } from "react-icons/md";
+import { AiFillFileAdd } from "react-icons/ai";
 
 import { useRef } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { BiWebcam } from "react-icons/bi";
 import { RiWebcamFill } from "react-icons/ri";
 
 export default function MessageForm({

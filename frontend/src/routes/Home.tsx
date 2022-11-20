@@ -99,23 +99,38 @@ export default function Home() {
         <h2 className="whitespace-nowrap font-extrabold tracking-tight text-md">
           Popular posts
         </h2>
-        <div style={{maxWidth:"22.5pc"}} className="flex flex-col items-center justify-center">
+        <div
+          style={{ maxWidth: "22.5pc" }}
+          className="flex flex-col items-center justify-center"
+        >
           {popularPosts &&
             popularPosts.length > 0 &&
             popularPosts.map((post) => (
-              <>
-                <article className="leading-5 py-1 my-1 mb-4 rounded-sm">
-                  <h3 className="font-bold text-sm leading-4 my-0">{post.title}</h3>
-                  <p className="text-xs leading-3 my-0 mb-2 py-0.5">{post.description}<a href={`/posts/${post.slug}`} className="font-bold italic cursor-pointer"> - Read more</a></p>
-                  <User likeShareIcons likes={post.likes} shares={post.shares} uid={post.author.id} user={getUserData(post.author.id)}/>
-                </article>
-                {/*<PostCard
-              handleToggleLike={handleToggleLike}
-              handleToggleShare={handleToggleShare}
-              key={post.id}
-              post={post}
-          />*/}
-              </>
+              <article
+                key={post.id}
+                className="leading-5 py-1 my-1 mb-4 rounded-sm"
+              >
+                <h3 className="font-bold text-sm leading-4 my-0">
+                  {post.title}
+                </h3>
+                <p className="text-xs leading-3 my-0 mb-2 py-0.5">
+                  {post.description}
+                  <a
+                    href={`/posts/${post.slug}`}
+                    className="font-bold italic cursor-pointer"
+                  >
+                    {" "}
+                    - Read more
+                  </a>
+                </p>
+                <User
+                  likeShareIcons
+                  likes={post.likes}
+                  shares={post.shares}
+                  uid={post.author.id}
+                  user={getUserData(post.author.id)}
+                />
+              </article>
             ))}
         </div>
       </div>

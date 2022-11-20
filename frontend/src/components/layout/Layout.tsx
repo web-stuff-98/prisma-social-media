@@ -21,7 +21,7 @@ export default function Layout() {
       <main
         className={
           pathname === "/login" || pathname === "/register"
-            ? "w-fit p-2 rounded my-auto shadow-xl mx-auto bg-foreground dark:bg-darkmodeForeground border border-black dark:border-zinc-800"
+            ? "w-fit p-2 rounded my-auto shadow-xl mx-auto bg-foreground dark:bg-darkmodeForeground border border-black dark:border-stone-800"
             : "container mx-auto mt-navheader h-screen"
         }
       >

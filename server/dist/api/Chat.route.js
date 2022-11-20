@@ -12,28 +12,29 @@ router.route("/search/user/:name").post(Chat_controller_1.default.searchUser);
 router.route("/conversations").get(Chat_controller_1.default.getConversations);
 router.route("/conversation/:uid").get(Chat_controller_1.default.getConversation);
 router.route("/conversation/:uid").delete(Chat_controller_1.default.deleteConversation);
+router.route("/conversation/message").post(Chat_controller_1.default.sendPrivateMessage);
 router
     .route("/conversation/message")
-    .post(Chat_controller_1.default.sendPrivateMessage);
-router
-    .route("/conversation/message/:msgId")
     .delete(Chat_controller_1.default.deletePrivateMessage);
-router
-    .route("/conversation/message/:msgId")
-    .put(Chat_controller_1.default.updatePrivateMessage);
+router.route("/conversation/message").put(Chat_controller_1.default.updatePrivateMessage);
 router
     .route("/conversation/message/attachment/:msgId/:bytes")
     .post(Chat_controller_1.default.uploadPrivateMessageAttachment);
+//Chatroom messages
+router.route("/room/message").post(Chat_controller_1.default.sendRoomMessage);
+router.route("/room/message").delete(Chat_controller_1.default.deleteRoomMessage);
+router.route("/room/message").put(Chat_controller_1.default.updateRoomMessage);
+router
+    .route("/room/message/attachment/:msgId/:bytes")
+    .post(Chat_controller_1.default.uploadRoomMessageAttachment);
 //Chatrooms
 router.route("/room").get(Chat_controller_1.default.getRooms);
 router.route("/room").post(Chat_controller_1.default.createRoom);
 router.route("/room/:roomId").get(Chat_controller_1.default.getRoom);
+router.route("/room/:roomId/messages").get(Chat_controller_1.default.getRoomMessages);
 router.route("/room/:roomId").delete(Chat_controller_1.default.deleteRoom);
 router.route("/room/:roomId").patch(Chat_controller_1.default.updateRoom);
-router
-    .route("/room/message/attachment/:msgId/:bytes")
-    .post(Chat_controller_1.default.uploadRoomMessageAttachment);
-//User actions (join/leave/kick/ban)
+//Chatroom User actions (join/leave/kick/ban)
 router.route("/room/:roomId/join").post(Chat_controller_1.default.joinRoom);
 router.route("/room/:roomId/leave").post(Chat_controller_1.default.leaveRoom);
 router.route("/room/:roomId/kick/:kickUid").post(Chat_controller_1.default.kickUser);

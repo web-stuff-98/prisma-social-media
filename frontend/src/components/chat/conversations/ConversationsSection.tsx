@@ -6,11 +6,11 @@ import { useState, useEffect } from "react";
 import { RiDeleteBin4Fill, RiMessage2Fill } from "react-icons/ri";
 import { getConversations, deleteConversation } from "../../../services/chat";
 import { IUser } from "../../../context/AuthContext";
-import { useMessenger } from "../../../context/MessengerContext";
+import { useChat } from "../../../context/ChatContext";
 import useUsers from "../../../context/UsersContext";
 
 export default function ConversationsSection() {
-  const { openConversation } = useMessenger();
+  const { openConversation } = useChat();
   const { getUserData } = useUsers();
 
   const [users, setUsers] = useState<IUser[]>([]);

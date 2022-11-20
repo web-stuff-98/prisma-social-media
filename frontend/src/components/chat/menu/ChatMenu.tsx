@@ -1,20 +1,20 @@
 import {
-  MessengerSection,
-  useMessenger,
-} from "../../../context/MessengerContext";
+  ChatSection,
+  useChat,
+} from "../../../context/ChatContext";
 
 export default function Menu() {
-  const { setMessengerSection } = useMessenger();
+  const { setChatSection } = useChat();
 
   const Button = ({
     name,
     section,
   }: {
     name: string;
-    section: MessengerSection;
+    section: ChatSection;
   }) => {
     return (
-      <button aria-label={name} onClick={() => setMessengerSection(section)}>
+      <button aria-label={name} onClick={() => setChatSection(section)}>
         {name}
       </button>
     );

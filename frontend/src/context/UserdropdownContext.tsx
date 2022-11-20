@@ -112,7 +112,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
           onMouseLeave={() => setCursorInside(false)}
           aria-label="User dropdown"
           style={{ left: clickPos.left, top: clickPos.top, zIndex: 100 }}
-          className="bg-foreground text-white dark:bg-darkmodeForeground fixed border dark:border-zinc-800 rounded shadow-md p-1"
+          className="bg-foreground text-white dark:bg-darkmodeForeground fixed border dark:border-stone-800 rounded shadow-md p-1"
         >
           {err ? (
             <div className="text-rose-500 flex items-center gap-1 text-xs pr-0.5 drop-shadow">

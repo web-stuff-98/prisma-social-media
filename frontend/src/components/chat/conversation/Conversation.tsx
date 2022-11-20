@@ -1,35 +1,20 @@
-import Message from "./Message";
-import MessageForm from "./MessageForm";
+import MessageForm from "../messages/MessageForm";
 
 import useCustomArrayAsync from "../../../hooks/useCustomArrayAsync";
 
 import { useCallback, useEffect, useState, useRef } from "react";
 import type { FormEvent, ChangeEvent } from "react";
+
 import {
   getConversation,
   sendPrivateMessage,
   uploadPrivateMessageAttachment,
 } from "../../../services/chat";
-import { useSocket } from "../../../context/SocketContext";
-import { useAuth } from "../../../context/AuthContext";
-import { MdError } from "react-icons/md";
-import { useMessenger } from "../../../context/MessengerContext";
-import { ImSpinner8 } from "react-icons/im";
 
-export interface IMessage {
-  id: string;
-  message: string;
-  senderId: string;
-  recipientId?: string; //recipientId doesn't actually exist for messages retrieved from getConversations (it might though now I'm not sure)
-  hasAttachment: boolean;
-  attachmentType?: string;
-  attachmentKey?: string;
-  attachmentPending?: boolean;
-  attachmentError?: boolean;
-  attachmentProgress?: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { useSocket } from "../../../context/SocketContext";
+import { IMessage, useChat } from "../../../context/ChatContext";
+
+import MessageList from "../messages/MessageList";
 
 export default function ConversationSection({
   conversationWith = "",
@@ -47,14 +32,12 @@ export default function ConversationSection({
     "private_message_update",
     "private_message_delete",
     "private_message",
-    (a: IMessage, b: IMessage) => {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    }
+    (a: IMessage, b: IMessage) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 
   const { socket } = useSocket();
-  const { user } = useAuth();
-  const { setMessengerSection } = useMessenger();
+  const { setChatSection } = useChat();
 
   const messagesBottomRef = useRef<HTMLSpanElement>(null);
   const [messageInput, setMessageInput] = useState("");
@@ -71,10 +54,8 @@ export default function ConversationSection({
   const [file, setFile] = useState<File>();
   const fileRef = useRef<File>();
   const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.files);
     if (e.target.files?.length === 0) return;
     const f = e.target?.files![0];
-    console.log(`F : ` + f);
     if (!f) return;
     setFile(f);
     fileRef.current = f;
@@ -90,47 +71,32 @@ export default function ConversationSection({
 
     socket.on(
       "private_message_request_attachment_upload",
-      handleUploadConversationAttachment
+      handleUploadAttachment
     );
     socket.on("private_conversation_deleted", handleConversationDeleted);
-    socket.on(
-      "private_message_attachment_complete",
-      handleMessageAttachmentComplete
-    );
-    socket.on(
-      "private_message_attachment_failed",
-      handleMessageAttachmentFailed
-    );
-    socket.on(
-      "private_message_attachment_progress",
-      handleMessageAttachmentProgress
-    );
+    socket.on("private_message_attachment_complete", handleAttachmentComplete);
+    socket.on("private_message_attachment_failed", handleAttachmentFailed);
+    socket.on("private_message_attachment_progress", handleAttachmentProgress);
     return () => {
       socket.off(
         "private_message_attachment_complete",
-        handleMessageAttachmentComplete
+        handleAttachmentComplete
       );
-      socket.off(
-        "private_message_attachment_failed",
-        handleMessageAttachmentFailed
-      );
+      socket.off("private_message_attachment_failed", handleAttachmentFailed);
       socket.off(
         "private_message_attachment_progress",
-        handleMessageAttachmentProgress
+        handleAttachmentProgress
       );
       socket.off(
         "private_message_request_attachment_upload",
-        handleUploadConversationAttachment
+        handleUploadAttachment
       );
       socket.off("private_conversation_deleted", handleConversationDeleted);
     };
   }, [socket]);
 
-  const handleUploadConversationAttachment = useCallback(
+  const handleUploadAttachment = useCallback(
     async (id: string) => {
-      console.log(
-        "Upload attachment for : " + id + " | File : " + fileRef.current
-      );
       try {
         if (!fileRef.current) throw new Error("No file selected");
         await uploadPrivateMessageAttachment(
@@ -142,15 +108,13 @@ export default function ConversationSection({
     },
     [file]
   );
-
   const handleConversationDeleted = useCallback((sender: string) => {
     if (conversationWith === sender) {
-      setMessengerSection("Conversations");
+      setChatSection("Conversations");
     }
     setMessages((p) => [...p.filter((msg) => msg.senderId !== sender)]);
   }, []);
-
-  const handleMessageAttachmentComplete = useCallback(
+  const handleAttachmentComplete = useCallback(
     (messageId: string, type: string, key: string) => {
       setMessages((p) => {
         let newMsgs = p;
@@ -169,8 +133,7 @@ export default function ConversationSection({
     },
     []
   );
-
-  const handleMessageAttachmentFailed = useCallback((messageId: string) => {
+  const handleAttachmentFailed = useCallback((messageId: string) => {
     setMessages((p) => {
       let newMsgs = p;
       const i = newMsgs.findIndex((msg) => msg.id === messageId);
@@ -182,10 +145,8 @@ export default function ConversationSection({
       return [...newMsgs];
     });
   }, []);
-
-  const handleMessageAttachmentProgress = useCallback(
+  const handleAttachmentProgress = useCallback(
     (progress: number, messageId: string) => {
-      console.log("PROGRESS : " + progress + " | MSGID : " + messageId);
       setMessages((p) => {
         let newMsgs = p;
         const i = newMsgs.findIndex((msg) => msg.id === messageId);
@@ -204,27 +165,7 @@ export default function ConversationSection({
       style={{ maxHeight: "50vh" }}
       className="w-full h-full flex flex-col items-between justify-between"
     >
-      {status === "success" && (
-        <div className="relative overflow-y-scroll flex flex-col gap-2 grow">
-          {messages.map((msg) => (
-            <Message
-              {...msg}
-              key={msg.id}
-              otherUser={msg.senderId !== user?.id}
-            />
-          ))}
-          <span ref={messagesBottomRef} className="w-full" />
-        </div>
-      )}
-      {status === "pending" && (
-        <ImSpinner8 className="mx-auto my-auto animate-spin text-2xl" />
-      )}
-      {status === "error" && (
-        <div className="flex flex-col gap-2 text-rose-600 gap-2 text-center">
-          <MdError />
-          {error}
-        </div>
-      )}
+      <MessageList messages={messages} status={status} error={error} />
       <MessageForm
         file={file}
         handleFileInput={handleFileInput}

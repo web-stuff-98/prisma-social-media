@@ -22,7 +22,7 @@ class ChatController {
                 res.status(200).json(users);
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -35,7 +35,7 @@ class ChatController {
                 res.status(201).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -43,11 +43,11 @@ class ChatController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.updatePrivateMessage(req.params.msgId, req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.updatePrivateMessage(req.body.messageId, req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(200).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -55,13 +55,11 @@ class ChatController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log("DELETE MESSAGE CONTROLLER");
-                yield Chat_dao_1.default.deletePrivateMessage(req.params.msgId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.deletePrivateMessage(req.body.messageId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(200).end();
             }
             catch (e) {
-                console.log("ERRROR : " + e);
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -73,7 +71,7 @@ class ChatController {
                 res.status(200).json(users).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -85,7 +83,7 @@ class ChatController {
                 res.status(200).json(messages).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -97,7 +95,7 @@ class ChatController {
                 res.status(200).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -143,7 +141,7 @@ class ChatController {
                 })
                     .catch((e) => {
                     req.unpipe(bb);
-                    res.status(500).json({ msg: "Internal error" });
+                    res.status(400).json({ msg: `${e}` });
                 });
             }));
             bb.on("finish", () => __awaiter(this, void 0, void 0, function* () {
@@ -183,7 +181,18 @@ class ChatController {
     static getRoom(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const messages = yield Chat_dao_1.default.getRoomById(req.params.roomId);
+                const room = yield Chat_dao_1.default.getRoomById(req.params.roomId);
+                res.status(200).json(room).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static getRoomMessages(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const messages = yield Chat_dao_1.default.getRoomMessages(req.params.roomId);
                 res.status(200).json(messages).end();
             }
             catch (e) {
@@ -295,6 +304,42 @@ class ChatController {
             }
         });
     }
+    static sendRoomMessage(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.sendRoomMessage(req.body.message, req.body.hasAttachment, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body.roomId);
+                res.status(201).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static updateRoomMessage(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.updateRoomMessage(req.body.messageId, req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static deleteRoomMessage(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.deleteRoomMessage(req.body.messageId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
     static uploadRoomMessageAttachment(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
@@ -336,7 +381,7 @@ class ChatController {
                 })
                     .catch((e) => {
                     req.unpipe(bb);
-                    res.status(500).json({ msg: "Internal error" });
+                    res.status(400).json({ msg: `${e}` });
                 });
             }));
             bb.on("finish", () => __awaiter(this, void 0, void 0, function* () {

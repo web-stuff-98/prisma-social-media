@@ -1,5 +1,5 @@
 import Layout from "./components/layout/Layout";
-import { MessengerProvider } from "./context/MessengerContext";
+import { ChatProvider } from "./context/ChatContext";
 import { InterfaceProvider } from "./context/InterfaceContext";
 import { ModalProvider } from "./context/ModalContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -15,9 +15,9 @@ function App() {
           <ModalProvider>
             <UserdropdownProvider>
               <AuthProvider>
-                <MessengerProvider>
+                <ChatProvider>
                   <Layout />
-                </MessengerProvider>
+                </ChatProvider>
               </AuthProvider>
             </UserdropdownProvider>
           </ModalProvider>

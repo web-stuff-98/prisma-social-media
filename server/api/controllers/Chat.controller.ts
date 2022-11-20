@@ -10,7 +10,7 @@ export default class ChatController {
       const users = await ChatDAO.searchUser(req.params.name);
       res.status(200).json(users);
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
 
@@ -26,42 +26,44 @@ export default class ChatController {
       );
       res.status(201).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async updatePrivateMessage(req: Req, res: Res) {
     try {
       await ChatDAO.updatePrivateMessage(
-        req.params.msgId,
+        req.body.messageId,
         req.body.message,
         String(req.user?.id)
       );
       res.status(200).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async deletePrivateMessage(req: Req, res: Res) {
     try {
-      console.log("DELETE MESSAGE CONTROLLER");
       await ChatDAO.deletePrivateMessage(
-        req.params.msgId,
+        req.body.messageId,
         String(req.user?.id)
       );
       res.status(200).end();
     } catch (e) {
-      console.log("ERRROR : "+e)
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async getConversations(req: Req, res: Res) {
     try {
       const users = await ChatDAO.getConversations(String(req.user?.id));
       res.status(200).json(users).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async getConversation(req: Req, res: Res) {
     try {
       const messages = await ChatDAO.getConversation(
@@ -70,17 +72,19 @@ export default class ChatController {
       );
       res.status(200).json(messages).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   static async deleteConversation(req: Req, res: Res) {
     try {
       await ChatDAO.deleteConversation(String(req.user?.id), req.params.uid);
       res.status(200).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
+
   // messy crap ahead
   static async uploadPrivateMessageAttachment(req: Req, res: Res) {
     /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
@@ -137,7 +141,7 @@ export default class ChatController {
         })
         .catch((e) => {
           req.unpipe(bb);
-          res.status(500).json({ msg: "Internal error" });
+          res.status(400).json({ msg: `${e}` });
         });
     });
     bb.on("finish", async () => {
@@ -182,7 +186,16 @@ export default class ChatController {
 
   static async getRoom(req: Req, res: Res) {
     try {
-      const messages = await ChatDAO.getRoomById(req.params.roomId);
+      const room = await ChatDAO.getRoomById(req.params.roomId);
+      res.status(200).json(room).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async getRoomMessages(req:Req, res:Res) {
+    try {
+      const messages = await ChatDAO.getRoomMessages(req.params.roomId);
       res.status(200).json(messages).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -281,6 +294,45 @@ export default class ChatController {
     }
   }
 
+  static async sendRoomMessage(req: Req, res: Res) {
+    try {
+      await ChatDAO.sendRoomMessage(
+        req.body.message,
+        req.body.hasAttachment,
+        String(req.user?.id),
+        req.body.roomId
+      );
+      res.status(201).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async updateRoomMessage(req: Req, res: Res) {
+    try {
+      await ChatDAO.updateRoomMessage(
+        req.body.messageId,
+        req.body.message,
+        String(req.user?.id)
+      );
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async deleteRoomMessage(req: Req, res: Res) {
+    try {
+      await ChatDAO.deleteRoomMessage(
+        req.body.messageId,
+        String(req.user?.id)
+      );
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
   static async uploadRoomMessageAttachment(req: Req, res: Res) {
     /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
     inside the Chat DAO for some reason. I wrote the same code in my other project and it
@@ -331,7 +383,7 @@ export default class ChatController {
         })
         .catch((e) => {
           req.unpipe(bb);
-          res.status(500).json({ msg: "Internal error" });
+          res.status(400).json({ msg: `${e}` });
         });
     });
     bb.on("finish", async () => {
