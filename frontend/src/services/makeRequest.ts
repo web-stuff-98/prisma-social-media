@@ -8,6 +8,8 @@ export function makeRequest(url: string, options?: AxiosRequestConfig) {
   return api(url, options)
     .then((res) => res.data)
     .catch((error) =>
-      Promise.reject(error.response?.data ? error.response?.data.msg : "Error")
+      Promise.reject(
+        (error.response?.data.msg ?? "Error").replace("Error: ", "")
+      )
     );
 }
