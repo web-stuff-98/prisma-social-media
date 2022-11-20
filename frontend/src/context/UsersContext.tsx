@@ -77,7 +77,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const cacheUserData = async (
     uid: string,
     force?: boolean
-  ): Promise<undefined> => {
+  ) => {
     try {
       const found = users.find((u) => u.id === uid);
       if (found && !force) return;

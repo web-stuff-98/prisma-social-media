@@ -15,7 +15,7 @@ import { useSocket } from "../../../context/SocketContext";
 import { IMessage, useChat } from "../../../context/ChatContext";
 
 import MessageList from "../messages/MessageList";
-import MessengerError from "../messages/MessengerError";
+import MessengerError from "../MessengerError";
 
 export default function ConversationSection({
   conversationWith = "",

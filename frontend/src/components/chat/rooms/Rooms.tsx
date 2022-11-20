@@ -9,6 +9,7 @@ import { TbDoorOff, TbDoor } from "react-icons/tb";
 
 import { IconBtn } from "../../IconBtn";
 import { IRoom, useChat } from "../../../context/ChatContext";
+import MessengerError from "../MessengerError";
 
 export default function Rooms({
   setRoomId = () => {},
@@ -17,17 +18,16 @@ export default function Rooms({
 }) {
   const { setChatSection, rooms, roomsError, roomsStatus } = useChat();
 
-  const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: false });
+  const [err, setErr] = useState("");
 
   const [nameInput, setNameInput] = useState("");
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      setResMsg({ msg: "", err: false, pen: true });
+      setErr("");
       await createRoom(nameInput);
-      setResMsg({ msg: "", err: false, pen: false });
     } catch (e) {
-      setResMsg({ msg: `${e}`, err: true, pen: false });
+      setErr(`${e}`);
     }
   };
 
@@ -37,11 +37,11 @@ export default function Rooms({
         {roomsStatus === "pending" && (
           <ImSpinner8 className="drop-shadow animate-spin text-2xl my-2" />
         )}
-        {(resMsg.err || roomsStatus === "error") && (
+        {roomsStatus === "error" && (
           <div className="text-lg text-rose-600 drop-shadow text-center flex flex-col items-center justify-center">
             <>
               <MdError className="text-2xl" />
-              {resMsg.err || roomsError}
+              {roomsError}
             </>
           </div>
         )}
@@ -57,10 +57,12 @@ export default function Rooms({
                 <IconBtn
                   aria-label="Join room"
                   onClick={() =>
-                    joinRoom(room.id).then(() => {
-                      setChatSection("Chatroom");
-                      setRoomId(room.id);
-                    })
+                    joinRoom(room.id)
+                      .then(() => {
+                        setChatSection("Chatroom");
+                        setRoomId(room.id);
+                      })
+                      .catch((e) => setErr(`${e}`))
                   }
                   Icon={room.public ? TbDoor : TbDoorOff}
                 />
@@ -68,6 +70,7 @@ export default function Rooms({
             </article>
           ))}
         </div>
+        {err && <MessengerError err={err} closeError={() => setErr("")} />}
       </div>
       <form
         aria-label="Create room form"

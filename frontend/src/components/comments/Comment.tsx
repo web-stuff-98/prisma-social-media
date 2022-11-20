@@ -1,7 +1,7 @@
 import { IconBtn } from "../IconBtn";
 import { AiOutlineLike, AiFillLike } from "react-icons/ai";
 import { FaReply } from "react-icons/fa";
-import { IComment, usePost } from "../../context/PostContext";
+import { IPostComment, usePost } from "../../context/PostContext";
 import { useState, useCallback } from "react";
 import {
   createComment,
@@ -21,7 +21,7 @@ export function Comment({
   createdAt,
   likeCount,
   likedByMe,
-}: IComment) {
+}: IPostComment) {
   /*
 This function is from the web dev simplified video. It is supposed to be in the useAsync hook but that was causing infinite rerenders in the original PostContext, so I changed it to the useAync hook from usehooks.com and it worked. But I'll keep this function here anyway because it works here and dont need to change anything aside from the name.
 */
@@ -72,7 +72,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
   const onCommentReply = (message: string) =>
     createCommentFn
       .execute({ postId: post?.id, message, parentId: id })
-      .then((comment: IComment) => {
+      .then((comment: IPostComment) => {
         if (replyingTo === id) setReplyingTo("");
         createLocalComment(comment);
       });
@@ -80,7 +80,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
   const onCommentUpdate = (message: string) =>
     updateCommentFn
       .execute({ postId: post?.id, message, id })
-      .then((comment: IComment) => {
+      .then((comment: IPostComment) => {
         setIsEditing(false);
         updateLocalComment(id, comment.message);
       });
@@ -88,7 +88,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
   const onCommentDelete = () =>
     deleteCommentFn
       .execute({ postId: post?.id, id })
-      .then((comment: IComment) => deleteLocalComment(comment.id));
+      .then((comment: IPostComment) => deleteLocalComment(comment.id));
 
   const onToggleCommentLike = () =>
     toggleCommentLikeFn

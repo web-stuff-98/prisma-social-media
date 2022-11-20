@@ -20,7 +20,7 @@ export interface IPost {
   tags: string[];
   body: string;
   author: { id: string };
-  comments?: IComment[];
+  comments?: IPostComment[];
   createdAt?: string;
   slug: string;
   likedByMe?: boolean;
@@ -29,7 +29,7 @@ export interface IPost {
   shares: number;
 }
 
-export interface IComment {
+export interface IPostComment {
   likeCount: number;
   likedByMe: boolean;
   message: string;
@@ -42,8 +42,8 @@ export interface IComment {
 const Context = createContext<{
   post?: IPost;
   rootComments: any[];
-  getReplies: (parentId: string) => IComment[];
-  createLocalComment: (comment: IComment) => void;
+  getReplies: (parentId: string) => IPostComment[];
+  createLocalComment: (comment: IPostComment) => void;
   updateLocalComment: (id: string, message: string) => void;
   deleteLocalComment: (id: string) => void;
   toggleLocalCommentLike: (id: string, addLike: boolean) => void;
@@ -184,7 +184,7 @@ export function PostProvider({ children }: { children: ReactNode }) {
     };
   }, [socket]);
 
-  const [comments, setComments] = useState<IComment[]>([]);
+  const [comments, setComments] = useState<IPostComment[]>([]);
   const commentsByParentId = useMemo(() => {
     const group: any = {};
     comments.forEach((comment) => {
@@ -199,10 +199,10 @@ export function PostProvider({ children }: { children: ReactNode }) {
     setComments(post.comments);
   }, [post?.comments]);
 
-  const getReplies = (parentId: string): IComment[] =>
+  const getReplies = (parentId: string): IPostComment[] =>
     commentsByParentId[parentId as keyof typeof commentsByParentId];
 
-  const createLocalComment = (comment: IComment) =>
+  const createLocalComment = (comment: IPostComment) =>
     setComments((prevComments) => [comment, ...prevComments]);
 
   const updateLocalComment = (id: string, message: string) =>

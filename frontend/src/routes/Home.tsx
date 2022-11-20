@@ -100,7 +100,7 @@ export default function Home() {
           Popular posts
         </h2>
         <div
-          style={{ maxWidth: "22.5pc" }}
+          style={{ maxWidth: "25pc" }}
           className="flex flex-col items-center justify-center"
         >
           {popularPosts &&

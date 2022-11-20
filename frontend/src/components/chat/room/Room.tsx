@@ -11,7 +11,7 @@ import MessageList from "../messages/MessageList";
 import useCustomArrayAsync from "../../../hooks/useCustomArrayAsync";
 import { IMessage, useChat } from "../../../context/ChatContext";
 import { useSocket } from "../../../context/SocketContext";
-import MessengerError from "../messages/MessengerError";
+import MessengerError from "../MessengerError";
 import useUsers from "../../../context/UsersContext";
 
 export default function Room({ roomId }: { roomId: string }) {

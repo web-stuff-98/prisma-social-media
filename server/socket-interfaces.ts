@@ -1,4 +1,4 @@
-import { PrivateMessage, RoomMessage } from "@prisma/client";
+import { Post, PrivateMessage, RoomMessage } from "@prisma/client";
 
 export interface ServerToClientEvents {
   comment_added: (
@@ -11,7 +11,7 @@ export interface ServerToClientEvents {
   comment_updated: (message: string, commentId: string, uid: string) => void;
   comment_deleted: (commentId: string, uid: string) => void;
   comment_liked: (addLike: boolean, uid: string) => void;
-  
+
   private_message: (id: string, data: PrivateMessage) => void;
   private_message_attachment_progress: (progress: number, id: string) => void;
   private_message_attachment_failed: (id: string) => void;
@@ -26,10 +26,7 @@ export interface ServerToClientEvents {
   private_message_request_attachment_upload: (id: string) => void;
   private_conversation_deleted: (conversationWith: string) => void;
 
-  room_message: (
-    id: string,
-    data: RoomMessage,
-  ) => void;
+  room_message: (id: string, data: RoomMessage) => void;
   room_message_request_attachment_upload: (id: string) => void;
   room_message_error: (error: string) => void;
   room_message_update: (id: string, data: Partial<RoomMessage>) => void;
@@ -45,12 +42,17 @@ export interface ServerToClientEvents {
   room_created: (id: string, name: string, authorId: string) => void;
   room_deleted: (id: string) => void;
   room_updated: (id: string, name: string) => void;
-  
+
+  post_created: (id: string, data: Post) => void;
+  post_deleted: (id: string) => void;
+  post_updated: (id: string, data: Partial<Post>) => void;
+
   user_subscription_update: (data: {
     id: string;
     name?: string;
     online?: boolean;
   }) => void;
+  post_subscription_update: (data: Partial<Post>) => void;
 }
 
 export interface ClientToServerEvents {

@@ -7,7 +7,7 @@ export default function MessengerError({
   closeError: Function;
 }) {
   return (
-    <div className="w-full p-2 flex text-rose-600 bg-foreground text-md bg-black border-t dark:border-stone-800 items-center justify-between">
+    <div style={{background:"rgba(0,0,0,0.5)"}} className="w-full p-2 flex text-rose-600 text-md border-t dark:border-stone-800 items-center justify-between">
       <div className="flex items-center justify-center gap-2">
         <MdError className="text-2xl" />
         {err}
