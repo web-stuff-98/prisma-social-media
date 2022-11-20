@@ -121,7 +121,10 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
         >
           {err ? (
             <div className="text-rose-500 flex items-center gap-1 text-xs pr-0.5 leading-5 tracking-tight drop-shadow">
-              <MdError className="text-xl" />
+              <MdError
+                className="text-xl"
+                style={{ minWidth: "1.5rem", minHeight: "1.5rem" }}
+              />
               {err}
             </div>
           ) : (
@@ -149,9 +152,9 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                       className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
                       aria-label="Invite"
                       onClick={() =>
-                        kickUserFromRoom(openedInChatroom, uid).catch((e) =>
-                          setErr(`${e}`)
-                        ).finally(() => setCursorInside(false))
+                        kickUserFromRoom(openedInChatroom, uid)
+                          .catch((e) => setErr(`${e}`))
+                          .finally(() => setCursorInside(false))
                       }
                     >
                       <GiBootKick className="text-lg my-1 ml-0.5" />
@@ -163,9 +166,11 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                       className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
                       aria-label="Ban"
                       onClick={() =>
-                        banUserFromRoom(openedInChatroom, uid).catch((e:Error) => {
-                          setErr(`${e}`);
-                        }).finally(() => setCursorInside(false))
+                        banUserFromRoom(openedInChatroom, uid)
+                          .catch((e: Error) => {
+                            setErr(`${e}`);
+                          })
+                          .finally(() => setCursorInside(false))
                       }
                     >
                       <ImBlocked className="text-lg my-1 ml-0.5" />
