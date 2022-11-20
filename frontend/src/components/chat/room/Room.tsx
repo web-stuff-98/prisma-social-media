@@ -92,7 +92,6 @@ export default function Room({ roomId }: { roomId: string }) {
   const handleUploadAttachment = useCallback(
     async (id: string) => {
       try {
-        console.log("UPLOAD");
         if (!fileRef.current) throw new Error("No file selected");
         await uploadRoomMessageAttachment(
           id,

@@ -296,7 +296,8 @@ export default class PostsDAO {
       comment.id,
       parentId,
       uid,
-      name
+      name,
+      comment.post.slug
     );
     return comment;
   }
@@ -310,7 +311,7 @@ export default class PostsDAO {
       select: { userId: true, post: { select: { slug: true } } },
     });
     if (!userId || userId !== uid) return false;
-    io.to(slug).emit("comment_updated", message, commentId, uid);
+    io.to(slug).emit("comment_updated", message, commentId, uid, slug);
     return await prisma.comment.update({
       where: { id: commentId },
       data: { message },
@@ -327,7 +328,7 @@ export default class PostsDAO {
       select: { userId: true, post: { select: { slug: true } } },
     });
     if (!userId || userId !== uid) return false;
-    io.to(slug).emit("comment_deleted", commentId, uid);
+    io.to(slug).emit("comment_deleted", commentId, uid, slug);
     return await prisma.comment.delete({
       where: { id: commentId },
       select: { id: true },
@@ -349,7 +350,12 @@ export default class PostsDAO {
         data,
         include: { comment: { select: { post: { select: { slug: true } } } } },
       });
-      io.to(newLike.comment.post.slug).emit("comment_liked", true, uid);
+      io.to(newLike.comment.post.slug).emit(
+        "comment_liked",
+        true,
+        uid,
+        newLike.comment.post.slug
+      );
       return { addLike: true };
     } else {
       await prisma.commentLike.delete({
@@ -357,7 +363,12 @@ export default class PostsDAO {
           userId_commentId: data,
         },
       });
-      io.to(like.comment.post.slug).emit("comment_liked", false, uid);
+      io.to(like.comment.post.slug).emit(
+        "comment_liked",
+        false,
+        uid,
+        like.comment.post.slug
+      );
       return { addLike: false };
     }
   }

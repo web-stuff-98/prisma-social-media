@@ -13,6 +13,8 @@ import { CommentForm } from "./CommentForm";
 import { useAuth } from "../../context/AuthContext";
 import User from "../User";
 import useUsers from "../../context/UsersContext";
+import { usePosts } from "../../context/PostsContext";
+import { useParams } from "react-router-dom";
 
 export function Comment({
   id,
@@ -49,16 +51,22 @@ This function is from the web dev simplified video. It is supposed to be in the 
     return { loading, error, value, execute };
   }
 
+  const { slug } = useParams();
+
   const [areChildrenHidden, setAreChildrenHidden] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const {
-    post,
     getReplies,
     createLocalComment,
     updateLocalComment,
     deleteLocalComment,
     toggleLocalCommentLike,
   } = usePost();
+
+  const { getPostData } = usePosts();
+
+  const post = getPostData(String(slug));
+
   const createCommentFn = useAsyncFn(createComment);
   const updateCommentFn = useAsyncFn(updateComment);
   const deleteCommentFn = useAsyncFn(deleteComment);
@@ -67,7 +75,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
 
   const { user: currentUser } = useAuth();
   const { setReplyingTo, replyingTo } = usePost();
-  const { getUserData } =useUsers()
+  const { getUserData } = useUsers();
 
   const onCommentReply = (message: string) =>
     createCommentFn

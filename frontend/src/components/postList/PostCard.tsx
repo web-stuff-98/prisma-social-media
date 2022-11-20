@@ -1,22 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { IPost } from "../../context/PostContext";
+import { IPost, usePosts } from "../../context/PostsContext";
 import useUsers from "../../context/UsersContext";
 import User from "../User";
 
 export default function PostCard({
   post,
-  handleToggleLike,
-  handleToggleShare,
 }: {
   post: IPost;
-  handleToggleLike: (postId: string) => void;
-  handleToggleShare: (postId: string) => void;
 }) {
   const navigate = useNavigate();
   const { getUserData } = useUsers();
 
-  const handleLikeIconClicked = () => handleToggleLike(post.id);
-  const handleShareIconClicked = () => handleToggleShare(post.id);
+  const { likePost, sharePost } = usePosts()
 
   return (
     <article
@@ -44,8 +39,8 @@ export default function PostCard({
           shared={post.sharedByMe}
           shares={post.shares}
           date={new Date(String(post.createdAt))}
-          onLikeClick={handleLikeIconClicked}
-          onShareClick={handleShareIconClicked}
+          onLikeClick={() => likePost(post.id)}
+          onShareClick={() => sharePost(post.id)}
           by
           uid={String(post.author.id)}
           user={getUserData(String(post.author.id))}

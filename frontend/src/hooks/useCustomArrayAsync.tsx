@@ -64,7 +64,6 @@ const useCustomArrayAsync = (
 
   const { socket } = useSocket();
   const handleItemCreated = useCallback((id: string, data: any) => {
-    console.log("Item created : " + JSON.stringify(id))
     setValue((p) =>
       sortFunction
         ? [...p, { id, ...data }].sort(sortFunction).filter(filterFunction)
@@ -72,7 +71,6 @@ const useCustomArrayAsync = (
     );
   }, []);
   const handleItemUpdated = useCallback((id: string, data: any) => {
-    console.log("Item updated : " + JSON.stringify(data))
     setValue((p) => {
       let newVal = p;
       const i = p.findIndex((item) => item.id === id);

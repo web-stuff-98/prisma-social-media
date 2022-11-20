@@ -143,12 +143,10 @@ export default class ChatDAO {
 
   static async deletePrivateMessage(id: string, uid: string) {
     let msg: PrivateMessage;
-    console.log("Del private msg");
     try {
       msg = await prisma.privateMessage.findUniqueOrThrow({
         where: { id },
       });
-      console.log("DELETED MSG : " + JSON.stringify(msg));
     } catch (e) {
       throw new Error("Message does not exist");
     }
@@ -303,13 +301,11 @@ export default class ChatDAO {
         //only send progress updates every 2nd event, otherwise it's probably too many emits
         if (p === 2) {
           p = 0;
-          console.log("PROGRESS EMIT TO " + message.recipientId);
           io.to(`inbox=${message.recipientId}`).emit(
             "private_message_attachment_progress",
             e.loaded / bytes,
             message.id
           );
-          console.log("PROGRESS EMIT TO " + message.senderId);
           io.to(`inbox=${message.senderId}`).emit(
             "private_message_attachment_progress",
             e.loaded / bytes,
@@ -467,7 +463,6 @@ export default class ChatDAO {
 
   static async joinRoom(roomId: string, uid: string) {
     let room;
-    console.log("JOIN ROOM : " + roomId);
     room = await prisma.room
       .findUniqueOrThrow({
         where: { id: roomId },
@@ -481,7 +476,6 @@ export default class ChatDAO {
       });
     if (!room.public)
       throw new Error("You need an invitation to join this room");
-    console.log(JSON.stringify(room.banned));
     if (room.banned.find((banned) => banned.id === uid))
       throw new Error("You are banned from this room");
     await prisma.room.update({
@@ -514,7 +508,6 @@ export default class ChatDAO {
     });
     const usersSocket = await getUserSocket(uid);
     if (usersSocket) usersSocket.join(`room=${roomId}`);
-    console.log("JOINED");
   }
 
   static async banUser(roomId: string, bannedUid: string, bannerUid: string) {
@@ -726,7 +719,6 @@ export default class ChatDAO {
       createdAt: msg.createdAt,
       updatedAt: msg.updatedAt,
     });
-    console.log("Send message from " + msg.senderId + " to " + roomId);
     if (hasAttachment) {
       io.to(`room=${roomId}`).emit(
         "room_message_request_attachment_upload",
@@ -737,7 +729,6 @@ export default class ChatDAO {
 
   static async updateRoomMessage(id: string, message: string, uid: string) {
     let msg;
-    console.log("Update message : " + id);
     try {
       msg = await prisma.roomMessage.findUniqueOrThrow({
         where: { id },
@@ -759,7 +750,6 @@ export default class ChatDAO {
 
   static async deleteRoomMessage(id: string, uid: string) {
     let msg: RoomMessage;
-    console.log("Delete message : " + id);
     try {
       msg = await prisma.roomMessage.findUniqueOrThrow({
         where: { id },

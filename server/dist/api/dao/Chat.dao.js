@@ -154,12 +154,10 @@ class ChatDAO {
     static deletePrivateMessage(id, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             let msg;
-            console.log("Del private msg");
             try {
                 msg = yield prisma_1.default.privateMessage.findUniqueOrThrow({
                     where: { id },
                 });
-                console.log("DELETED MSG : " + JSON.stringify(msg));
             }
             catch (e) {
                 throw new Error("Message does not exist");
@@ -308,9 +306,7 @@ class ChatDAO {
                     //only send progress updates every 2nd event, otherwise it's probably too many emits
                     if (p === 2) {
                         p = 0;
-                        console.log("PROGRESS EMIT TO " + message.recipientId);
                         __1.io.to(`inbox=${message.recipientId}`).emit("private_message_attachment_progress", e.loaded / bytes, message.id);
-                        console.log("PROGRESS EMIT TO " + message.senderId);
                         __1.io.to(`inbox=${message.senderId}`).emit("private_message_attachment_progress", e.loaded / bytes, message.id);
                     }
                 });
@@ -451,7 +447,6 @@ class ChatDAO {
     static joinRoom(roomId, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             let room;
-            console.log("JOIN ROOM : " + roomId);
             room = yield prisma_1.default.room
                 .findUniqueOrThrow({
                 where: { id: roomId },
@@ -465,7 +460,6 @@ class ChatDAO {
             });
             if (!room.public)
                 throw new Error("You need an invitation to join this room");
-            console.log(JSON.stringify(room.banned));
             if (room.banned.find((banned) => banned.id === uid))
                 throw new Error("You are banned from this room");
             yield prisma_1.default.room.update({
@@ -499,7 +493,6 @@ class ChatDAO {
             const usersSocket = yield (0, getUserSocket_1.default)(uid);
             if (usersSocket)
                 usersSocket.join(`room=${roomId}`);
-            console.log("JOINED");
         });
     }
     static banUser(roomId, bannedUid, bannerUid) {
@@ -714,7 +707,6 @@ class ChatDAO {
                 createdAt: msg.createdAt,
                 updatedAt: msg.updatedAt,
             });
-            console.log("Send message from " + msg.senderId + " to " + roomId);
             if (hasAttachment) {
                 __1.io.to(`room=${roomId}`).emit("room_message_request_attachment_upload", msg.id);
             }
@@ -723,7 +715,6 @@ class ChatDAO {
     static updateRoomMessage(id, message, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             let msg;
-            console.log("Update message : " + id);
             try {
                 msg = yield prisma_1.default.roomMessage.findUniqueOrThrow({
                     where: { id },
@@ -748,7 +739,6 @@ class ChatDAO {
     static deleteRoomMessage(id, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             let msg;
-            console.log("Delete message : " + id);
             try {
                 msg = yield prisma_1.default.roomMessage.findUniqueOrThrow({
                     where: { id },

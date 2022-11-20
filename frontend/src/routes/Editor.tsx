@@ -1,11 +1,9 @@
 import { useFormik } from "formik";
-import { useState, useEffect, useRef } from "react";
-import type { ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
 import { createPost, getPost, updatePost } from "../services/posts";
 import { ImSpinner8 } from "react-icons/im";
-import { IPost } from "../context/PostContext";
 
 export default function Editor() {
   const { slug } = useParams();

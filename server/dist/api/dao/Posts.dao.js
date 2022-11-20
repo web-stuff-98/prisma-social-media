@@ -268,7 +268,7 @@ class PostsDAO {
                 },
             })
                 .then((comment) => (Object.assign(Object.assign({}, comment), { likeCount: 0, likedByMe: false })));
-            __1.io.to(comment.post.slug).emit("comment_added", message, comment.id, parentId, uid, name);
+            __1.io.to(comment.post.slug).emit("comment_added", message, comment.id, parentId, uid, name, comment.post.slug);
             return comment;
         });
     }
@@ -280,7 +280,7 @@ class PostsDAO {
             });
             if (!userId || userId !== uid)
                 return false;
-            __1.io.to(slug).emit("comment_updated", message, commentId, uid);
+            __1.io.to(slug).emit("comment_updated", message, commentId, uid, slug);
             return yield prisma_1.default.comment.update({
                 where: { id: commentId },
                 data: { message },
@@ -296,7 +296,7 @@ class PostsDAO {
             });
             if (!userId || userId !== uid)
                 return false;
-            __1.io.to(slug).emit("comment_deleted", commentId, uid);
+            __1.io.to(slug).emit("comment_deleted", commentId, uid, slug);
             return yield prisma_1.default.comment.delete({
                 where: { id: commentId },
                 select: { id: true },
@@ -319,7 +319,7 @@ class PostsDAO {
                     data,
                     include: { comment: { select: { post: { select: { slug: true } } } } },
                 });
-                __1.io.to(newLike.comment.post.slug).emit("comment_liked", true, uid);
+                __1.io.to(newLike.comment.post.slug).emit("comment_liked", true, uid, newLike.comment.post.slug);
                 return { addLike: true };
             }
             else {
@@ -328,7 +328,7 @@ class PostsDAO {
                         userId_commentId: data,
                     },
                 });
-                __1.io.to(like.comment.post.slug).emit("comment_liked", false, uid);
+                __1.io.to(like.comment.post.slug).emit("comment_liked", false, uid, like.comment.post.slug);
                 return { addLike: false };
             }
         });

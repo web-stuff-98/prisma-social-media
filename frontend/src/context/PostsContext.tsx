@@ -1,15 +1,32 @@
 import { createContext, useContext, useCallback, useState } from "react";
 import type { ReactNode } from "react";
-import { IPost } from "./PostContext";
 import useCustomArrayAsync from "../hooks/useCustomArrayAsync";
-import { getPosts, toggleLike, toggleShare } from "../services/posts";
+import { getPost, getPosts, toggleLike, toggleShare } from "../services/posts";
 import { useSocket } from "./SocketContext";
 import useUsers from "./UsersContext";
+import { IPostComment } from "./PostContext";
+
+export interface IPost {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  body: string;
+  author: { id: string };
+  comments?: IPostComment[];
+  createdAt?: string;
+  slug: string;
+  likedByMe?: boolean;
+  sharedByMe?: boolean;
+  likes: number;
+  shares: number;
+}
 
 /*
     Posts context.
-    I am going to make everything live, but currently only comments are
-    updated live via socket.io
+    Works in the same way as the UsersContext to receive live updates from
+    socket.io depending on whether or not the post is visible. Comments
+    are updated from PostContext (this is PostsContext with an S)
 
     This context is not currently being used, I will hook it up eventually
 
@@ -27,11 +44,11 @@ const PostsContext = createContext<{
   posts: IPost[];
   error: unknown;
   status: "idle" | "pending" | "success" | "error";
-  likePost: (pid: string) => void;
-  sharePost: (pid: string) => void;
-  getPostData: (pid: string) => void;
-  openPost: (pid: string) => void;
-  closePost: (pid: string) => void;
+  likePost: (id: string) => void;
+  sharePost: (id: string) => void;
+  getPostData: (slug: string) => IPost | undefined;
+  openPost: (slug: string) => void;
+  closePost: (slug: string) => void;
   postsOpen: string[];
 }>({
   posts: [],
@@ -39,7 +56,7 @@ const PostsContext = createContext<{
   status: "idle",
   likePost: () => {},
   sharePost: () => {},
-  getPostData: () => {},
+  getPostData: () => undefined,
   openPost: () => {},
   closePost: () => {},
   postsOpen: [],
@@ -68,36 +85,49 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
 
   const openPost = (slug: string) => {
     const post: IPost = posts.find((p) => p.slug === slug);
-    cacheUserData(post.author.id);
-    socket?.emit("open_post", post.slug);
+    socket?.emit("open_post_comments", post.slug);
     setPostsOpen((p) => [...p.filter((checkSlug) => checkSlug !== slug), slug]);
+    getPost(slug)
+      .then((post) => {
+        cacheUserData(post.author.id);
+        setPosts((p) => [...p.filter((p) => p.slug !== slug), post]);
+      })
+      .catch((e) => setErr(`${e}`));
   };
   const closePost = (slug: string) => {
     const post: IPost = posts.find((p) => p.slug === slug);
-    socket?.emit("leave_post", post.slug);
+    socket?.emit("leave_post_comments", post.slug);
     setPostsOpen((p) => [...p.filter((checkSlug) => checkSlug !== slug)]);
   };
 
-  const likePost = async (pid: string) => {
+  const likePost = async (id: string) => {
     try {
-      await toggleLike(pid);
+      const { addLike } = await toggleLike(id);
       setPosts((p) => {
         let newPosts = p;
-        const i = newPosts.find((p) => p.id === pid);
-        newPosts[i] = { ...newPosts[i], likedByMe: !newPosts[i].likedByMe };
+        const i = newPosts.findIndex((p) => p.id === id);
+        newPosts[i] = {
+          ...newPosts[i],
+          likedByMe: !newPosts[i].likedByMe,
+          likes: newPosts[i].likes + (addLike ? 1 : -1),
+        };
         return [...newPosts];
       });
     } catch (e) {
       setErr(`${e}`);
     }
   };
-  const sharePost = async (pid: string) => {
+  const sharePost = async (id: string) => {
     try {
-      await toggleShare(pid);
+      const { addShare } = await toggleShare(id);
       setPosts((p) => {
         let newPosts = p;
-        const i = newPosts.find((p) => p.id === pid);
-        newPosts[i] = { ...newPosts[i], sharedByMe: !newPosts[i].sharedByMe };
+        const i = newPosts.findIndex((p) => p.id === id);
+        newPosts[i] = {
+          ...newPosts[i],
+          sharedByMe: !newPosts[i].sharedByMe,
+          shares: newPosts[i].shares + (addShare ? 1 : -1),
+        };
         return [...newPosts];
       });
     } catch (e) {
@@ -105,10 +135,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // probably wont end up using this
   const getPostData = useCallback(
-    (pid: string) => {
-      return posts.find((p: IPost) => p.id === pid);
+    (slug: string) => {
+      return posts.find((p: IPost) => p.slug === slug);
     },
     [posts]
   );

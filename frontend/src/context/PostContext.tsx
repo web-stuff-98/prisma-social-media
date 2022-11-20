@@ -8,26 +8,10 @@ import {
   useState,
 } from "react";
 import { useParams } from "react-router-dom";
-import { getPost, toggleLike, toggleShare } from "../services/posts";
 import { IUser, useAuth } from "./AuthContext";
+import { usePosts } from "./PostsContext";
 import { useSocket } from "./SocketContext";
 import useUsers from "./UsersContext";
-
-export interface IPost {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  body: string;
-  author: { id: string };
-  comments?: IPostComment[];
-  createdAt?: string;
-  slug: string;
-  likedByMe?: boolean;
-  sharedByMe?: boolean;
-  likes: number;
-  shares: number;
-}
 
 export interface IPostComment {
   likeCount: number;
@@ -40,7 +24,6 @@ export interface IPostComment {
 }
 
 const Context = createContext<{
-  post?: IPost;
   rootComments: any[];
   getReplies: (parentId: string) => IPostComment[];
   createLocalComment: (comment: IPostComment) => void;
@@ -49,10 +32,7 @@ const Context = createContext<{
   toggleLocalCommentLike: (id: string, addLike: boolean) => void;
   replyingTo: string;
   setReplyingTo: (to: string) => void;
-  handleLikeClicked: () => void;
-  handleShareClicked: () => void;
 }>({
-  post: undefined,
   rootComments: [],
   getReplies: () => [],
   createLocalComment: () => {},
@@ -61,8 +41,6 @@ const Context = createContext<{
   toggleLocalCommentLike: () => {},
   replyingTo: "",
   setReplyingTo: () => {},
-  handleLikeClicked: () => {},
-  handleShareClicked: () => {},
 });
 
 export const usePost = () => useContext(Context);
@@ -71,61 +49,18 @@ export function PostProvider({ children }: { children: ReactNode }) {
   const { slug } = useParams();
   const { socket } = useSocket();
   const { user } = useAuth();
+  const { getPostData } = usePosts()
   const { cacheUserData } = useUsers();
 
-  const [status, setStatus] = useState("pending");
-  const [error, setError] = useState("");
-  const [post, setPost] = useState<IPost>({
-    id: "123",
-    title: "post",
-    body: "body",
-    author: { id: "123" },
-    tags: [],
-    comments: [],
-    slug: "123",
-    description: "",
-    likes: 0,
-    shares: 0,
-    likedByMe: false,
-    sharedByMe: false,
-  });
+  const post = getPostData(String(slug))
+
   const [replyingTo, setReplyingTo] = useState("");
 
-  const handleLikeClicked = async () => {
-    try {
-      await toggleLike(post.id);
-      setPost((p) => ({ ...p, likedByMe: !p.likedByMe }));
-    } catch (e) {
-      setError(`${e}`);
-    }
-  };
-
-  const handleShareClicked = async () => {
-    try {
-      await toggleShare(post.id);
-      setPost((p) => ({ ...p, sharedByMe: !p.sharedByMe }));
-    } catch (e) {
-      setError(`${e}`);
-    }
-  };
-
   useEffect(() => {
-    getPost(String(slug))
-      .then((post) => {
-        setPost(post);
-        setError("");
-        setStatus("success");
-        cacheUserData(post.author.id);
-        if (socket) {
-          socket.emit("open_post", String(slug));
-        }
-      })
-      .catch((e) => {
-        setStatus("error");
-        setError(`${e}`);
-      });
+    if (socket)
+      socket.emit("open_post_comments", String(slug));
     return () => {
-      if (socket) socket.emit("leave_post", String(slug));
+      if (socket) socket.emit("leave_post_comments", String(slug));
     };
   }, [slug]);
 
@@ -244,26 +179,17 @@ export function PostProvider({ children }: { children: ReactNode }) {
   return (
     <Context.Provider
       value={{
-        post,
         rootComments: commentsByParentId["null"],
         getReplies,
         createLocalComment,
         updateLocalComment,
         deleteLocalComment,
         toggleLocalCommentLike,
-        handleLikeClicked,
-        handleShareClicked,
         replyingTo,
         setReplyingTo,
       }}
     >
-      {status === "pending" ? (
-        <h1>Loading</h1>
-      ) : error ? (
-        <h1 className="text-rose-600">{error}</h1>
-      ) : (
-        children
-      )}
+      {children}
     </Context.Provider>
   );
 }

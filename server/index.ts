@@ -61,8 +61,8 @@ io.on("connection", (socket) => {
 
   socket.on("subscribe_to_user", (uid) => socket.join(uid));
   socket.on("unsubscribe_to_user", (uid) => socket.leave(uid));
-  socket.on("open_post", (slug) => socket.join(slug));
-  socket.on("leave_post", (slug) => socket.leave(slug));
+  socket.on("open_post_comments", (slug) => socket.join(slug));
+  socket.on("leave_post_comments", (slug) => socket.leave(slug));
 
   socket.on("disconnect", () => {
     if (socket.data.user)

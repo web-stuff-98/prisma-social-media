@@ -78,7 +78,7 @@ export default function User({
   const containerRef = useRef(null);
 
   const observer = new IntersectionObserver(([entry]) => {
-    if (!uid) return;
+    if (!uid || uid === "undefined") return;
     if (entry.isIntersecting) {
       userEnteredView(uid);
       cacheUserData(uid);
@@ -191,7 +191,7 @@ export default function User({
               bottom: 0,
               right: 0,
             }}
-            className="absolute rounded-full shadow bg-green-500"
+            className="absolute rounded-full shadow border border-black bg-green-500"
           />
         )}
       </div>

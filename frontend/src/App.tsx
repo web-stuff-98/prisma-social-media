@@ -6,6 +6,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
 import { UsersProvider } from "./context/UsersContext";
 import { UserdropdownProvider } from "./context/UserdropdownContext";
+import { PostsProvider } from "./context/PostsContext";
 
 function App() {
   return (
@@ -16,7 +17,9 @@ function App() {
             <UserdropdownProvider>
               <AuthProvider>
                 <ChatProvider>
-                  <Layout />
+                  <PostsProvider>
+                    <Layout />
+                  </PostsProvider>
                 </ChatProvider>
               </AuthProvider>
             </UserdropdownProvider>

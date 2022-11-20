@@ -30,11 +30,11 @@ export default function Layout() {
       </div>
       <main
         className={
-          pathname === "/login" ||
+          pathname.includes("/editor") ? "container mx-auto mt-navheader w-full h-screen bg-foreground dark:bg-darkmodeForeground border-l border-r border-stone-200 shadow dark:border-stone-800 px-2" : (pathname === "/login" ||
           pathname === "/register" ||
           pathname === "/settings"
-            ? "w-fit p-2 rounded my-auto shadow-xl mx-auto bg-foreground dark:bg-darkmodeForeground border border-stone-300 dark:border-stone-800"
-            : "container mx-auto mt-navheader h-screen"
+            ? "w-fit rounded my-auto shadow-xl mx-auto bg-foreground dark:bg-darkmodeForeground border border-stone-300 dark:border-stone-800"
+            : "container mx-auto mt-navheader w-full h-screen")
         }
       >
         <Outlet />

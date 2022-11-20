@@ -120,7 +120,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
           className="bg-foreground font-rubik text-white dark:bg-darkmodeForeground fixed border dark:border-stone-800 rounded shadow-md p-1"
         >
           {err ? (
-            <div className="text-rose-500 flex items-center gap-1 text-xs pr-0.5 leading-5 tracking-tight drop-shadow">
+            <div className="text-rose-500 flex items-center gap-1 text-xs font-bold pr-0.5 leading-5 tracking-tight drop-shadow">
               <MdError
                 className="text-xl"
                 style={{ minWidth: "1.5rem", minHeight: "1.5rem" }}

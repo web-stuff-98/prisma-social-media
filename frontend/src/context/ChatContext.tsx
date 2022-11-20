@@ -140,7 +140,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }}
         className={`mx-auto font-rubik dark:text-white relative ${
           chatOpen
-            ? "bg-foreground dark:bg-darkmodeForeground border dark:border-stone-800"
+            ? "bg-foreground dark:bg-darkmodeForeground border border-zinc-600 dark:border-stone-800"
             : "bg-transparent"
         } rounded p-3 ${chatOpen ? "shadow-xl" : ""}`}
       >

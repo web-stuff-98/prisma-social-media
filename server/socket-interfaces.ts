@@ -6,11 +6,17 @@ export interface ServerToClientEvents {
     commentId: string,
     parentId: string | undefined,
     uid: string,
-    name: string
+    name: string,
+    postSlug: string
   ) => void;
-  comment_updated: (message: string, commentId: string, uid: string) => void;
-  comment_deleted: (commentId: string, uid: string) => void;
-  comment_liked: (addLike: boolean, uid: string) => void;
+  comment_updated: (
+    message: string,
+    commentId: string,
+    uid: string,
+    postSlug: string
+  ) => void;
+  comment_deleted: (commentId: string, uid: string, postSlug: string) => void;
+  comment_liked: (addLike: boolean, uid: string, postSlug: string) => void;
 
   private_message: (id: string, data: PrivateMessage) => void;
   private_message_attachment_progress: (progress: number, id: string) => void;
@@ -56,8 +62,8 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  open_post: (slug: string) => void;
-  leave_post: (slug: string) => void;
+  open_post_comments: (slug: string) => void;
+  leave_post_comments: (slug: string) => void;
 
   subscribe_to_user: (uid: string) => void;
   unsubscribe_to_user: (uid: string) => void;

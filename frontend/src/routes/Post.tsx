@@ -1,19 +1,21 @@
+import { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import { useParams } from "react-router-dom";
 import { Comment } from "../components/comments/Comment";
 import { CommentForm } from "../components/comments/CommentForm";
 import User from "../components/User";
 import { usePost } from "../context/PostContext";
+import { usePosts } from "../context/PostsContext";
 import useUsers from "../context/UsersContext";
 import { createComment } from "../services/comments";
 
 export default function Post() {
-  const {
-    post,
-    rootComments,
-    createLocalComment,
-    handleLikeClicked,
-    handleShareClicked,
-  } = usePost();
+  const { rootComments, createLocalComment } = usePost();
+
+  const { getPostData, likePost, sharePost, openPost, closePost } = usePosts();
+  const { slug } = useParams();
+
+  const post = getPostData(String(slug));
 
   const { getUserData } = useUsers();
 
@@ -22,11 +24,19 @@ export default function Post() {
       createLocalComment
     );
 
+  useEffect(() => {
+    if (slug) {
+      openPost(slug);
+    }
+    return () => {
+      closePost(String(slug));
+    };
+  }, [slug]);
+
   return (
-    <>
-      <h1 className="text-4xl mt-4 text-center font-bold">{post?.title}</h1>
+    <div className="w-full px-2 py-2">
       <div className="flex dark:border-stone-800 items-center pb-2 my-2">
-        <p className="text-lg leading-5 font-bold mr-4">{post?.description}</p>
+        <h1 className="text-4xl font-bold mr-4">{post?.title}</h1>
         <div className="my-2 w-fit">
           <User
             uid={String(post?.author.id)}
@@ -35,9 +45,9 @@ export default function Post() {
             likes={post?.likes}
             shared={post?.sharedByMe}
             shares={post?.shares}
-            onLikeClick={handleLikeClicked}
-            onShareClick={handleShareClicked}
-            date={new Date(String(post?.createdAt))}
+            onLikeClick={() => likePost(String(post?.id))}
+            onShareClick={() => sharePost(String(post?.id))}
+            date={post?.createdAt ? new Date(post.createdAt) : undefined}
             by
             user={getUserData(String(post?.author.id))}
             reverse
@@ -73,7 +83,7 @@ export default function Post() {
           onSubmit={postComment}
         />
         {rootComments != null && rootComments.length > 0 && (
-          <div className="mt-4 w-full">
+          <div className="mt-4 pb-1 w-full">
             {rootComments.map((comment) => (
               <div key={comment.id} className="w-full h-full">
                 <Comment {...comment} />
@@ -82,6 +92,6 @@ export default function Post() {
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }
