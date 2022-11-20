@@ -105,8 +105,8 @@ const deletePrivateMessage = (messageId: string) =>
     method: "DELETE",
     withCredentials: true,
     data: {
-      messageId
-    }
+      messageId,
+    },
   });
 const updatePrivateMessage = (messageId: string, message: string) =>
   makeRequest(`/api/chat/conversation/message`, {
@@ -114,7 +114,7 @@ const updatePrivateMessage = (messageId: string, message: string) =>
     withCredentials: true,
     data: {
       message,
-      messageId
+      messageId,
     },
   });
 const uploadPrivateMessageAttachment = async (
@@ -142,7 +142,7 @@ const searchUsers = (name: string) =>
 const getRooms = () => makeRequest(`/api/chat/room`, { withCredentials: true });
 const getRoom = (roomId: string) =>
   makeRequest(`/api/chat/room/${roomId}`, { withCredentials: true });
-  const getRoomMessages = (roomId: string) =>
+const getRoomMessages = (roomId: string) =>
   makeRequest(`/api/chat/room/${roomId}/messages`, { withCredentials: true });
 
 export {

@@ -1,4 +1,10 @@
-import { useContext, createContext, useState, useEffect } from "react";
+import {
+  useContext,
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import type { ReactNode, CSSProperties } from "react";
 
 import { BsFillChatRightFill } from "react-icons/bs";
@@ -12,6 +18,8 @@ import UsersChatrooms from "../components/chat/usersChatrooms/UsersChatrooms";
 import useScrollbarSize from "react-scrollbar-size";
 import Rooms from "../components/chat/rooms/Rooms";
 import Room from "../components/chat/room/Room";
+import useCustomArrayAsync from "../hooks/useCustomArrayAsync";
+import { getRooms } from "../services/chat";
 
 export type ChatSection =
   | "Menu"
@@ -25,7 +33,7 @@ export type ChatSection =
 export interface IMessage {
   id: string;
   message: string;
-  senderId: string;
+  senderId?: string; //if there is no senderId that means its a server message
   recipientId?: string; //recipientId doesn't actually exist for messages retrieved from getConversations (it might though now I'm not sure)
   hasAttachment: boolean;
   attachmentType?: string;
@@ -44,6 +52,11 @@ export interface IRoom {
   public: boolean;
 }
 
+export type MessengerError = {
+  msg: string;
+  show: boolean;
+};
+
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { width: scrollBarWidth } = useScrollbarSize();
 
@@ -51,10 +64,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const [chatOpen, setchatOpen] = useState(false);
   const [chatSection, setChatSectionState] = useState<ChatSection>("Menu");
-  const setChatSection = (to:ChatSection) => {
-    setChatSectionState(to)
-    if(to === "Menu") setTopText("")
-  }
+  const setChatSection = (to: ChatSection) => {
+    setChatSectionState(to);
+    if (to === "Menu") setTopText("");
+  };
 
   const [conversationWith, setConversationWith] = useState("");
   const [roomId, setRoomId] = useState("");
@@ -85,6 +98,19 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [chatSection]);
 
+  const {
+    error: roomsError,
+    status: roomsStatus,
+    value: rooms,
+    setValueState: setRooms,
+  } = useCustomArrayAsync(
+    getRooms,
+    [],
+    "room_updated",
+    "room_deleted",
+    "room_created"
+  );
+
   return (
     <ChatContext.Provider
       value={{
@@ -97,6 +123,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         streamWindowsOffset,
         topText,
         setTopText,
+        rooms,
+        roomsError,
+        roomsStatus,
       }}
     >
       <div
@@ -166,6 +195,9 @@ const ChatContext = createContext<{
   streamWindowsOffset: { left: string; bottom: string };
   topText: string;
   setTopText: (to: string) => void;
+  roomsStatus: "idle" | "pending" | "success" | "error";
+  roomsError: unknown;
+  rooms: IRoom[];
 }>({
   chatOpen: false,
   openChat: () => {},
@@ -176,6 +208,9 @@ const ChatContext = createContext<{
   streamWindowsOffset: { left: "0", bottom: "0" },
   topText: "",
   setTopText: () => {},
+  roomsStatus: "idle",
+  roomsError: null,
+  rooms: [],
 });
 
 export const useChat = () => useContext(ChatContext);

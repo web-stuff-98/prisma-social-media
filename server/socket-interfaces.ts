@@ -45,12 +45,7 @@ export interface ServerToClientEvents {
   room_created: (id: string, name: string, authorId: string) => void;
   room_deleted: (id: string) => void;
   room_updated: (id: string, name: string) => void;
-
-  room_user_joined: (uid:string) => void;
-  room_user_left: (uid:string) => void;
-  room_user_banned: (uid:string) => void;
-  room_user_kicked: (uid:string) => void;
-
+  
   user_subscription_update: (data: {
     id: string;
     name?: string;

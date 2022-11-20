@@ -15,6 +15,7 @@ import { useSocket } from "../../../context/SocketContext";
 import { IMessage, useChat } from "../../../context/ChatContext";
 
 import MessageList from "../messages/MessageList";
+import MessengerError from "../messages/MessengerError";
 
 export default function ConversationSection({
   conversationWith = "",
@@ -39,17 +40,23 @@ export default function ConversationSection({
   const { socket } = useSocket();
   const { setChatSection } = useChat();
 
+  const [err, setErr] = useState("");
+
   const messagesBottomRef = useRef<HTMLSpanElement>(null);
   const [messageInput, setMessageInput] = useState("");
   const handleMessageInput = (e: ChangeEvent<HTMLInputElement>) =>
     setMessageInput(e.target.value);
   const handleMessageSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await sendPrivateMessage(
-      messageInput,
-      conversationWith,
-      file ? true : false
-    );
+    try {
+      await sendPrivateMessage(
+        messageInput,
+        conversationWith,
+        file ? true : false
+      );
+    } catch (e) {
+      setErr(`${e}`);
+    }
   };
   const [file, setFile] = useState<File>();
   const fileRef = useRef<File>();
@@ -161,11 +168,9 @@ export default function ConversationSection({
   );
 
   return (
-    <div
-      style={{ maxHeight: "50vh" }}
-      className="w-full h-full flex flex-col items-between justify-between"
-    >
+    <div className="w-full h-full flex flex-col items-between justify-between">
       <MessageList messages={messages} status={status} error={error} />
+      {err && <MessengerError err={err} closeError={() => setErr("")} />}
       <MessageForm
         file={file}
         handleFileInput={handleFileInput}

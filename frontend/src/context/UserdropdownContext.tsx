@@ -9,15 +9,19 @@ import {
 import type { ReactNode, ChangeEvent, FormEvent } from "react";
 import { MdError, MdSend } from "react-icons/md";
 import { BsFillChatRightFill } from "react-icons/bs";
-import { AiFillPlusSquare } from "react-icons/ai";
+import { GiBootKick } from "react-icons/gi";
 import { CgProfile } from "react-icons/cg";
 import { ImBlocked } from "react-icons/im";
-import { sendPrivateMessage } from "../services/chat";
+import {
+  banUserFromRoom,
+  kickUserFromRoom,
+  sendPrivateMessage,
+} from "../services/chat";
 import useScrollbarSize from "react-scrollbar-size";
 
 const UserdropdownContext = createContext<{
   clickPos: { left: string; top: string };
-  openUserdropdown: (uid: string) => void;
+  openUserdropdown: (uid: string, inChatroom?: string) => void;
 }>({
   clickPos: { left: "0", top: "0" },
   openUserdropdown: () => {},
@@ -36,8 +40,11 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
   const [err, setErr] = useState("");
   const [section, setSection] = useState<MenuSection>("Menu");
 
-  const openUserdropdown = (uid: string) => {
+  const [openedInChatroom, setOpenedInChatroom] = useState("");
+
+  const openUserdropdown = (uid: string, chatroomId?: string) => {
     setUid(uid);
+    setOpenedInChatroom(chatroomId || "");
   };
 
   const directMessageSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -52,6 +59,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
     setCursorInside(false);
     setSection("Menu");
     setErr("");
+    setOpenedInChatroom("");
   };
 
   const adjust = useCallback(
@@ -100,9 +108,6 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("mousedown", clickedWhileOutside);
   }, [cursorInside]);
 
-  const inviteUser = () => {};
-  const blockUser = () => {};
-
   return (
     <UserdropdownContext.Provider value={{ clickPos, openUserdropdown }}>
       {uid && (
@@ -112,7 +117,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
           onMouseLeave={() => setCursorInside(false)}
           aria-label="User dropdown"
           style={{ left: clickPos.left, top: clickPos.top, zIndex: 100 }}
-          className="bg-foreground text-white dark:bg-darkmodeForeground fixed border dark:border-stone-800 rounded shadow-md p-1"
+          className="bg-foreground font-rubik text-white dark:bg-darkmodeForeground fixed border dark:border-stone-800 rounded shadow-md p-1"
         >
           {err ? (
             <div className="text-rose-500 flex items-center gap-1 text-xs pr-0.5 drop-shadow">
@@ -125,36 +130,48 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                 <div className="flex flex-col gap-1">
                   <button
                     aria-label="Message"
-                    className="text-xs rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
+                    className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
                     onClick={() => setSection("DirectMessage")}
                   >
-                    <BsFillChatRightFill className="text-md" />
+                    <BsFillChatRightFill className="text-lg my-1 ml-0.5" />
                     Chat
                   </button>
                   <button
-                    className="text-xs rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
+                    className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
                     aria-label="Block"
-                    onClick={() => blockUser()}
+                    onClick={() => console.log("oof")}
                   >
-                    <CgProfile className="text-md" />
+                    <CgProfile className="text-lg my-1 ml-0.5" />
                     Profile
                   </button>
-                  <button
-                    className="text-xs rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
-                    aria-label="Invite"
-                    onClick={() => inviteUser()}
-                  >
-                    <AiFillPlusSquare className="text-md" />
-                    Invite
-                  </button>
-                  <button
-                    className="text-xs rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
-                    aria-label="Block"
-                    onClick={() => blockUser()}
-                  >
-                    <ImBlocked className="text-md" />
-                    Block
-                  </button>
+                  {openedInChatroom && (
+                    <button
+                      className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
+                      aria-label="Invite"
+                      onClick={() =>
+                        kickUserFromRoom(openedInChatroom, uid).catch((e) =>
+                          setErr(`${e}`)
+                        )
+                      }
+                    >
+                      <GiBootKick className="text-lg my-1 ml-0.5" />
+                      Kick
+                    </button>
+                  )}
+                  {openedInChatroom && (
+                    <button
+                      className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
+                      aria-label="Ban"
+                      onClick={() =>
+                        banUserFromRoom(openedInChatroom, uid).catch((e) =>
+                          setErr(`${e}`)
+                        )
+                      }
+                    >
+                      <ImBlocked className="text-lg my-1 ml-0.5" />
+                      Ban
+                    </button>
+                  )}
                 </div>
               )}
               {section === "DirectMessage" && (

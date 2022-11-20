@@ -13,15 +13,27 @@ export default function Layout() {
   }, [iState]);
 
   return (
-    <div className="w-screen font-rubik h-screen overflow-x-hidden bg-background dark:bg-darkmodeBackground text-black dark:text-white flex flex-col">
-      <div style={{ top: "0", zIndex:"99" }} className="sticky w-full shadow-md flex flex-col">
+    <div
+      style={{
+        backgroundImage: iState.darkMode
+          ? "url(./bgt_dark.png)"
+          : "url(./bgt.png)",
+      }}
+      className="w-screen font-rubik h-screen overflow-x-hidden text-black dark:text-white flex flex-col"
+    >
+      <div
+        style={{ top: "0", zIndex: "99" }}
+        className="sticky w-full shadow-md flex flex-col"
+      >
         <Header />
         <Nav />
       </div>
       <main
         className={
-          pathname === "/login" || pathname === "/register"
-            ? "w-fit p-2 rounded my-auto shadow-xl mx-auto bg-foreground dark:bg-darkmodeForeground border border-black dark:border-stone-800"
+          pathname === "/login" ||
+          pathname === "/register" ||
+          pathname === "/settings"
+            ? "w-fit p-2 rounded my-auto shadow-xl mx-auto bg-foreground dark:bg-darkmodeForeground border border-stone-300 dark:border-stone-800"
             : "container mx-auto mt-navheader h-screen"
         }
       >
@@ -30,3 +42,5 @@ export default function Layout() {
     </div>
   );
 }
+
+//bg-background dark:bg-darkmodeBackground

@@ -3,18 +3,37 @@ import MessageForm from "../messages/MessageForm";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { ChangeEvent, FormEvent } from "react";
 import {
-  getRoom,
   getRoomMessages,
   sendRoomMessage,
   uploadRoomMessageAttachment,
 } from "../../../services/chat";
 import MessageList from "../messages/MessageList";
 import useCustomArrayAsync from "../../../hooks/useCustomArrayAsync";
-import { IMessage } from "../../../context/ChatContext";
+import { IMessage, useChat } from "../../../context/ChatContext";
 import { useSocket } from "../../../context/SocketContext";
+import MessengerError from "../messages/MessengerError";
+import useUsers from "../../../context/UsersContext";
 
 export default function Room({ roomId }: { roomId: string }) {
   const { socket } = useSocket();
+  const { getUserData } = useUsers();
+  const { rooms, setTopText } = useChat();
+
+  const getAuthorName = useCallback(
+    (uid: string) => {
+      const u = getUserData(uid);
+      return u ? u.name : "";
+    },
+    [rooms]
+  );
+
+  const [err, setErr] = useState("");
+
+  useEffect(() => {
+    const found = rooms.find((r) => r.id === roomId);
+    if (found)
+      setTopText(`${found?.name} - by ${getAuthorName(found.authorId)}`);
+  }, [rooms]);
 
   const [messageInput, setMessageInput] = useState("");
   const handleMessageInput = (e: ChangeEvent<HTMLInputElement>) =>
@@ -31,7 +50,11 @@ export default function Room({ roomId }: { roomId: string }) {
 
   const handleMessageSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await sendRoomMessage(messageInput, roomId, file ? true : false);
+    try {
+      await sendRoomMessage(messageInput, roomId, file ? true : false);
+    } catch (e) {
+      setErr(`${e}`);
+    }
   };
 
   const {
@@ -69,7 +92,7 @@ export default function Room({ roomId }: { roomId: string }) {
   const handleUploadAttachment = useCallback(
     async (id: string) => {
       try {
-        console.log("UPLOAD")
+        console.log("UPLOAD");
         if (!fileRef.current) throw new Error("No file selected");
         await uploadRoomMessageAttachment(
           id,
@@ -128,7 +151,8 @@ export default function Room({ roomId }: { roomId: string }) {
 
   return (
     <div>
-      <MessageList isRoom messages={messages} error={error} status={status} />
+      <MessageList roomId={roomId} messages={messages} error={error} status={status} />
+      {err && <MessengerError closeError={() => setErr("")} err={err} />}
       <MessageForm
         handleMessageSubmit={handleMessageSubmit}
         messageInput={messageInput}

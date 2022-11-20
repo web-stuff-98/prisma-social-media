@@ -42,8 +42,8 @@ export default function Settings() {
 
   const hiddenPfpInput = useRef<HTMLInputElement>(null);
   return (
-    <div className="w-full flex flex-col">
-      <div className="flex mt-6 gap-2 items-center justify-center text-center">
+    <div style={{maxWidth:"15pc"}} className="w-full flex flex-col">
+      <div className="flex gap-2 items-center justify-center text-center">
         <RiSettings4Fill className="text-3xl" />
         <h1 className="text-center py-2 font-extrabold">Settings</h1>
       </div>
@@ -62,7 +62,7 @@ export default function Settings() {
           user={getUserData(String(user?.id))}
         />
       )}
-      <p className="text-center">
+      <p className="text-center text-xs leading-4 mt-1">
         Click on your profile picture to select a new one, then press confirm to
         update it.
       </p>

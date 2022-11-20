@@ -13,7 +13,8 @@
     }
 
     input, textarea {
-        @apply bg-transparent;
+        @apply bg-foreground;
+        @apply dark:bg-darkmodeForeground;
         @apply border;
         @apply dark:border-stone-800;
         @apply px-1;

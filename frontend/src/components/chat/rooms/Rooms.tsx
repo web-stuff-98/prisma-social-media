@@ -1,36 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 
-import { createRoom, getRooms, joinRoom } from "../../../services/chat";
+import { createRoom, joinRoom } from "../../../services/chat";
 
 import { MdError, MdSend } from "react-icons/md";
 import { ImSpinner8 } from "react-icons/im";
 import { TbDoorOff, TbDoor } from "react-icons/tb";
 
-import useCustomArrayAsync from "../../../hooks/useCustomArrayAsync";
 import { IconBtn } from "../../IconBtn";
 import { IRoom, useChat } from "../../../context/ChatContext";
-import { useSocket } from "../../../context/SocketContext";
 
 export default function Rooms({
   setRoomId = () => {},
 }: {
   setRoomId: (to: string) => void;
 }) {
-  const { socket } = useSocket();
-  const { setChatSection } = useChat();
-
-  const {
-    error: roomsError,
-    status: roomsStatus,
-    value: rooms,
-  } = useCustomArrayAsync(
-    getRooms,
-    [],
-    "room_updated",
-    "room_deleted",
-    "room_created"
-  );
+  const { setChatSection, rooms, roomsError, roomsStatus } = useChat();
 
   const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: false });
 
@@ -46,25 +31,6 @@ export default function Rooms({
     }
   };
 
-  const handleUserJoined = useCallback((uid: string) => {}, []);
-  const handleUserLeft = useCallback((uid: string) => {}, []);
-  const handleUserKicked = useCallback((uid: string) => {}, []);
-  const handleUserBanned = useCallback((uid: string) => {}, []);
-
-  useEffect(() => {
-    if (!socket) return;
-    socket.on("room_user_joined", handleUserJoined);
-    socket.on("room_user_banned", handleUserBanned);
-    socket.on("room_user_kicked", handleUserKicked);
-    socket.on("room_user_left", handleUserLeft);
-    return () => {
-      socket.off("room_user_joined", handleUserJoined);
-      socket.off("room_user_banned", handleUserBanned);
-      socket.off("room_user_kicked", handleUserKicked);
-      socket.off("room_user_left", handleUserLeft);
-    };
-  }, [socket]);
-
   return (
     <>
       <div className="flex flex-col items-center justify-start">
@@ -73,8 +39,10 @@ export default function Rooms({
         )}
         {(resMsg.err || roomsStatus === "error") && (
           <div className="text-lg text-rose-600 drop-shadow text-center flex flex-col items-center justify-center">
-            <MdError className="text-2xl" />
-            {resMsg.err || roomsError}
+            <>
+              <MdError className="text-2xl" />
+              {resMsg.err || roomsError}
+            </>
           </div>
         )}
         <div className="flex flex-col justify-start gap-1 p-1 w-full">

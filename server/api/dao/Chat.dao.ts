@@ -61,7 +61,7 @@ export default class ChatDAO {
     recipientId: string,
     senderId: string
   ) {
-    if (recipientId === senderId) 
+    if (recipientId === senderId)
       throw new Error("You cannot message yourself");
     const msg = hasAttachment
       ? await prisma.privateMessage.create({
@@ -467,7 +467,7 @@ export default class ChatDAO {
 
   static async joinRoom(roomId: string, uid: string) {
     let room;
-    console.log("JOIN ROOM : " + roomId)
+    console.log("JOIN ROOM : " + roomId);
     room = await prisma.room
       .findUniqueOrThrow({
         where: { id: roomId },
@@ -487,9 +487,33 @@ export default class ChatDAO {
       where: { id: roomId },
       data: { members: { connect: { id: uid } } },
     });
-    io.to(`room=${roomId}`).emit("room_user_joined", uid);
+    const user = await prisma.user.findFirst({
+      where: { id: uid },
+      select: { name: true },
+    });
+    const serverMessage = await prisma.roomMessage.create({
+      data: {
+        message: `${user?.name} has joined the room`,
+        hasAttachment: false,
+        roomId,
+      },
+    });
+    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+      id: serverMessage.id,
+      roomId,
+      message: serverMessage.message,
+      senderId: "",
+      hasAttachment: false,
+      attachmentPending: null,
+      attachmentKey: null,
+      attachmentError: null,
+      attachmentType: null,
+      createdAt: serverMessage.createdAt,
+      updatedAt: serverMessage.updatedAt,
+    });
     const usersSocket = await getUserSocket(uid);
     if (usersSocket) usersSocket.join(`room=${roomId}`);
+    console.log("JOINED")
   }
 
   static async banUser(roomId: string, bannedUid: string, bannerUid: string) {
@@ -517,7 +541,34 @@ export default class ChatDAO {
         members: { disconnect: { id: bannedUid } },
       },
     });
-    io.to(`room=${roomId}`).emit("room_user_banned", bannedUid);
+    const bannedUser = await prisma.user.findFirst({
+      where: { id: bannedUid },
+      select: { name: true },
+    });
+    const bannerUser = await prisma.user.findFirst({
+      where: { id: bannerUid },
+      select: { name: true },
+    });
+    const serverMessage = await prisma.roomMessage.create({
+      data: {
+        message: `${bannedUser?.name} was banned from the room by ${bannerUser?.name}`,
+        hasAttachment: false,
+        roomId,
+      },
+    });
+    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+      id: serverMessage.id,
+      roomId,
+      message: serverMessage.message,
+      senderId: "",
+      hasAttachment: false,
+      attachmentPending: null,
+      attachmentKey: null,
+      attachmentError: null,
+      attachmentType: null,
+      createdAt: serverMessage.createdAt,
+      updatedAt: serverMessage.updatedAt,
+    });
     const usersSocket = await getUserSocket(bannedUid);
     if (usersSocket) usersSocket.leave(`room=${roomId}`);
   }
@@ -548,7 +599,34 @@ export default class ChatDAO {
         members: { disconnect: { id: kickedUid } },
       },
     });
-    io.to(`room=${roomId}`).emit("room_user_kicked", kickedUid);
+    const kickedUser = await prisma.user.findFirst({
+      where: { id: kickedUid },
+      select: { name: true },
+    });
+    const kickerUser = await prisma.user.findFirst({
+      where: { id: kickerUid },
+      select: { name: true },
+    });
+    const serverMessage = await prisma.roomMessage.create({
+      data: {
+        message: `${kickedUser?.name} was kicked from the room by ${kickerUser?.name}`,
+        hasAttachment: false,
+        roomId,
+      },
+    });
+    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+      id: serverMessage.id,
+      roomId,
+      message: serverMessage.message,
+      senderId: "",
+      hasAttachment: false,
+      attachmentPending: null,
+      attachmentKey: null,
+      attachmentError: null,
+      attachmentType: null,
+      createdAt: serverMessage.createdAt,
+      updatedAt: serverMessage.updatedAt,
+    });
     const usersSocket = await getUserSocket(kickedUid);
     if (usersSocket) usersSocket.leave(`room=${roomId}`);
   }
@@ -574,7 +652,30 @@ export default class ChatDAO {
       throw new Error(
         "You cannot leave a room which you are already banned from"
       );
-    io.to(`room=${roomId}`).emit("room_user_left", uid);
+    const user = await prisma.user.findFirst({
+      where: { id: uid },
+      select: { name: true },
+    });
+    const serverMessage = await prisma.roomMessage.create({
+      data: {
+        message: `${user?.name} has left the room`,
+        hasAttachment: false,
+        roomId,
+      },
+    });
+    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+      id: serverMessage.id,
+      roomId,
+      message: serverMessage.message,
+      senderId: "",
+      hasAttachment: false,
+      attachmentPending: null,
+      attachmentKey: null,
+      attachmentError: null,
+      attachmentType: null,
+      createdAt: serverMessage.createdAt,
+      updatedAt: serverMessage.updatedAt,
+    });
     const usersSocket = await getUserSocket(uid);
     if (usersSocket) usersSocket.leave(`room=${roomId}`);
   }
@@ -588,8 +689,8 @@ export default class ChatDAO {
   static async sendRoomMessage(
     message: string,
     hasAttachment: boolean | undefined,
-    senderId:string,
-    roomId:string
+    senderId: string,
+    roomId: string
   ) {
     const msg = hasAttachment
       ? await prisma.roomMessage.create({
@@ -624,6 +725,7 @@ export default class ChatDAO {
       createdAt: msg.createdAt,
       updatedAt: msg.updatedAt,
     });
+    console.log("Send message from " + msg.senderId + " to " + roomId);
     if (hasAttachment) {
       io.to(`room=${roomId}`).emit(
         "room_message_request_attachment_upload",
@@ -634,7 +736,7 @@ export default class ChatDAO {
 
   static async updateRoomMessage(id: string, message: string, uid: string) {
     let msg;
-    console.log("Update message : " + id)
+    console.log("Update message : " + id);
     try {
       msg = await prisma.roomMessage.findUniqueOrThrow({
         where: { id },
@@ -656,7 +758,7 @@ export default class ChatDAO {
 
   static async deleteRoomMessage(id: string, uid: string) {
     let msg: RoomMessage;
-    console.log("Delete message : " + id)
+    console.log("Delete message : " + id);
     try {
       msg = await prisma.roomMessage.findUniqueOrThrow({
         where: { id },

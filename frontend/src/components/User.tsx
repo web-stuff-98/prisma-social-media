@@ -24,10 +24,10 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 export default function User({
   date,
   user,
-  by = undefined,
+  by,
   uid,
-  editDeleteIcons = false,
-  likeShareIcons = false,
+  editDeleteIcons,
+  likeShareIcons,
   onEditClick,
   onDeleteClick,
   onLikeClick,
@@ -38,14 +38,16 @@ export default function User({
   shares = 0,
   isEditing,
   isDeleting,
-  reverse = false,
-  overridePfpOnClick = undefined,
+  reverse,
+  overridePfpOnClick,
   overridePfpBase64 = "",
   pfpCursor,
+  isServer,
+  chatroomId,
 }: {
   date?: Date;
   user?: IUser;
-  uid: string;
+  uid?: string; //there has to be a UID for every real user, but the server has no uid
   by?: boolean;
   editDeleteIcons?: boolean;
   onEditClick?: () => void;
@@ -63,6 +65,8 @@ export default function User({
   overridePfpOnClick?: Function;
   overridePfpBase64?: string;
   pfpCursor?: boolean;
+  isServer?: boolean;
+  chatroomId?: string;
 }) {
   const { openUserdropdown } = useUserdropdown();
   const { user: currentUser } = useAuth();
@@ -74,6 +78,7 @@ export default function User({
   const containerRef = useRef(null);
 
   const observer = new IntersectionObserver(([entry]) => {
+    if (!uid) return;
     if (entry.isIntersecting) {
       userEnteredView(uid);
       cacheUserData(uid);
@@ -84,7 +89,7 @@ export default function User({
   useLayoutEffect(() => {
     observer.observe(containerRef.current!);
     return () => {
-      userLeftView(uid);
+      if (uid) userLeftView(uid);
       observer.disconnect();
     };
     //putting the ref in the dependency array was the only way to get this working properly for some reason
@@ -122,24 +127,28 @@ export default function User({
             Icon={liked ? AiFillLike : AiOutlineLike}
             aria-label={liked ? "Unlike" : "Like"}
           >
-            {likes > 0 && <div
-              style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
-              className="absolute text-sm drop-shadow-md leading-3 tracking-tighter"
-            >
-              {likes}
-            </div>}
+            {likes > 0 && (
+              <div
+                style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
+                className="absolute text-sm drop-shadow-md leading-3 tracking-tighter"
+              >
+                {likes}
+              </div>
+            )}
           </IconBtn>
           <IconBtn
             onClick={onShareClick}
             Icon={shared ? BsShareFill : BsShare}
             aria-label="Share"
           >
-            {shares > 0 && <div
-              style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
-              className="absolute text-sm drop-shadow-md leading-3 tracking-tighter"
-            >
-              {shares}
-            </div>}
+            {shares > 0 && (
+              <div
+                style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
+                className="absolute text-sm drop-shadow-md leading-3 tracking-tighter"
+              >
+                {shares}
+              </div>
+            )}
           </IconBtn>
         </div>
       )}
@@ -151,8 +160,12 @@ export default function User({
               }
             : {
                 backgroundImage: `url(${
-                  user?.pfp ||
-                  (iState.darkMode ? "./pfp_dark.png" : "./pfp.png")
+                  isServer
+                    ? iState.darkMode
+                      ? "./pfp_server_dark.png"
+                      : "./pfp_server.png"
+                    : user?.pfp ||
+                      (iState.darkMode ? "./pfp_dark.png" : "./pfp.png")
                 })`,
               }),
           backgroundPosition: "center",
@@ -162,13 +175,13 @@ export default function User({
           if (overridePfpOnClick) {
             return overridePfpOnClick();
           }
-          if (currentUser)
-            if (user?.id !== currentUser?.id) openUserdropdown(uid);
+          if (currentUser && uid)
+            if (user?.id !== currentUser?.id) openUserdropdown(uid, chatroomId);
         }}
-        className={`${date ? "w-10 h-10" : "w-8 h-8"} relative ${
-          ((currentUser && user?.id !== currentUser?.id) || pfpCursor) &&
+        className={`${date && !isServer ? "w-10 h-10" : "w-8 h-8"} relative ${
+          ((currentUser && user?.id !== currentUser?.id && uid) || pfpCursor) &&
           "cursor-pointer"
-        } rounded-full border border-black dark:border-zinc-600 shadow-md`}
+        } rounded-full border border-zinc-500 dark:border-zinc-600 shadow-md`}
       >
         {user?.online && (
           <span

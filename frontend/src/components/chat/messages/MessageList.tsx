@@ -10,12 +10,12 @@ export default function MessageList({
   messages,
   status,
   error,
-  isRoom,
+  roomId,
 }: {
   messages: IMessage[];
   status: "idle" | "pending" | "error" | "success";
   error: unknown;
-  isRoom?: boolean;
+  roomId?: string;
 }) {
   const messagesBottomRef = useRef<HTMLSpanElement>(null);
 
@@ -29,13 +29,17 @@ export default function MessageList({
   return (
     <>
       {status === "success" && (
-        <div className="relative overflow-y-scroll flex flex-col gap-2 grow">
+        <div
+          style={{ maxHeight: "20pc" }}
+          className="relative overflow-y-scroll flex flex-col gap-2 grow"
+        >
           {messages.length > 0 &&
             messages.map((msg) => (
               <Message
                 {...msg}
-                isRoomMessage={isRoom}
+                roomId={roomId}
                 key={msg.id}
+                isServerMessage={!msg.senderId}
                 otherUser={msg.senderId !== user?.id}
               />
             ))}

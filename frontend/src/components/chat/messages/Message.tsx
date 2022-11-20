@@ -34,7 +34,8 @@ export default function Message({
   attachmentPending,
   createdAt,
   updatedAt,
-  isRoomMessage,
+  roomId,
+  isServerMessage,
 }: {
   otherUser?: boolean;
   attachmentType?: string;
@@ -45,10 +46,11 @@ export default function Message({
   hasAttachment: boolean;
   message: string;
   id: string;
-  senderId: string;
+  senderId?: string; //if there is no senderId that means its a message from the server
   createdAt: Date;
   updatedAt: Date;
-  isRoomMessage?: boolean;
+  roomId?: string;
+  isServerMessage?: boolean;
 }) {
   const { getUserData } = useUsers();
 
@@ -70,7 +72,7 @@ export default function Message({
 
   const updateMessage = () => {
     if (messageEditInput !== message)
-      isRoomMessage
+      roomId
         ? updateRoomMessage(id, messageEditInput)
         : updatePrivateMessage(id, messageEditInput);
     setIsEditing(false);
@@ -86,10 +88,12 @@ export default function Message({
       {/* username, pfp & date */}
       <div className="p-1">
         <User
-          reverse={otherUser}
+          reverse={isServerMessage || otherUser}
           date={new Date(createdAt)}
-          uid={senderId}
-          user={getUserData(senderId)}
+          uid={senderId!}
+          user={isServerMessage ? undefined : getUserData(senderId!)}
+          isServer={isServerMessage}
+          chatroomId={roomId}
         />
       </div>
       {/* message content & attachment */}
@@ -187,9 +191,7 @@ export default function Message({
           {!isEditing && (
             <button
               onClick={() => {
-                isRoomMessage
-                  ? deleteRoomMessage(id)
-                  : deletePrivateMessage(id);
+                roomId ? deleteRoomMessage(id) : deletePrivateMessage(id);
                 /*socket?.emit("private_message_delete", id);*/
               }}
               className="px-0 bg-transparent"

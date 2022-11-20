@@ -141,8 +141,9 @@ model RoomMessage {
   message String
   id      String @id @default(cuid())
 
-  sender   User   @relation(name: "sentRoomMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  senderId String
+  //if there is no sender relation that means it is a message from the server
+  sender   User?   @relation(name: "sentRoomMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId String?
 
   room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   roomId String
@@ -155,6 +156,4 @@ model RoomMessage {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([senderId])
 }

@@ -471,10 +471,34 @@ class ChatDAO {
                 where: { id: roomId },
                 data: { members: { connect: { id: uid } } },
             });
-            __1.io.to(`room=${roomId}`).emit("room_user_joined", uid);
+            const user = yield prisma_1.default.user.findFirst({
+                where: { id: uid },
+                select: { name: true },
+            });
+            const serverMessage = yield prisma_1.default.roomMessage.create({
+                data: {
+                    message: `${user === null || user === void 0 ? void 0 : user.name} has joined the room`,
+                    hasAttachment: false,
+                    roomId,
+                },
+            });
+            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+                id: serverMessage.id,
+                roomId,
+                message: serverMessage.message,
+                senderId: "",
+                hasAttachment: false,
+                attachmentPending: null,
+                attachmentKey: null,
+                attachmentError: null,
+                attachmentType: null,
+                createdAt: serverMessage.createdAt,
+                updatedAt: serverMessage.updatedAt,
+            });
             const usersSocket = yield (0, getUserSocket_1.default)(uid);
             if (usersSocket)
                 usersSocket.join(`room=${roomId}`);
+            console.log("JOINED");
         });
     }
     static banUser(roomId, bannedUid, bannerUid) {
@@ -504,7 +528,34 @@ class ChatDAO {
                     members: { disconnect: { id: bannedUid } },
                 },
             });
-            __1.io.to(`room=${roomId}`).emit("room_user_banned", bannedUid);
+            const bannedUser = yield prisma_1.default.user.findFirst({
+                where: { id: bannedUid },
+                select: { name: true },
+            });
+            const bannerUser = yield prisma_1.default.user.findFirst({
+                where: { id: bannerUid },
+                select: { name: true },
+            });
+            const serverMessage = yield prisma_1.default.roomMessage.create({
+                data: {
+                    message: `${bannedUser === null || bannedUser === void 0 ? void 0 : bannedUser.name} was banned from the room by ${bannerUser === null || bannerUser === void 0 ? void 0 : bannerUser.name}`,
+                    hasAttachment: false,
+                    roomId,
+                },
+            });
+            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+                id: serverMessage.id,
+                roomId,
+                message: serverMessage.message,
+                senderId: "",
+                hasAttachment: false,
+                attachmentPending: null,
+                attachmentKey: null,
+                attachmentError: null,
+                attachmentType: null,
+                createdAt: serverMessage.createdAt,
+                updatedAt: serverMessage.updatedAt,
+            });
             const usersSocket = yield (0, getUserSocket_1.default)(bannedUid);
             if (usersSocket)
                 usersSocket.leave(`room=${roomId}`);
@@ -538,7 +589,34 @@ class ChatDAO {
                     members: { disconnect: { id: kickedUid } },
                 },
             });
-            __1.io.to(`room=${roomId}`).emit("room_user_kicked", kickedUid);
+            const kickedUser = yield prisma_1.default.user.findFirst({
+                where: { id: kickedUid },
+                select: { name: true },
+            });
+            const kickerUser = yield prisma_1.default.user.findFirst({
+                where: { id: kickerUid },
+                select: { name: true },
+            });
+            const serverMessage = yield prisma_1.default.roomMessage.create({
+                data: {
+                    message: `${kickedUser === null || kickedUser === void 0 ? void 0 : kickedUser.name} was kicked from the room by ${kickerUser === null || kickerUser === void 0 ? void 0 : kickerUser.name}`,
+                    hasAttachment: false,
+                    roomId,
+                },
+            });
+            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+                id: serverMessage.id,
+                roomId,
+                message: serverMessage.message,
+                senderId: "",
+                hasAttachment: false,
+                attachmentPending: null,
+                attachmentKey: null,
+                attachmentError: null,
+                attachmentType: null,
+                createdAt: serverMessage.createdAt,
+                updatedAt: serverMessage.updatedAt,
+            });
             const usersSocket = yield (0, getUserSocket_1.default)(kickedUid);
             if (usersSocket)
                 usersSocket.leave(`room=${roomId}`);
@@ -564,7 +642,30 @@ class ChatDAO {
                 throw new Error("You cannot leave a room that you aren't already in");
             if (room.banned.includes({ id: uid }))
                 throw new Error("You cannot leave a room which you are already banned from");
-            __1.io.to(`room=${roomId}`).emit("room_user_left", uid);
+            const user = yield prisma_1.default.user.findFirst({
+                where: { id: uid },
+                select: { name: true },
+            });
+            const serverMessage = yield prisma_1.default.roomMessage.create({
+                data: {
+                    message: `${user === null || user === void 0 ? void 0 : user.name} has left the room`,
+                    hasAttachment: false,
+                    roomId,
+                },
+            });
+            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+                id: serverMessage.id,
+                roomId,
+                message: serverMessage.message,
+                senderId: "",
+                hasAttachment: false,
+                attachmentPending: null,
+                attachmentKey: null,
+                attachmentError: null,
+                attachmentType: null,
+                createdAt: serverMessage.createdAt,
+                updatedAt: serverMessage.updatedAt,
+            });
             const usersSocket = yield (0, getUserSocket_1.default)(uid);
             if (usersSocket)
                 usersSocket.leave(`room=${roomId}`);
@@ -612,6 +713,7 @@ class ChatDAO {
                 createdAt: msg.createdAt,
                 updatedAt: msg.updatedAt,
             });
+            console.log("Send message from " + msg.senderId + " to " + roomId);
             if (hasAttachment) {
                 __1.io.to(`room=${roomId}`).emit("room_message_request_attachment_upload", msg.id);
             }
