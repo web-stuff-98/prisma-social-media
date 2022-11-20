@@ -95,7 +95,7 @@ export default function Home() {
             />
           ))}
       </div>
-      <div className="bg-foreground border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-4">
+      <div className="bg-foreground border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-2">
         <h2 className="whitespace-nowrap font-extrabold tracking-tight text-md">
           Popular posts
         </h2>
@@ -104,7 +104,7 @@ export default function Home() {
             popularPosts.length > 0 &&
             popularPosts.map((post) => (
               <>
-                <article className="leading-5 py-1 px-1 my-1 mb-4 rounded-sm">
+                <article className="leading-5 py-1 my-1 mb-4 rounded-sm">
                   <h3 className="font-bold text-sm leading-4 my-0">{post.title}</h3>
                   <p className="text-xs leading-3 my-0 mb-2 py-0.5">{post.description}<a href={`/posts/${post.slug}`} className="font-bold italic cursor-pointer"> - Read more</a></p>
                   <User likeShareIcons likes={post.likes} shares={post.shares} uid={post.author.id} user={getUserData(post.author.id)}/>

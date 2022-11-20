@@ -127,6 +127,9 @@ class PostsDAO {
                                     id: true,
                                 },
                             },
+                            _count: {
+                                select: { likes: true },
+                            },
                         },
                     },
                     author: {
@@ -162,6 +165,9 @@ class PostsDAO {
                                 select: {
                                     id: true,
                                 },
+                            },
+                            _count: {
+                                select: { likes: true },
                             },
                         },
                     },

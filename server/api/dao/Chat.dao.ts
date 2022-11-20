@@ -1,20 +1,19 @@
 import prisma from "../../utils/prisma";
 
-import busboy, { Busboy } from "busboy";
+import busboy from "busboy";
 import internal from "stream";
 
 import mime from "mime-types";
 
 import AWS from "../../utils/aws";
 import { io } from "../..";
-import { PrivateMessage, Room, RoomMessage, User } from "@prisma/client";
-import isUserInRoom from "../../utils/isUserInRoom";
+import { PrivateMessage, Room, RoomMessage } from "@prisma/client";
 import getUserSocket from "../../utils/getUserSocket";
 
 export default class MessengerDAO {
   static async searchUser(name: string) {
     /*
-    You could easily make this faster, couldn't be bothered to figure out the proper way of doing it at the time
+    You could easily make this function faster, couldn't be bothered to figure out the proper way of doing it at the time
     It also returns the user making the search, which is maybe shouldn't dos
     */
     const inQ = await prisma.user
@@ -157,22 +156,24 @@ export default class MessengerDAO {
       throw new Error("Message does not exist");
     }
     if (msg.senderId !== uid) throw new Error("Unauthorized");
+    if (msg.hasAttachment) {
+      const s3 = new AWS.S3();
+      await new Promise<void>((resolve, reject) =>
+        s3.deleteObject(
+          {
+            Bucket: "prisma-socialmedia",
+            Key: String(msg.attachmentKey),
+          },
+          (err, data) => {
+            if (err) reject(err);
+            resolve();
+          }
+        )
+      );
+    }
     await prisma.privateMessage.delete({
       where: { id },
     });
-    const s3 = new AWS.S3();
-    await new Promise<void>((resolve, reject) =>
-      s3.deleteObject(
-        {
-          Bucket: "prisma-socialmedia",
-          Key: String(msg.attachmentKey),
-        },
-        (err, data) => {
-          if (err) reject(err);
-          resolve();
-        }
-      )
-    );
     io.to(`inbox=${msg.recipientId}`).emit("private_message_delete", id);
     io.to(`inbox=${msg.senderId}`).emit("private_message_delete", id);
   }
@@ -439,7 +440,7 @@ export default class MessengerDAO {
       select: { _count: true },
     });
     if (usersRooms.length > 8) throw new Error("Max 8 rooms");
-    const room = await prisma.room.create({
+    const { id } = await prisma.room.create({
       data: {
         authorId,
         name,
@@ -451,7 +452,7 @@ export default class MessengerDAO {
         createdAt: true,
       },
     });
-    io.emit("room_created", room.id, room.name, authorId);
+    io.emit("room_created", id, name, authorId);
   }
 
   static async joinRoom(roomId: string, uid: string) {

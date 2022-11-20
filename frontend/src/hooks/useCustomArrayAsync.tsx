@@ -5,16 +5,15 @@ import { useSocket } from "../context/SocketContext";
 
 /*
 
-This script could be optimized....
+This script could be optimized a bit.... filter function is being called with
+return true even if there is no filter function being used
 
 https://usehooks.com/useCustomArrayAsync/
 
-^ This hook, except I modified it so that it can be used in combination with socket.io to receive updates for items in an array.
+^ This hook, except I modified it so that it can be used with socket.io to receive updates for items in an array.
   It will immediately run the asyncFunction to get the array, then it will use the update,create and delete item socket events
-  to update the array. You can also pass it a sorting function, a filter function & use setValueState to immediately set the
-  array value state using the normal (previousValue) => [...your return value from your callback]. If you are having problems
-  with dates for example then you can also set stringifyAndParse to true to make sure that your dates are actually dates and
-  not strings.
+  to update the array. You can also pass it a sorting function, a filter function & use setValueState to set the
+  array value state using the normal (previousValue) => [...your return value from your callback].
 
 The value is supposed to be for example a list of users, rooms, messages, et cet. It will listen for
 your create new item event, update item event and your delete item event on the socket.

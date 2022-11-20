@@ -69,16 +69,21 @@ export default function ConversationSection({
     );
   };
   const [file, setFile] = useState<File>();
-  const fileRef = useRef<File>()
+  const fileRef = useRef<File>();
   const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.files)
+    console.log(e.target.files);
     if (e.target.files?.length === 0) return;
     const f = e.target?.files![0];
-    console.log(`F : ` + f)
+    console.log(`F : ` + f);
     if (!f) return;
     setFile(f);
-    fileRef.current = f
+    fileRef.current = f;
   };
+
+  useEffect(() => {
+    if (!messages) return;
+    messagesBottomRef.current?.scrollIntoView({ behavior: "auto" });
+  }, [messages]);
 
   useEffect(() => {
     if (!socket) return;
@@ -121,13 +126,22 @@ export default function ConversationSection({
     };
   }, [socket]);
 
-  const handleUploadConversationAttachment = useCallback(async (id: string) => {
-    console.log("Upload attachment for : " + id + " | File : " + fileRef.current);
-    try {
-      if (!fileRef.current) throw new Error("No file selected");
-      await uploadPrivateMessageAttachment(id, fileRef.current.size, fileRef.current).then(() => setFile(undefined));
-    } catch (e) {}
-  }, [file]);
+  const handleUploadConversationAttachment = useCallback(
+    async (id: string) => {
+      console.log(
+        "Upload attachment for : " + id + " | File : " + fileRef.current
+      );
+      try {
+        if (!fileRef.current) throw new Error("No file selected");
+        await uploadPrivateMessageAttachment(
+          id,
+          fileRef.current.size,
+          fileRef.current
+        ).then(() => setFile(undefined));
+      } catch (e) {}
+    },
+    [file]
+  );
 
   const handleConversationDeleted = useCallback((sender: string) => {
     if (conversationWith === sender) {
@@ -171,7 +185,7 @@ export default function ConversationSection({
 
   const handleMessageAttachmentProgress = useCallback(
     (progress: number, messageId: string) => {
-      console.log("PROGRESS : " + progress + " | MSGID : " + messageId)
+      console.log("PROGRESS : " + progress + " | MSGID : " + messageId);
       setMessages((p) => {
         let newMsgs = p;
         const i = newMsgs.findIndex((msg) => msg.id === messageId);
@@ -186,7 +200,10 @@ export default function ConversationSection({
   );
 
   return (
-    <div style={{maxHeight:"50vh"}} className="w-full h-full flex flex-col items-between justify-between">
+    <div
+      style={{ maxHeight: "50vh" }}
+      className="w-full h-full flex flex-col items-between justify-between"
+    >
       {status === "success" && (
         <div className="relative overflow-y-scroll flex flex-col gap-2 grow">
           {messages.map((msg) => (

@@ -43,7 +43,7 @@ class ChatController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.updatePrivateMessage(req.body.messageId, req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.updatePrivateMessage(req.params.msgId, req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(200).end();
             }
             catch (e) {
@@ -56,10 +56,11 @@ class ChatController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 console.log("DELETE MESSAGE CONTROLLER");
-                yield Chat_dao_1.default.deletePrivateMessage(req.body.messageId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.deletePrivateMessage(req.params.msgId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(200).end();
             }
             catch (e) {
+                console.log("ERRROR : " + e);
                 res.status(500).json({ msg: "Internal error" });
             }
         });

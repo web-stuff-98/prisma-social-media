@@ -26,13 +26,15 @@ export default function Post() {
     <>
       <h1 className="text-4xl mt-4 text-center font-bold">{post?.title}</h1>
       <div className="flex dark:border-zinc-800 items-center pb-2 my-2">
-        <p className="text-lg leading-5 mr-4">{post?.description}</p>
+        <p className="text-lg leading-5 font-bold mr-4">{post?.description}</p>
         <div className="my-2 w-fit">
           <User
             uid={String(post?.author.id)}
             likeShareIcons
             liked={post?.likedByMe}
+            likes={post?.likes}
             shared={post?.sharedByMe}
+            shares={post?.shares}
             onLikeClick={handleLikeClicked}
             onShareClick={handleShareClicked}
             date={new Date(String(post?.createdAt))}

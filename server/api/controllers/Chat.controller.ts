@@ -32,7 +32,7 @@ export default class ChatController {
   static async updatePrivateMessage(req: Req, res: Res) {
     try {
       await ChatDAO.updatePrivateMessage(
-        req.body.messageId,
+        req.params.msgId,
         req.body.message,
         String(req.user?.id)
       );
@@ -45,11 +45,12 @@ export default class ChatController {
     try {
       console.log("DELETE MESSAGE CONTROLLER");
       await ChatDAO.deletePrivateMessage(
-        req.body.messageId,
+        req.params.msgId,
         String(req.user?.id)
       );
       res.status(200).end();
     } catch (e) {
+      console.log("ERRROR : "+e)
       res.status(500).json({ msg: "Internal error" });
     }
   }

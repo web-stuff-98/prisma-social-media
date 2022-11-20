@@ -129,6 +129,9 @@ export default class PostsDAO {
                   id: true,
                 },
               },
+              _count: {
+                select: { likes: true },
+              },
             },
           },
           author: {
@@ -163,6 +166,9 @@ export default class PostsDAO {
                 select: {
                   id: true,
                 },
+              },
+              _count: {
+                select: { likes: true },
               },
             },
           },

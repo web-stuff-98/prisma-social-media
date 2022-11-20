@@ -14,10 +14,10 @@ router
   .route("/conversation/message")
   .post(ChatController.sendPrivateMessage);
 router
-  .route("/conversation/message")
+  .route("/conversation/message/:msgId")
   .delete(ChatController.deletePrivateMessage);
 router
-  .route("/conversation/message")
+  .route("/conversation/message/:msgId")
   .put(ChatController.updatePrivateMessage);
 router
   .route("/conversation/message/attachment/:msgId/:bytes")
@@ -25,13 +25,13 @@ router
 
 //Chatrooms
 router.route("/room").get(ChatController.getRooms);
+router.route("/room").post(ChatController.createRoom);
 router.route("/room/:roomId").get(ChatController.getRoom);
 router.route("/room/:roomId").delete(ChatController.deleteRoom);
 router.route("/room/:roomId").patch(ChatController.updateRoom);
 router
   .route("/room/message/attachment/:msgId/:bytes")
   .post(ChatController.uploadRoomMessageAttachment);
-router.route("/room")
 //User actions (join/leave/kick/ban)
 router.route("/room/:roomId/join").post(ChatController.joinRoom)
 router.route("/room/:roomId/leave").post(ChatController.leaveRoom)

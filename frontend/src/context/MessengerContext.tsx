@@ -13,6 +13,7 @@ import { getRooms } from "../services/chat";
 import { useSocket } from "./SocketContext";
 import useScrollbarSize from "react-scrollbar-size";
 import Rooms from "../components/messenger/rooms/Rooms";
+import useCustomArrayAsync from "../hooks/useCustomArrayAsync";
 
 export type MessengerSection =
   | "Menu"
@@ -30,7 +31,6 @@ export interface IRoom {
 }
 
 export const MessengerProvider = ({ children }: { children: ReactNode }) => {
-  const { socket } = useSocket();
   const { width: scrollBarWidth } = useScrollbarSize();
 
   const [messengerOpen, setMessengerOpen] = useState(false);
@@ -51,12 +51,6 @@ export const MessengerProvider = ({ children }: { children: ReactNode }) => {
     setMessengerSection("Conversation");
   };
 
-  const [rooms, setRooms] = useState<IRoom[]>();
-  useEffect(() => {
-    getRooms().then((rooms: IRoom[]) => setRooms(rooms));
-    if (!socket) return;
-  }, [socket]);
-
   const [streamWindowsOffset, setStreamWindowsOffset] = useState({
     left: "0",
     bottom: "0",
@@ -69,6 +63,19 @@ export const MessengerProvider = ({ children }: { children: ReactNode }) => {
     );
   }, [messengerSection]);
 
+  ////////// ROOMS
+  const {
+    error: roomsError,
+    status: roomsStatus,
+    value: rooms,
+  } = useCustomArrayAsync(
+    getRooms,
+    [],
+    "room_updated",
+    "room_deleted",
+    "room_created"
+  );
+
   return (
     <MessengerContext.Provider
       value={{
@@ -79,6 +86,9 @@ export const MessengerProvider = ({ children }: { children: ReactNode }) => {
         setMessengerSection,
         messengerSection,
         streamWindowsOffset,
+        roomsError,
+        roomsStatus,
+        rooms,
       }}
     >
       <div
@@ -101,7 +111,10 @@ export const MessengerProvider = ({ children }: { children: ReactNode }) => {
         {messengerOpen ? (
           <MessengerTopIcons />
         ) : (
-          <button className="px-0 bg-transparent" aria-label="Open messenger">
+          <button
+            className="px-0 text-3xl bg-transparent"
+            aria-label="Open messenger"
+          >
             <BsFillChatRightFill
               onClick={() => openMessenger()}
               className="text-3xl cursor-pointer text-black dark:text-white drop-shadow"
@@ -141,6 +154,9 @@ const MessengerContext = createContext<{
   setMessengerSection: (to: MessengerSection) => void;
   messengerSection: MessengerSection;
   streamWindowsOffset: { left: string; bottom: string };
+  roomsError: unknown;
+  roomsStatus: "idle" | "pending" | "success" | "error";
+  rooms: IRoom[];
 }>({
   messengerOpen: false,
   openMessenger: () => {},
@@ -149,7 +165,11 @@ const MessengerContext = createContext<{
   setMessengerSection: () => {},
   messengerSection: "Menu",
   streamWindowsOffset: { left: "0", bottom: "0" },
+  roomsError: null,
+  roomsStatus: "idle",
+  rooms: [],
 });
+
 export const useMessenger = () => useContext(MessengerContext);
 
 const messengerModalStyle: CSSProperties = {

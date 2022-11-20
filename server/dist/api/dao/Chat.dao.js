@@ -28,7 +28,7 @@ class MessengerDAO {
     static searchUser(name) {
         return __awaiter(this, void 0, void 0, function* () {
             /*
-            You could easily make this faster, couldn't be bothered to figure out the proper way of doing it at the time
+            You could easily make this function faster, couldn't be bothered to figure out the proper way of doing it at the time
             It also returns the user making the search, which is maybe shouldn't dos
             */
             const inQ = yield prisma_1.default.user
@@ -169,18 +169,20 @@ class MessengerDAO {
             }
             if (msg.senderId !== uid)
                 throw new Error("Unauthorized");
+            if (msg.hasAttachment) {
+                const s3 = new aws_1.default.S3();
+                yield new Promise((resolve, reject) => s3.deleteObject({
+                    Bucket: "prisma-socialmedia",
+                    Key: String(msg.attachmentKey),
+                }, (err, data) => {
+                    if (err)
+                        reject(err);
+                    resolve();
+                }));
+            }
             yield prisma_1.default.privateMessage.delete({
                 where: { id },
             });
-            const s3 = new aws_1.default.S3();
-            yield new Promise((resolve, reject) => s3.deleteObject({
-                Bucket: "prisma-socialmedia",
-                Key: String(msg.attachmentKey),
-            }, (err, data) => {
-                if (err)
-                    reject(err);
-                resolve();
-            }));
             __1.io.to(`inbox=${msg.recipientId}`).emit("private_message_delete", id);
             __1.io.to(`inbox=${msg.senderId}`).emit("private_message_delete", id);
         });
@@ -419,7 +421,7 @@ class MessengerDAO {
             });
             if (usersRooms.length > 8)
                 throw new Error("Max 8 rooms");
-            const room = yield prisma_1.default.room.create({
+            const { id } = yield prisma_1.default.room.create({
                 data: {
                     authorId,
                     name,
@@ -431,7 +433,7 @@ class MessengerDAO {
                     createdAt: true,
                 },
             });
-            __1.io.emit("room_created", room.id, room.name, authorId);
+            __1.io.emit("room_created", id, name, authorId);
         });
     }
     static joinRoom(roomId, uid) {

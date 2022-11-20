@@ -10,6 +10,33 @@ const deleteConversation = (uid: string) =>
     method: "DELETE",
   });
 
+const createRoom = (name: string) =>
+  makeRequest("/api/chat/room", {
+    withCredentials: true,
+    method: "POST",
+    data: { name },
+  });
+const joinRoom = (roomId: string) =>
+  makeRequest(`/api/chat/room/${roomId}/join`, {
+    withCredentials: true,
+    method: "POST",
+  });
+const leaveRoom = (roomId: string) =>
+  makeRequest(`/api/chat/room/${roomId}/leave`, {
+    withCredentials: true,
+    method: "POST",
+  });
+const kickUserFromRoom = (roomId: string, uid: string) =>
+  makeRequest(`/api/chat/room/${roomId}/kick/${uid}`, {
+    withCredentials: true,
+    method: "POST",
+  });
+const banUserFromRoom = (roomId: string, uid: string) =>
+  makeRequest(`/api/chat/room/${roomId}/ban/${uid}`, {
+    withCredentials: true,
+    method: "POST",
+  });
+
 const sendRoomMessage = (
   message: string,
   roomId: string,
@@ -74,19 +101,15 @@ const sendPrivateMessage = (
     },
   });
 const deletePrivateMessage = (messageId: string) =>
-  makeRequest(`/api/chat/conversation/message`, {
+  makeRequest(`/api/chat/conversation/message/${messageId}`, {
     method: "DELETE",
     withCredentials: true,
-    data: {
-      messageId,
-    },
   });
 const updatePrivateMessage = (messageId: string, message: string) =>
-  makeRequest(`/api/chat/conversation/message`, {
+  makeRequest(`/api/chat/conversation/message/${messageId}`, {
     method: "PUT",
     withCredentials: true,
     data: {
-      messageId,
       message,
     },
   });
@@ -128,4 +151,9 @@ export {
   deleteRoomMessage,
   searchUsers,
   getRooms,
+  joinRoom,
+  leaveRoom,
+  kickUserFromRoom,
+  banUserFromRoom,
+  createRoom,
 };

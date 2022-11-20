@@ -16,23 +16,23 @@ router
     .route("/conversation/message")
     .post(Chat_controller_1.default.sendPrivateMessage);
 router
-    .route("/conversation/message")
+    .route("/conversation/message/:msgId")
     .delete(Chat_controller_1.default.deletePrivateMessage);
 router
-    .route("/conversation/message")
+    .route("/conversation/message/:msgId")
     .put(Chat_controller_1.default.updatePrivateMessage);
 router
     .route("/conversation/message/attachment/:msgId/:bytes")
     .post(Chat_controller_1.default.uploadPrivateMessageAttachment);
 //Chatrooms
 router.route("/room").get(Chat_controller_1.default.getRooms);
+router.route("/room").post(Chat_controller_1.default.createRoom);
 router.route("/room/:roomId").get(Chat_controller_1.default.getRoom);
 router.route("/room/:roomId").delete(Chat_controller_1.default.deleteRoom);
 router.route("/room/:roomId").patch(Chat_controller_1.default.updateRoom);
 router
     .route("/room/message/attachment/:msgId/:bytes")
     .post(Chat_controller_1.default.uploadRoomMessageAttachment);
-router.route("/room");
 //User actions (join/leave/kick/ban)
 router.route("/room/:roomId/join").post(Chat_controller_1.default.joinRoom);
 router.route("/room/:roomId/leave").post(Chat_controller_1.default.leaveRoom);
