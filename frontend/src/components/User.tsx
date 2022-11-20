@@ -181,7 +181,7 @@ export default function User({
         className={`${date && !isServer ? "w-10 h-10" : "w-8 h-8"} relative ${
           ((currentUser && user?.id !== currentUser?.id && uid) || pfpCursor) &&
           "cursor-pointer"
-        } rounded-full border border-zinc-500 dark:border-zinc-600 shadow-md`}
+        } rounded-full ${!isServer && "border border-zinc-500 dark:border-zinc-600 shadow-md"}`}
       >
         {user?.online && (
           <span

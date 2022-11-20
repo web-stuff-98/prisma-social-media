@@ -120,7 +120,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
           className="bg-foreground font-rubik text-white dark:bg-darkmodeForeground fixed border dark:border-stone-800 rounded shadow-md p-1"
         >
           {err ? (
-            <div className="text-rose-500 flex items-center gap-1 text-xs pr-0.5 drop-shadow">
+            <div className="text-rose-500 flex items-center gap-1 text-xs pr-0.5 leading-5 tracking-tight drop-shadow">
               <MdError className="text-xl" />
               {err}
             </div>
@@ -151,7 +151,7 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                       onClick={() =>
                         kickUserFromRoom(openedInChatroom, uid).catch((e) =>
                           setErr(`${e}`)
-                        )
+                        ).finally(() => setCursorInside(false))
                       }
                     >
                       <GiBootKick className="text-lg my-1 ml-0.5" />
@@ -163,9 +163,9 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                       className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
                       aria-label="Ban"
                       onClick={() =>
-                        banUserFromRoom(openedInChatroom, uid).catch((e) =>
-                          setErr(`${e}`)
-                        )
+                        banUserFromRoom(openedInChatroom, uid).catch((e:Error) => {
+                          setErr(`${e}`);
+                        }).finally(() => setCursorInside(false))
                       }
                     >
                       <ImBlocked className="text-lg my-1 ml-0.5" />
