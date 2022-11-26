@@ -6,23 +6,7 @@ import { Request as Req, Response as Res, NextFunction } from "express";
  * simpleRateLimit   <- For really simple rate limiting, block an IP on
  *                      a specific route for a certain amount of time
  *                      if they make too many requests in a given time
- *                      window.
- *
- * bruteRateLimit    <- bruteRate limit doubles the IP block time for
- *                      every failed request, but it needs to be used
- * + bruteFail          with bruteFail and bruteSuccess to work
- * + bruteSuccess       properly. Call bruteFail from inside your API
- *                      route for example when the user puts in the
- *                      wrong password. Call bruteSuccess to remove the
- *                      IP block for that route, for example when a
- *                      user logs in successfully.
- *
- * There are better explanations in the comments for the functions
- * that have information for parameters.
- *
- * routeName needs to be provided and should be unique for the route
- * it's applied on, but the same routeName can be used for multiple
- * routes.
+ *                      window. Could improve.
  */
 
 import {
@@ -81,10 +65,10 @@ const checkBlockedBySimpleOrBruteBlock = async ({
 };
 
 /**
- * Determine if a block for an IP should be removed, then remove it.
- * There is a better way of doing this, which is by checking if the
- * block should be removed directly from the middleware instead of
- * checking at an interval. You should upgrade this.
+ * This isn't used anymore, because the rate limiter
+ * is using redis now. I am just keeping it here to
+ * remind me that I need to set up expiration dates
+ * for the keys.
  */
 export const ipBlockCleanupInterval = async () => {
   const i = setInterval(() => {
@@ -171,66 +155,6 @@ export const simpleRateLimit = (
   };
 };
 
-/**
- * This is similar to simpleRateLimit, but intended for guarding logins.
- *
- * The more fails the longer it takes, using
- * (duration * min(4, max(1, number of fails)))
- * to calculate the cooldown period where 4 is the maximum number of
- * times the duration can be multiplied by default.
- *
- * Because bruteRateLimit is not automatic like simpleRateLimit you
- * need to call failBrute("the name of the routeName you passed in")
- * whenever a failure happens for this to work as intended. Call
- * successBrute("the routeName") when you need the block cleared after
- * success (for example after successfully logging in)
- *
- * "routeName" should be the API route path as it is in the router, for
- * example "room/:roomId/message". req.url is used automatically as
- * a fallback but routeName should always be set MANUALLY for ALL API
- * routes that have query params! Otherwise you will be rate limiting
- * for specific pages and ids and so on, which is not its intended
- * behaviour
- *
- * parameters:
- *  maxMultiplication? = maximum number to use in calculating cooldown
- *  duration? = number of milliseconds the client is blocked for
- *  msg? = the message sent back
- *  routeName = the express route, example : room/:roomId/message/like
- *
- * maxMultiplication is at 4 by default, and the duration is set to
- * 3 hours. Which means after failing 4 times the block duration would
- * be 12 hours after the last failure.
- */
-export const bruteRateLimit = (
-  params: {
-    maxMultiplication?: number;
-    duration?: number;
-    msg?: string;
-    routeName?: string;
-  } = {
-    maxMultiplication: 4,
-    duration: 3600000, //3 hrs
-    msg: "Too many requests",
-    routeName: "",
-  }
-) => {
-  return async (req: Req, res: Res, next: NextFunction) => {
-    const routeName = params.routeName || req.path;
-    const ip = getReqIp(req);
-    const ipBlockInfo = await findIPBlockInfo(ip);
-    if (ipBlockInfo) {
-      const blocked = await checkBlockedBySimpleOrBruteBlock({
-        info: ipBlockInfo,
-        mode: "brute",
-        routeName,
-      });
-      if (blocked) return res.status(429).json({ msg: params.msg }).end();
-    }
-    next();
-  };
-};
-
 /** This is called only for simpleRateLimit and only if the ip isn't already blocked.
  * It returns true if the ip should be blocked by the middleware
  * **/
@@ -284,7 +208,7 @@ const simpleRateLimitTrigger = async (
         ...simpleRateLimitWindowData![i],
         reqs: simpleRateLimitWindowData![i].reqs + 1,
       } as SimpleRateLimitWindowData;
- 
+
       if (
         simpleRateLimitWindowData![i].reqs >=
         simpleRateLimitWindowData![i].maxReqs

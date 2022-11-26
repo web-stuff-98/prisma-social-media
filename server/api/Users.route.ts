@@ -1,11 +1,29 @@
 import express from "express";
 import authMiddleware, { withUser } from "../utils/authMiddleware";
 import UsersController from "./controllers/Users.controller";
+
+import slowDown from "express-slow-down";
+
 const router = express.Router();
 
 router.route("/").get(UsersController.getUsers);
-router.route("/").post(authMiddleware, UsersController.updateUser);
-router.route("/:id").get(UsersController.getUserById);
+router.route("/").post(
+  slowDown({
+    windowMs: 20000,
+    delayAfter: 5,
+    delayMs: 2000,
+  }),
+  authMiddleware,
+  UsersController.updateUser
+);
+router.route("/:id").get(
+  slowDown({
+    windowMs: 10000,
+    delayAfter: 50,
+    delayMs: 5000,
+  }),
+  UsersController.getUserById
+);
 router.route("/register").post(UsersController.register);
 router.route("/check").post(withUser, UsersController.checkLogin);
 router.route("/login").post(UsersController.login);

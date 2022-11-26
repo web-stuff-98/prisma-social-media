@@ -6,7 +6,7 @@ import redisClient from "../../utils/redis";
 
 export interface IPBlockInfo {
   ip: string;
-  simpleRateLimitWindowData?: SimpleRateLimitWindowData[]; //
+  simpleRateLimitWindowData?: SimpleRateLimitWindowData[];
   simpleRateLimitBlocks?: SimpleRateLimitBlockInfo[];
   bruteRateLimitBlocks?: BruteRateLimitBlockInfo[];
 }
@@ -16,7 +16,7 @@ export type SimpleRateLimitBlockInfo = {
   blockDuration: number;
 };
 export type BruteRateLimitBlockInfo = SimpleRateLimitBlockInfo & {
-  failTimes: number;
+  failTimes: number; // the number of fails (fails are added when bruteFail is called)
 };
 export type SimpleRateLimitWindowData = {
   routeName: string;
@@ -37,16 +37,17 @@ const findIPBlockInfo = (ip: string): Promise<IPBlockInfo | undefined> =>
     })
   );
 
-const addIPBlockInfo = async (info:IPBlockInfo) => {
-  await redisClient.set(`ip-info:${info.ip}`, JSON.stringify(info))
-}
+const addIPBlockInfo = (info: IPBlockInfo) =>
+  redisClient.set(`ip-info:${info.ip}`, JSON.stringify(info));
 
-const updateIPBlockInfo = async (info:Partial<IPBlockInfo>, original:IPBlockInfo) => {
-  await redisClient.set(`ip-info:${original.ip}`, JSON.stringify({
-    ...original,
-    ...info,
-  }))
-}
+const updateIPBlockInfo = (info: Partial<IPBlockInfo>, original: IPBlockInfo) =>
+  redisClient.set(
+    `ip-info:${original.ip}`,
+    JSON.stringify({
+      ...original,
+      ...info,
+    })
+  );
 
 const addSimpleRateLimiterBlock = async (
   ip: string,
@@ -98,4 +99,9 @@ const addSimpleRateLimiterBlock = async (
   }
 };
 
-export { findIPBlockInfo, addSimpleRateLimiterBlock, addIPBlockInfo, updateIPBlockInfo };
+export {
+  findIPBlockInfo,
+  addSimpleRateLimiterBlock,
+  addIPBlockInfo,
+  updateIPBlockInfo,
+};

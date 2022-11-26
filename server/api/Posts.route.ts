@@ -1,20 +1,67 @@
 import express from "express";
 import authMiddleware, { withUser } from "../utils/authMiddleware";
 import PostsController from "./controllers/Posts.controller";
+
 import { simpleRateLimit } from "./limiter/limiters";
+import slowDown from "express-slow-down";
+
 const router = express.Router();
 
-router.route("/").get(withUser, PostsController.getPosts);
-router.route("/popular").get(withUser, PostsController.getPopularPosts);
-router.route("/").post(authMiddleware, PostsController.createPost);
-router.route("/:slug").put(authMiddleware, PostsController.updatePost);
+router.route("/").get(
+  slowDown({
+    windowMs: 2000,
+    delayAfter: 10,
+    delayMs: 1000,
+  }),
+  withUser,
+  PostsController.getPosts
+);
+router.route("/popular").get(
+  slowDown({
+    windowMs: 2000,
+    delayAfter: 10,
+    delayMs: 1000,
+  }),
+  withUser,
+  PostsController.getPopularPosts
+);
+router.route("/").post(
+  slowDown({
+    windowMs: 120000,
+    delayAfter: 10,
+    delayMs: 5000,
+  }),
+  authMiddleware,
+  PostsController.createPost
+);
+router.route("/:slug").put(
+  slowDown({
+    windowMs: 120000,
+    delayAfter: 10,
+    delayMs: 5000,
+  }),
+  authMiddleware,
+  PostsController.updatePost
+);
 router.route("/:slug").get(withUser, PostsController.getPostBySlug);
-router
-  .route("/:id/toggleLike")
-  .post(authMiddleware, PostsController.togglePostLike);
-router
-  .route("/:id/toggleShare")
-  .post(authMiddleware, PostsController.togglePostShare);
+router.route("/:id/toggleLike").post(
+  slowDown({
+    windowMs: 10000,
+    delayAfter: 20,
+    delayMs: 3000,
+  }),
+  authMiddleware,
+  PostsController.togglePostLike
+);
+router.route("/:id/toggleShare").post(
+  slowDown({
+    windowMs: 10000,
+    delayAfter: 20,
+    delayMs: 3000,
+  }),
+  authMiddleware,
+  PostsController.togglePostShare
+);
 router.route("/:id/comments").post(
   simpleRateLimit({
     routeName: "postComment",
