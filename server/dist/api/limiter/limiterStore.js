@@ -28,7 +28,7 @@ const addIPBlockInfo = (info) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.addIPBlockInfo = addIPBlockInfo;
 const updateIPBlockInfo = (info, original) => __awaiter(void 0, void 0, void 0, function* () {
-    yield redis_1.default.set(`ip-info:${info.ip}`, JSON.stringify(Object.assign(Object.assign({}, original), info)));
+    yield redis_1.default.set(`ip-info:${original.ip}`, JSON.stringify(Object.assign(Object.assign({}, original), info)));
 });
 exports.updateIPBlockInfo = updateIPBlockInfo;
 const addSimpleRateLimiterBlock = (ip, simpleBlockData) => __awaiter(void 0, void 0, void 0, function* () {

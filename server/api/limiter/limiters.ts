@@ -18,7 +18,7 @@ import { Request as Req, Response as Res, NextFunction } from "express";
  *                      user logs in successfully.
  *
  * There are better explanations in the comments for the functions
- * that give extra information for providing parameters.
+ * that have information for parameters.
  *
  * routeName needs to be provided and should be unique for the route
  * it's applied on, but the same routeName can be used for multiple
@@ -284,6 +284,7 @@ const simpleRateLimitTrigger = async (
         ...simpleRateLimitWindowData![i],
         reqs: simpleRateLimitWindowData![i].reqs + 1,
       } as SimpleRateLimitWindowData;
+ 
       if (
         simpleRateLimitWindowData![i].reqs >=
         simpleRateLimitWindowData![i].maxReqs
@@ -320,94 +321,3 @@ const simpleRateLimitTrigger = async (
   }
   return false;
 };
-
-/*
-const simpleRateLimitTrigger = (
-  ip: string,
-  params: SimpleRateLimitParams
-): boolean => {
-  const ipBlockInfoIndex = findIPBlockInfoIndex(ip);
-  if (ipBlockInfoIndex === -1) {
-    blockedIPsInfo.push({
-      ip,
-      simpleRateLimitWindowData: [
-        {
-          routeName: params.routeName,
-          timestamp: new Date().toISOString(),
-          windowDuration: Number(params.windowMs),
-          maxReqs: Number(params.maxReqs),
-          reqs: 1,
-        },
-      ],
-    });
-    return false;
-  }
-  if (!blockedIPsInfo[ipBlockInfoIndex]!.simpleRateLimitWindowData) {
-    blockedIPsInfo[ipBlockInfoIndex] = {
-      ...blockedIPsInfo[ipBlockInfoIndex],
-      simpleRateLimitWindowData: [
-        {
-          routeName: params.routeName,
-          timestamp: new Date().toISOString(),
-          windowDuration: Number(params.windowMs),
-          maxReqs: Number(params.maxReqs),
-          reqs: 1,
-        },
-      ],
-    };
-  } else if (blockedIPsInfo[ipBlockInfoIndex]) {
-    let simpleRateLimitWindowData =
-      blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData;
-    const i = simpleRateLimitWindowData?.findIndex(
-      (info) => info.routeName === params.routeName
-    );
-    if (typeof i !== "undefined" && i !== -1 && simpleRateLimitWindowData![i]) {
-      const isInTimeWindow =
-        Date.now() -
-          new Date(simpleRateLimitWindowData![i].timestamp).getTime() <
-        simpleRateLimitWindowData![i].windowDuration;
-
-      simpleRateLimitWindowData![i] = {
-        ...simpleRateLimitWindowData![i],
-        reqs: simpleRateLimitWindowData![i].reqs + 1,
-      } as SimpleRateLimitWindowData;
-      if (
-        simpleRateLimitWindowData![i].reqs >=
-        simpleRateLimitWindowData![i].maxReqs
-      ) {
-        if (isInTimeWindow) {
-          blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData =
-            simpleRateLimitWindowData;
-          return true;
-        }
-      }
-      if (!isInTimeWindow) {
-        simpleRateLimitWindowData = [
-          ...simpleRateLimitWindowData!.filter(
-            (data) => data.routeName !== params.routeName
-          ),
-          {
-            routeName: params.routeName,
-            timestamp: new Date().toISOString(),
-            windowDuration: Number(params.windowMs),
-            maxReqs: Number(params.maxReqs),
-            reqs: 1,
-          },
-        ];
-      }
-    } else {
-      simpleRateLimitWindowData?.push({
-        routeName: params.routeName,
-        timestamp: new Date().toISOString(),
-        windowDuration: Number(params.windowMs),
-        maxReqs: Number(params.maxReqs),
-        reqs: 1,
-      });
-    }
-    blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData =
-      simpleRateLimitWindowData;
-  }
-  return false;
-};
-
-*/

@@ -42,7 +42,7 @@ const addIPBlockInfo = async (info:IPBlockInfo) => {
 }
 
 const updateIPBlockInfo = async (info:Partial<IPBlockInfo>, original:IPBlockInfo) => {
-  await redisClient.set(`ip-info:${info.ip}`, JSON.stringify({
+  await redisClient.set(`ip-info:${original.ip}`, JSON.stringify({
     ...original,
     ...info,
   }))

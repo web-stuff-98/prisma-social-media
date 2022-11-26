@@ -29,7 +29,7 @@ export default function Videos({
     <div
       style={{
         width: `calc(100% - ${scrollWidth}px)`,
-        background: "rgba(0,0,0,0.666)",
+        background: "rgba(0,0,0,0.75)",
       }}
       className="w-full absolute p-0.5 flex border-b border-stone-600 dark:border-stone-800 flex-wrap z-40"
     >
