@@ -39,7 +39,7 @@ export interface ServerToClientEvents {
   private_message_request_attachment_upload: (id: string) => void;
   private_conversation_deleted: (conversationWith: string) => void;
 
-  room_message: (id: string, data: RoomMessage) => void;
+  room_message: (data: RoomMessage) => void;
   room_message_request_attachment_upload: (id: string) => void;
   room_message_error: (error: string) => void;
   room_message_update: (id: string, data: Partial<RoomMessage>) => void;

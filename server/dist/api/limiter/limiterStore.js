@@ -1,32 +1,59 @@
 "use strict";
 /**
- * All the functions used to access data by the rate limiting middleware.
+ * All the functions used to access data by the rate limiting middleware stored on Redis.
  **/
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addSimpleRateLimiterBlock = exports.findIPBlockInfoIndex = exports.findIPBlockInfo = void 0;
-const findIPBlockInfo = (ip) => blockedIPsInfo.find((info) => info.ip === ip);
+exports.updateIPBlockInfo = exports.addIPBlockInfo = exports.addSimpleRateLimiterBlock = exports.findIPBlockInfo = void 0;
+const redis_1 = __importDefault(require("../../utils/redis"));
+const findIPBlockInfo = (ip) => new Promise((resolve, reject) => redis_1.default.get(`ip-info:${ip}`, (e, data) => {
+    e
+        ? reject(e)
+        : resolve(data ? JSON.parse(data) : undefined);
+}));
 exports.findIPBlockInfo = findIPBlockInfo;
-const findIPBlockInfoIndex = (ip) => blockedIPsInfo.findIndex((info) => info.ip === ip);
-exports.findIPBlockInfoIndex = findIPBlockInfoIndex;
-const addSimpleRateLimiterBlock = (ip, info) => {
-    var _a;
-    const i = blockedIPsInfo.findIndex((info) => info.ip === ip);
-    if (i !== -1) {
-        const found = blockedIPsInfo[i];
+const addIPBlockInfo = (info) => __awaiter(void 0, void 0, void 0, function* () {
+    yield redis_1.default.set(`ip-info:${info.ip}`, JSON.stringify(info));
+});
+exports.addIPBlockInfo = addIPBlockInfo;
+const updateIPBlockInfo = (info, original) => __awaiter(void 0, void 0, void 0, function* () {
+    yield redis_1.default.set(`ip-info:${info.ip}`, JSON.stringify(Object.assign(Object.assign({}, original), info)));
+});
+exports.updateIPBlockInfo = updateIPBlockInfo;
+const addSimpleRateLimiterBlock = (ip, simpleBlockData) => __awaiter(void 0, void 0, void 0, function* () {
+    const found = (yield findIPBlockInfo(ip));
+    if (found) {
         if (!found.simpleRateLimitBlocks) {
-            found.simpleRateLimitBlocks = [info];
-            return;
+            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(Object.assign(Object.assign({}, found), { simpleRateLimitBlocks: [simpleBlockData] })));
         }
-        const foundSimpleBlockIndex = found.simpleRateLimitBlocks.findIndex((block) => block.routeName === info.routeName);
-        if (foundSimpleBlockIndex !== -1) {
-            found.simpleRateLimitBlocks[i].blockedAt = new Date().toISOString();
+        const simpleBlockInfoIndex = found.simpleRateLimitBlocks.findIndex((block) => block.routeName === simpleBlockData.routeName);
+        let simpleRateLimitBlocks = found.simpleRateLimitBlocks;
+        if (simpleBlockInfoIndex !== -1) {
+            simpleRateLimitBlocks[simpleBlockInfoIndex].blockedAt =
+                new Date().toISOString();
+            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(Object.assign(Object.assign({}, found), { simpleRateLimitBlocks })));
         }
         else {
-            (_a = found.simpleRateLimitBlocks) === null || _a === void 0 ? void 0 : _a.push(info);
+            simpleRateLimitBlocks.push(simpleBlockData);
+            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(Object.assign(Object.assign({}, found), { simpleRateLimitBlocks })));
         }
     }
     else {
-        blockedIPsInfo.push({ ip, simpleRateLimitBlocks: [info] });
+        yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify({
+            ip,
+            simpleRateLimitBlocks: [simpleBlockData],
+        }));
     }
-};
+});
 exports.addSimpleRateLimiterBlock = addSimpleRateLimiterBlock;

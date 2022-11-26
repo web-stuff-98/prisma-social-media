@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -39,11 +30,12 @@ exports.bruteRateLimit = exports.simpleRateLimit = exports.ipBlockCleanupInterva
  */
 const limiterStore_1 = require("./limiterStore");
 const getReqIp_1 = __importDefault(require("../../utils/getReqIp"));
-const checkBlockedBySimpleOrBruteBlock = ({ info, mode, checkBruteCooldown, routeName = "any", }) => __awaiter(void 0, void 0, void 0, function* () {
+const checkBlockedBySimpleOrBruteBlock = ({ info, mode, checkBruteCooldown, routeName = "any", }) => {
     const key = `${mode}RateLimitBlocks`;
     let isBlocked = false;
     const hasKey = info[key] ? true : false;
     let i = 0;
+    console.log(JSON.stringify(info));
     /* iterate through all the stored block information to check for active blocks
     matching the routeName */
     if (hasKey)
@@ -69,35 +61,35 @@ const checkBlockedBySimpleOrBruteBlock = ({ info, mode, checkBruteCooldown, rout
             }
         }
     return isBlocked;
-});
+};
 /**
  * Determine if a block for an IP should be removed, then remove it.
  * There is a better way of doing this, which is by checking if the
  * block should be removed directly from the middleware instead of
  * checking at an interval. You should upgrade this.
  */
-const ipBlockCleanupInterval = () => __awaiter(void 0, void 0, void 0, function* () {
+const ipBlockCleanupInterval = () => {
     const i = setInterval(() => {
         let cleanupIps = [];
-        blockedIPsInfo.forEach((info) => __awaiter(void 0, void 0, void 0, function* () {
-            if ((yield checkBlockedBySimpleOrBruteBlock({
+        blockedIPsInfo.forEach((info) => {
+            if (checkBlockedBySimpleOrBruteBlock({
                 info,
                 mode: "simple",
                 routeName: "any",
-            })) ||
-                (yield checkBlockedBySimpleOrBruteBlock({
+            }) ||
+                checkBlockedBySimpleOrBruteBlock({
                     info,
                     mode: "brute",
                     checkBruteCooldown: true,
                     routeName: "any",
-                }))) {
+                })) {
                 cleanupIps.push(info.ip);
             }
-        }));
+        });
         blockedIPsInfo;
     }, 1000);
     return () => clearInterval(i);
-});
+};
 exports.ipBlockCleanupInterval = ipBlockCleanupInterval;
 /**
  * simpleRateLimit is for specific api routes. Refuses the IP if they
@@ -125,12 +117,12 @@ const simpleRateLimit = (params = {
     routeName: "",
     blockDuration: 5000,
 }) => {
-    return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    return (req, res, next) => {
         const routeName = params.routeName === "" ? req.path : params.routeName;
         const ip = (0, getReqIp_1.default)(req);
-        const ipBlockInfo = yield (0, limiterStore_1.findIPBlockInfo)(ip);
+        const ipBlockInfo = (0, limiterStore_1.findIPBlockInfo)(ip);
         if (ipBlockInfo) {
-            const blocked = yield checkBlockedBySimpleOrBruteBlock({
+            const blocked = checkBlockedBySimpleOrBruteBlock({
                 info: ipBlockInfo,
                 mode: "simple",
                 routeName,
@@ -138,8 +130,8 @@ const simpleRateLimit = (params = {
             if (blocked)
                 return res.status(429).json({ msg: params.msg }).end();
         }
-        if (yield simpleRateLimitTrigger(ip, params)) {
-            yield (0, limiterStore_1.addSimpleRateLimiterBlock)(ip, {
+        if (simpleRateLimitTrigger(ip, params)) {
+            (0, limiterStore_1.addSimpleRateLimiterBlock)(ip, {
                 routeName: params.routeName,
                 blockedAt: new Date().toISOString(),
                 blockDuration: params.blockDuration,
@@ -147,7 +139,7 @@ const simpleRateLimit = (params = {
             return res.status(429).json({ msg: params.msg }).end();
         }
         next();
-    });
+    };
 };
 exports.simpleRateLimit = simpleRateLimit;
 /**
@@ -187,12 +179,12 @@ const bruteRateLimit = (params = {
     msg: "Too many requests",
     routeName: "",
 }) => {
-    return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    return (req, res, next) => {
         const routeName = params.routeName || req.path;
         const ip = (0, getReqIp_1.default)(req);
-        const ipBlockInfo = yield (0, limiterStore_1.findIPBlockInfo)(ip);
+        const ipBlockInfo = (0, limiterStore_1.findIPBlockInfo)(ip);
         if (ipBlockInfo) {
-            const blocked = yield checkBlockedBySimpleOrBruteBlock({
+            const blocked = checkBlockedBySimpleOrBruteBlock({
                 info: ipBlockInfo,
                 mode: "brute",
                 routeName,
@@ -201,16 +193,16 @@ const bruteRateLimit = (params = {
                 return res.status(429).json({ msg: params.msg }).end();
         }
         next();
-    });
+    };
 };
 exports.bruteRateLimit = bruteRateLimit;
 /** This is called only for simpleRateLimit and only if the ip isn't already blocked.
  * It returns true if the ip should be blocked by the middleware
  * **/
-const simpleRateLimitTrigger = (ip, params) => __awaiter(void 0, void 0, void 0, function* () {
-    const ipBlockInfo = yield (0, limiterStore_1.findIPBlockInfo)(ip);
-    if (!ipBlockInfo) {
-        yield (0, limiterStore_1.addIPBlockInfo)({
+const simpleRateLimitTrigger = (ip, params) => {
+    const ipBlockInfoIndex = (0, limiterStore_1.findIPBlockInfoIndex)(ip);
+    if (ipBlockInfoIndex === -1) {
+        blockedIPsInfo.push({
             ip,
             simpleRateLimitWindowData: [
                 {
@@ -224,9 +216,8 @@ const simpleRateLimitTrigger = (ip, params) => __awaiter(void 0, void 0, void 0,
         });
         return false;
     }
-    if (!ipBlockInfo.simpleRateLimitWindowData) {
-        yield (0, limiterStore_1.updateIPBlockInfo)({
-            simpleRateLimitWindowData: [
+    if (!blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData) {
+        blockedIPsInfo[ipBlockInfoIndex] = Object.assign(Object.assign({}, blockedIPsInfo[ipBlockInfoIndex]), { simpleRateLimitWindowData: [
                 {
                     routeName: params.routeName,
                     timestamp: new Date().toISOString(),
@@ -234,11 +225,10 @@ const simpleRateLimitTrigger = (ip, params) => __awaiter(void 0, void 0, void 0,
                     maxReqs: Number(params.maxReqs),
                     reqs: 1,
                 },
-            ],
-        }, ipBlockInfo);
+            ] });
     }
-    else if (ipBlockInfo) {
-        let simpleRateLimitWindowData = ipBlockInfo.simpleRateLimitWindowData;
+    else if (blockedIPsInfo[ipBlockInfoIndex]) {
+        let simpleRateLimitWindowData = blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData;
         const i = simpleRateLimitWindowData === null || simpleRateLimitWindowData === void 0 ? void 0 : simpleRateLimitWindowData.findIndex((info) => info.routeName === params.routeName);
         if (typeof i !== "undefined" && i !== -1 && simpleRateLimitWindowData[i]) {
             const isInTimeWindow = Date.now() -
@@ -248,7 +238,8 @@ const simpleRateLimitTrigger = (ip, params) => __awaiter(void 0, void 0, void 0,
             if (simpleRateLimitWindowData[i].reqs >=
                 simpleRateLimitWindowData[i].maxReqs) {
                 if (isInTimeWindow) {
-                    yield (0, limiterStore_1.updateIPBlockInfo)({ simpleRateLimitWindowData }, ipBlockInfo);
+                    blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData =
+                        simpleRateLimitWindowData;
                     return true;
                 }
             }
@@ -274,97 +265,8 @@ const simpleRateLimitTrigger = (ip, params) => __awaiter(void 0, void 0, void 0,
                 reqs: 1,
             });
         }
-        yield (0, limiterStore_1.updateIPBlockInfo)({ simpleRateLimitWindowData }, ipBlockInfo);
-    }
-    return false;
-});
-/*
-const simpleRateLimitTrigger = (
-  ip: string,
-  params: SimpleRateLimitParams
-): boolean => {
-  const ipBlockInfoIndex = findIPBlockInfoIndex(ip);
-  if (ipBlockInfoIndex === -1) {
-    blockedIPsInfo.push({
-      ip,
-      simpleRateLimitWindowData: [
-        {
-          routeName: params.routeName,
-          timestamp: new Date().toISOString(),
-          windowDuration: Number(params.windowMs),
-          maxReqs: Number(params.maxReqs),
-          reqs: 1,
-        },
-      ],
-    });
-    return false;
-  }
-  if (!blockedIPsInfo[ipBlockInfoIndex]!.simpleRateLimitWindowData) {
-    blockedIPsInfo[ipBlockInfoIndex] = {
-      ...blockedIPsInfo[ipBlockInfoIndex],
-      simpleRateLimitWindowData: [
-        {
-          routeName: params.routeName,
-          timestamp: new Date().toISOString(),
-          windowDuration: Number(params.windowMs),
-          maxReqs: Number(params.maxReqs),
-          reqs: 1,
-        },
-      ],
-    };
-  } else if (blockedIPsInfo[ipBlockInfoIndex]) {
-    let simpleRateLimitWindowData =
-      blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData;
-    const i = simpleRateLimitWindowData?.findIndex(
-      (info) => info.routeName === params.routeName
-    );
-    if (typeof i !== "undefined" && i !== -1 && simpleRateLimitWindowData![i]) {
-      const isInTimeWindow =
-        Date.now() -
-          new Date(simpleRateLimitWindowData![i].timestamp).getTime() <
-        simpleRateLimitWindowData![i].windowDuration;
-
-      simpleRateLimitWindowData![i] = {
-        ...simpleRateLimitWindowData![i],
-        reqs: simpleRateLimitWindowData![i].reqs + 1,
-      } as SimpleRateLimitWindowData;
-      if (
-        simpleRateLimitWindowData![i].reqs >=
-        simpleRateLimitWindowData![i].maxReqs
-      ) {
-        if (isInTimeWindow) {
-          blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData =
+        blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData =
             simpleRateLimitWindowData;
-          return true;
-        }
-      }
-      if (!isInTimeWindow) {
-        simpleRateLimitWindowData = [
-          ...simpleRateLimitWindowData!.filter(
-            (data) => data.routeName !== params.routeName
-          ),
-          {
-            routeName: params.routeName,
-            timestamp: new Date().toISOString(),
-            windowDuration: Number(params.windowMs),
-            maxReqs: Number(params.maxReqs),
-            reqs: 1,
-          },
-        ];
-      }
-    } else {
-      simpleRateLimitWindowData?.push({
-        routeName: params.routeName,
-        timestamp: new Date().toISOString(),
-        windowDuration: Number(params.windowMs),
-        maxReqs: Number(params.maxReqs),
-        reqs: 1,
-      });
     }
-    blockedIPsInfo[ipBlockInfoIndex].simpleRateLimitWindowData =
-      simpleRateLimitWindowData;
-  }
-  return false;
+    return false;
 };
-
-*/

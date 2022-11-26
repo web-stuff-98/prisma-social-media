@@ -499,7 +499,7 @@ class ChatDAO {
                     roomId,
                 },
             });
-            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+            __1.io.to(`room=${roomId}`).emit("room_message", {
                 id: serverMessage.id,
                 roomId,
                 message: serverMessage.message,
@@ -560,7 +560,7 @@ class ChatDAO {
                     roomId,
                 },
             });
-            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+            __1.io.to(`room=${roomId}`).emit("room_message", {
                 id: serverMessage.id,
                 roomId,
                 message: serverMessage.message,
@@ -624,7 +624,7 @@ class ChatDAO {
                     roomId,
                 },
             });
-            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+            __1.io.to(`room=${roomId}`).emit("room_message", {
                 id: serverMessage.id,
                 roomId,
                 message: serverMessage.message,
@@ -694,7 +694,7 @@ class ChatDAO {
                 where: { id: roomId },
                 data: { members: { disconnect: { id: kickedUid } } },
             });
-            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+            __1.io.to(`room=${roomId}`).emit("room_message", {
                 id: serverMessage.id,
                 roomId,
                 message: serverMessage.message,
@@ -743,7 +743,7 @@ class ChatDAO {
                     roomId,
                 },
             });
-            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+            __1.io.to(`room=${roomId}`).emit("room_message", {
                 id: serverMessage.id,
                 roomId,
                 message: serverMessage.message,
@@ -793,7 +793,7 @@ class ChatDAO {
                         attachmentPending: false,
                     },
                 });
-            __1.io.to(`room=${roomId}`).emit("room_message", msg.id, {
+            __1.io.to(`room=${roomId}`).emit("room_message", {
                 id: msg.id,
                 roomId,
                 message: msg.message,

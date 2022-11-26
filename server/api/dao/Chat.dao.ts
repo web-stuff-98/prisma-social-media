@@ -516,7 +516,7 @@ export default class ChatDAO {
         roomId,
       },
     });
-    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+    io.to(`room=${roomId}`).emit("room_message", {
       id: serverMessage.id,
       roomId,
       message: serverMessage.message,
@@ -573,7 +573,7 @@ export default class ChatDAO {
         roomId,
       },
     });
-    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+    io.to(`room=${roomId}`).emit("room_message", {
       id: serverMessage.id,
       roomId,
       message: serverMessage.message,
@@ -641,7 +641,7 @@ export default class ChatDAO {
         roomId,
       },
     });
-    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+    io.to(`room=${roomId}`).emit("room_message", {
       id: serverMessage.id,
       roomId,
       message: serverMessage.message,
@@ -714,7 +714,7 @@ export default class ChatDAO {
       where: { id: roomId },
       data: { members: { disconnect: { id: kickedUid } } },
     });
-    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+    io.to(`room=${roomId}`).emit("room_message", {
       id: serverMessage.id,
       roomId,
       message: serverMessage.message,
@@ -764,7 +764,7 @@ export default class ChatDAO {
         roomId,
       },
     });
-    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+    io.to(`room=${roomId}`).emit("room_message", {
       id: serverMessage.id,
       roomId,
       message: serverMessage.message,
@@ -820,7 +820,7 @@ export default class ChatDAO {
             attachmentPending: false,
           },
         });
-    io.to(`room=${roomId}`).emit("room_message", msg.id, {
+    io.to(`room=${roomId}`).emit("room_message", {
       id: msg.id,
       roomId,
       message: msg.message,
