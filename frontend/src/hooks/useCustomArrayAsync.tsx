@@ -19,7 +19,7 @@ The value is supposed to be for example a list of users, rooms, messages, et cet
 your create new item event, update item event and your delete item event on the socket.
 
 Your serverside update and create socket event must be structured like this (it uses spread operator to create/update the item) :
-    function = (id, {item data}) => {}
+    function = ({item data, including the id}) => {}
 
 Your serverside delete item socket event must be structured like this :
     update = (id) => {}
@@ -63,17 +63,19 @@ const useCustomArrayAsync = (
   }, [asyncFunction]);
 
   const { socket } = useSocket();
-  const handleItemCreated = useCallback((id: string, data: any) => {
+  const handleItemCreated = useCallback((data: any) => {
+    console.log("Created : " + JSON.stringify(data))
     setValue((p) =>
       sortFunction
-        ? [...p, { id, ...data }].sort(sortFunction).filter(filterFunction)
-        : [...p, { id, ...data }].filter(filterFunction)
+        ? [...p, { ...data }].sort(sortFunction).filter(filterFunction)
+        : [...p, { ...data }].filter(filterFunction)
     );
   }, []);
-  const handleItemUpdated = useCallback((id: string, data: any) => {
+  const handleItemUpdated = useCallback((data: any) => {
+    console.log("Updated : " + JSON.stringify(data))
     setValue((p) => {
       let newVal = p;
-      const i = p.findIndex((item) => item.id === id);
+      const i = p.findIndex((item) => item.id === data.id);
       newVal[i] = { ...newVal[i], ...data };
       return [
         ...(sortFunction ? newVal.sort(sortFunction) : newVal).filter(
@@ -83,6 +85,7 @@ const useCustomArrayAsync = (
     });
   }, [value]);
   const handleItemDeleted = useCallback((id: string) => {
+    console.log("Deleted : " + JSON.stringify(data))
     setValue((p) => [
       ...(sortFunction
         ? p

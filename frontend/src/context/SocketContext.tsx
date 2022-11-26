@@ -15,8 +15,10 @@ import {
 
 const SocketContext = createContext<{
   socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
+  authSocket: () => void;
 }>({
   socket: undefined,
+  authSocket: () => {},
 });
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
@@ -31,6 +33,10 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     setSocket(socket);
   };
 
+  const authSocket = () => {
+    socket?.emit("auth");
+  };
+
   useEffect(() => {
     connectSocket();
     return () => {
@@ -39,7 +45,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket }}>
+    <SocketContext.Provider value={{ socket, authSocket }}>
       {children}
     </SocketContext.Provider>
   );

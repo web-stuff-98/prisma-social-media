@@ -7,7 +7,7 @@ export default function ChatTopIcons() {
   return (
     <div
       style={{ top: "0" }}
-      className="w-full bg-zinc-800 border-b text-white pl-1 text-xs dark:border-stone-800 h-6 flex justify-between items-center absolute"
+      className="w-full bg-zinc-800 dark:bg-stone-900 border-b border-stone-800 text-white pl-1 text-xs dark:border-stone-800 h-6 flex justify-between items-center absolute"
     >
       {topText}
       <div className="grow flex justify-end">

@@ -54,7 +54,6 @@ export default class ChatDAO {
   }
 
   //Conversations(priate messaging)
-
   static async sendPrivateMessage(
     message: string,
     hasAttachment: boolean | undefined,
@@ -83,7 +82,7 @@ export default class ChatDAO {
             attachmentPending: false,
           },
         });
-    io.to(`inbox=${recipientId}`).emit("private_message", msg.id, {
+    io.to(`inbox=${recipientId}`).emit("private_message", {
       id: msg.id,
       message: msg.message,
       senderId: msg.senderId,
@@ -96,7 +95,7 @@ export default class ChatDAO {
       createdAt: msg.createdAt,
       updatedAt: msg.updatedAt,
     });
-    io.to(`inbox=${senderId}`).emit("private_message", msg.id, {
+    io.to(`inbox=${senderId}`).emit("private_message", {
       id: msg.id,
       message: msg.message,
       senderId: msg.senderId,
@@ -133,10 +132,12 @@ export default class ChatDAO {
         message,
       },
     });
-    io.to(`inbox=${msg.recipientId}`).emit("private_message_update", id, {
+    io.to(`inbox=${msg.recipientId}`).emit("private_message_update", {
+      id,
       message,
     });
-    io.to(`inbox=${msg.senderId}`).emit("private_message_update", id, {
+    io.to(`inbox=${msg.senderId}`).emit("private_message_update", {
+      id,
       message,
     });
   }
@@ -150,6 +151,16 @@ export default class ChatDAO {
     } catch (e) {
       throw new Error("Message does not exist");
     }
+    console.log(
+      "DELETE : " +
+        id +
+        " | " +
+        uid +
+        " | " +
+        msg.recipientId +
+        " | " +
+        msg.senderId
+    );
     if (msg.senderId !== uid) throw new Error("Unauthorized");
     if (msg.hasAttachment) {
       const s3 = new AWS.S3();
@@ -381,16 +392,27 @@ export default class ChatDAO {
   }
 
   //Rooms
-  static async getRooms(): Promise<Room[]> {
-    return await prisma.room.findMany();
+  static async getRooms() {
+    return await prisma.room.findMany({
+      select: {
+        id: true,
+        name: true,
+        authorId: true,
+        members: { select: { id: true } },
+        banned: { select: { id: true } },
+      },
+    });
   }
 
   static async getRoomById(id: string) {
     return await prisma.room.findUnique({
       where: { id },
-      include: {
-        author: { select: { id: true } },
+      select: {
+        authorId: true,
+        id: true,
+        name: true,
         members: { select: { id: true } },
+        banned: { select: { id: true } },
       },
     });
   }
@@ -398,9 +420,12 @@ export default class ChatDAO {
   static async getRoomByName(name: string) {
     return await prisma.room.findFirst({
       where: { name },
-      include: {
-        author: { select: { id: true } },
+      select: {
+        authorId: true,
+        id: true,
+        name: true,
         members: { select: { id: true } },
+        banned: { select: { id: true } },
       },
     });
   }
@@ -424,12 +449,11 @@ export default class ChatDAO {
     });
     if (!matchingRoom)
       throw new Error("You either do not own the room, or it does not exist");
-    const { id } = await prisma.room.delete({
+    await prisma.room.delete({
       where: { id: roomId },
-      select: { id: true },
     });
-    io.emit("room_deleted", id);
-    return id;
+    io.emit("room_deleted", roomId);
+    return roomId;
   }
 
   static async createRoom(name: string, authorId: string) {
@@ -446,19 +470,18 @@ export default class ChatDAO {
       select: { _count: true },
     });
     if (usersRooms.length > 8) throw new Error("Max 8 rooms");
-    const { id } = await prisma.room.create({
+    const room = await prisma.room.create({
       data: {
         authorId,
         name,
         members: { connect: { id: authorId } },
       },
-      select: {
-        id: true,
-        name: true,
-        createdAt: true,
+      include: {
+        members: { select: { id: true } },
+        banned: { select: { id: true } },
       },
     });
-    io.emit("room_created", id, name, authorId);
+    io.emit("room_created", room);
   }
 
   static async joinRoom(roomId: string, uid: string) {
@@ -564,7 +587,86 @@ export default class ChatDAO {
       updatedAt: serverMessage.updatedAt,
     });
     const usersSocket = await getUserSocket(bannedUid);
-    if (usersSocket) usersSocket.leave(`room=${roomId}`);
+    if (usersSocket) {
+      usersSocket.leave(`room=${roomId}`);
+      usersSocket.data.vidChatOpen = false;
+      io.to(`room=${roomId}`).emit(
+        "room_video_chat_user_left",
+        String(usersSocket.data.user?.id)
+      );
+    }
+    io.emit("room_updated", {
+      ...room,
+      banned: [...room.banned, { id: bannedUid }],
+      members: room.members.filter((obj) => obj.id !== bannedUid),
+    });
+  }
+
+  static async unbanUser(roomId: string, bannedUid: string, bannerUid: string) {
+    let room;
+    if (bannedUid === bannerUid) throw new Error("You cannot unban yourself");
+    room = await prisma.room
+      .findUniqueOrThrow({
+        where: { id: roomId },
+        include: {
+          banned: { select: { id: true } },
+          members: { select: { id: true } },
+        },
+      })
+      .catch((e) => {
+        throw new Error("Room does not exist");
+      });
+    if (room.authorId !== bannerUid)
+      throw new Error("Only the rooms owner can unban users");
+    if (!room.banned.find((banned) => banned.id === bannedUid))
+      throw new Error("This user is not banned");
+    await prisma.room.update({
+      where: { id: roomId },
+      data: {
+        banned: { disconnect: { id: bannedUid } },
+      },
+    });
+    const bannedUser = await prisma.user.findFirst({
+      where: { id: bannedUid },
+      select: { name: true },
+    });
+    const bannerUser = await prisma.user.findFirst({
+      where: { id: bannerUid },
+      select: { name: true },
+    });
+    const serverMessage = await prisma.roomMessage.create({
+      data: {
+        message: `${bannedUser?.name} was unbanned by ${bannerUser?.name}`,
+        hasAttachment: false,
+        roomId,
+      },
+    });
+    io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+      id: serverMessage.id,
+      roomId,
+      message: serverMessage.message,
+      senderId: "",
+      hasAttachment: false,
+      attachmentPending: null,
+      attachmentKey: null,
+      attachmentError: null,
+      attachmentType: null,
+      createdAt: serverMessage.createdAt,
+      updatedAt: serverMessage.updatedAt,
+    });
+    const usersSocket = await getUserSocket(bannedUid);
+    if (usersSocket) {
+      usersSocket.leave(`room=${roomId}`);
+      usersSocket.data.vidChatOpen = false;
+      io.to(`room=${roomId}`).emit(
+        "room_video_chat_user_left",
+        String(usersSocket.data.user?.id)
+      );
+    }
+    io.emit("room_updated", {
+      ...room,
+      banned: room.banned.filter((obj) => obj.id !== bannedUid),
+    });
   }
 
   static async kickUser(roomId: string, kickedUid: string, kickerUid: string) {
@@ -608,6 +710,10 @@ export default class ChatDAO {
         roomId,
       },
     });
+    await prisma.room.update({
+      where: { id: roomId },
+      data: { members: { disconnect: { id: kickedUid } } },
+    });
     io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
       id: serverMessage.id,
       roomId,
@@ -622,12 +728,21 @@ export default class ChatDAO {
       updatedAt: serverMessage.updatedAt,
     });
     const usersSocket = await getUserSocket(kickedUid);
-    if (usersSocket) usersSocket.leave(`room=${roomId}`);
+    if (usersSocket) {
+      usersSocket.leave(`room=${roomId}`);
+      usersSocket.data.vidChatOpen = false;
+      io.to(`room=${roomId}`).emit(
+        "room_video_chat_user_left",
+        String(usersSocket.data.user?.id)
+      );
+    }
+    io.emit("room_updated", {
+      members: room.members.filter((m) => m.id !== kickedUid),
+    });
   }
 
   static async leaveRoom(roomId: string, uid: string) {
-    let room;
-    room = await prisma.room
+    await prisma.room
       .findUniqueOrThrow({
         where: { id: roomId },
         include: {
@@ -638,14 +753,6 @@ export default class ChatDAO {
       .catch((e) => {
         throw new Error("Room does not exist");
       });
-    if (room.authorId === uid)
-      throw new Error("You cannot leave a room that you own");
-    if (!room.members.find((u) => u.id === uid))
-      throw new Error("You cannot leave a room that you aren't already in");
-    if (room.banned.find((banned) => banned.id === uid))
-      throw new Error(
-        "You cannot leave a room which you are already banned from"
-      );
     const user = await prisma.user.findFirst({
       where: { id: uid },
       select: { name: true },
@@ -671,7 +778,14 @@ export default class ChatDAO {
       updatedAt: serverMessage.updatedAt,
     });
     const usersSocket = await getUserSocket(uid);
-    if (usersSocket) usersSocket.leave(`room=${roomId}`);
+    if (usersSocket) {
+      usersSocket.leave(`room=${roomId}`);
+      usersSocket.data.vidChatOpen = false;
+      io.to(`room=${roomId}`).emit(
+        "room_video_chat_user_left",
+        String(usersSocket.data.user?.id)
+      );
+    }
   }
 
   static async getRoomMessage(msgId: string) {
@@ -746,6 +860,24 @@ export default class ChatDAO {
     io.to(`room=${msg.roomId}`).emit("room_message_update", id, {
       message,
     });
+  }
+
+  static async getRoomUsers(roomId: string) {
+    try {
+      const room = await prisma.room.findUniqueOrThrow({
+        where: { id: roomId },
+        select: {
+          banned: { select: { id: true } },
+          members: { select: { id: true } },
+        },
+      });
+      return {
+        banned: room.banned.map((obj) => obj.id),
+        members: room.members.map((obj) => obj.id),
+      };
+    } catch (e) {
+      throw new Error("Room does not exist");
+    }
   }
 
   static async deleteRoomMessage(id: string, uid: string) {
@@ -827,6 +959,7 @@ export default class ChatDAO {
       });
     });
   }
+
   static async roomAttachmentComplete(
     roomId: string,
     messageId: string,
@@ -855,6 +988,7 @@ export default class ChatDAO {
       throw new Error("Internal error handling error :-(");
     }
   }
+
   static async roomAttachmentError(roomId: string, messageId: string) {
     try {
       io.to(`room=${roomId}`).emit("room_message_attachment_failed", messageId);
@@ -869,5 +1003,16 @@ export default class ChatDAO {
       console.warn(e);
       throw new Error("Internal error handling error :-(");
     }
+  }
+
+  static async roomOpenVideoChat(uid: string, roomId: string) {
+    const socket = await getUserSocket(uid);
+    if (!socket) throw new Error("User has no socket connection");
+    const sids = (await io.in(`room=${roomId}`).fetchSockets())
+      .filter((s) => s.data.vidChatOpen)
+      .map((s) => ({ sid: s.id, uid: s.data.user.id }))
+      .filter((ids) => ids.sid !== socket.id);
+    socket.data.vidChatOpen = true;
+    socket.emit("room_video_chat_all_users", sids);
   }
 }

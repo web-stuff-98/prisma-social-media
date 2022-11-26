@@ -93,7 +93,7 @@ class ChatDAO {
                         attachmentPending: false,
                     },
                 });
-            __1.io.to(`inbox=${recipientId}`).emit("private_message", msg.id, {
+            __1.io.to(`inbox=${recipientId}`).emit("private_message", {
                 id: msg.id,
                 message: msg.message,
                 senderId: msg.senderId,
@@ -106,7 +106,7 @@ class ChatDAO {
                 createdAt: msg.createdAt,
                 updatedAt: msg.updatedAt,
             });
-            __1.io.to(`inbox=${senderId}`).emit("private_message", msg.id, {
+            __1.io.to(`inbox=${senderId}`).emit("private_message", {
                 id: msg.id,
                 message: msg.message,
                 senderId: msg.senderId,
@@ -143,10 +143,12 @@ class ChatDAO {
                     message,
                 },
             });
-            __1.io.to(`inbox=${msg.recipientId}`).emit("private_message_update", id, {
+            __1.io.to(`inbox=${msg.recipientId}`).emit("private_message_update", {
+                id,
                 message,
             });
-            __1.io.to(`inbox=${msg.senderId}`).emit("private_message_update", id, {
+            __1.io.to(`inbox=${msg.senderId}`).emit("private_message_update", {
+                id,
                 message,
             });
         });
@@ -162,6 +164,14 @@ class ChatDAO {
             catch (e) {
                 throw new Error("Message does not exist");
             }
+            console.log("DELETE : " +
+                id +
+                " | " +
+                uid +
+                " | " +
+                msg.recipientId +
+                " | " +
+                msg.senderId);
             if (msg.senderId !== uid)
                 throw new Error("Unauthorized");
             if (msg.hasAttachment) {
@@ -358,16 +368,27 @@ class ChatDAO {
     //Rooms
     static getRooms() {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield prisma_1.default.room.findMany();
+            return yield prisma_1.default.room.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                    authorId: true,
+                    members: { select: { id: true } },
+                    banned: { select: { id: true } },
+                },
+            });
         });
     }
     static getRoomById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield prisma_1.default.room.findUnique({
                 where: { id },
-                include: {
-                    author: { select: { id: true } },
+                select: {
+                    authorId: true,
+                    id: true,
+                    name: true,
                     members: { select: { id: true } },
+                    banned: { select: { id: true } },
                 },
             });
         });
@@ -376,9 +397,12 @@ class ChatDAO {
         return __awaiter(this, void 0, void 0, function* () {
             return yield prisma_1.default.room.findFirst({
                 where: { name },
-                include: {
-                    author: { select: { id: true } },
+                select: {
+                    authorId: true,
+                    id: true,
+                    name: true,
                     members: { select: { id: true } },
+                    banned: { select: { id: true } },
                 },
             });
         });
@@ -405,12 +429,11 @@ class ChatDAO {
             });
             if (!matchingRoom)
                 throw new Error("You either do not own the room, or it does not exist");
-            const { id } = yield prisma_1.default.room.delete({
+            yield prisma_1.default.room.delete({
                 where: { id: roomId },
-                select: { id: true },
             });
-            __1.io.emit("room_deleted", id);
-            return id;
+            __1.io.emit("room_deleted", roomId);
+            return roomId;
         });
     }
     static createRoom(name, authorId) {
@@ -429,19 +452,18 @@ class ChatDAO {
             });
             if (usersRooms.length > 8)
                 throw new Error("Max 8 rooms");
-            const { id } = yield prisma_1.default.room.create({
+            const room = yield prisma_1.default.room.create({
                 data: {
                     authorId,
                     name,
                     members: { connect: { id: authorId } },
                 },
-                select: {
-                    id: true,
-                    name: true,
-                    createdAt: true,
+                include: {
+                    members: { select: { id: true } },
+                    banned: { select: { id: true } },
                 },
             });
-            __1.io.emit("room_created", id, name, authorId);
+            __1.io.emit("room_created", room);
         });
     }
     static joinRoom(roomId, uid) {
@@ -496,6 +518,7 @@ class ChatDAO {
         });
     }
     static banUser(roomId, bannedUid, bannerUid) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             let room;
             if (bannedUid === bannerUid)
@@ -551,11 +574,80 @@ class ChatDAO {
                 updatedAt: serverMessage.updatedAt,
             });
             const usersSocket = yield (0, getUserSocket_1.default)(bannedUid);
-            if (usersSocket)
+            if (usersSocket) {
                 usersSocket.leave(`room=${roomId}`);
+                usersSocket.data.vidChatOpen = false;
+                __1.io.to(`room=${roomId}`).emit("room_video_chat_user_left", String((_a = usersSocket.data.user) === null || _a === void 0 ? void 0 : _a.id));
+            }
+            __1.io.emit("room_updated", Object.assign(Object.assign({}, room), { banned: [...room.banned, { id: bannedUid }], members: room.members.filter((obj) => obj.id !== bannedUid) }));
+        });
+    }
+    static unbanUser(roomId, bannedUid, bannerUid) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            let room;
+            if (bannedUid === bannerUid)
+                throw new Error("You cannot unban yourself");
+            room = yield prisma_1.default.room
+                .findUniqueOrThrow({
+                where: { id: roomId },
+                include: {
+                    banned: { select: { id: true } },
+                    members: { select: { id: true } },
+                },
+            })
+                .catch((e) => {
+                throw new Error("Room does not exist");
+            });
+            if (room.authorId !== bannerUid)
+                throw new Error("Only the rooms owner can unban users");
+            if (!room.banned.find((banned) => banned.id === bannedUid))
+                throw new Error("This user is not banned");
+            yield prisma_1.default.room.update({
+                where: { id: roomId },
+                data: {
+                    banned: { disconnect: { id: bannedUid } },
+                },
+            });
+            const bannedUser = yield prisma_1.default.user.findFirst({
+                where: { id: bannedUid },
+                select: { name: true },
+            });
+            const bannerUser = yield prisma_1.default.user.findFirst({
+                where: { id: bannerUid },
+                select: { name: true },
+            });
+            const serverMessage = yield prisma_1.default.roomMessage.create({
+                data: {
+                    message: `${bannedUser === null || bannedUser === void 0 ? void 0 : bannedUser.name} was unbanned by ${bannerUser === null || bannerUser === void 0 ? void 0 : bannerUser.name}`,
+                    hasAttachment: false,
+                    roomId,
+                },
+            });
+            __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
+                id: serverMessage.id,
+                roomId,
+                message: serverMessage.message,
+                senderId: "",
+                hasAttachment: false,
+                attachmentPending: null,
+                attachmentKey: null,
+                attachmentError: null,
+                attachmentType: null,
+                createdAt: serverMessage.createdAt,
+                updatedAt: serverMessage.updatedAt,
+            });
+            const usersSocket = yield (0, getUserSocket_1.default)(bannedUid);
+            if (usersSocket) {
+                usersSocket.leave(`room=${roomId}`);
+                usersSocket.data.vidChatOpen = false;
+                __1.io.to(`room=${roomId}`).emit("room_video_chat_user_left", String((_a = usersSocket.data.user) === null || _a === void 0 ? void 0 : _a.id));
+            }
+            __1.io.emit("room_updated", Object.assign(Object.assign({}, room), { banned: room.banned.filter((obj) => obj.id !== bannedUid) }));
         });
     }
     static kickUser(roomId, kickedUid, kickerUid) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             let room;
             if (kickedUid === kickerUid)
@@ -598,6 +690,10 @@ class ChatDAO {
                     roomId,
                 },
             });
+            yield prisma_1.default.room.update({
+                where: { id: roomId },
+                data: { members: { disconnect: { id: kickedUid } } },
+            });
             __1.io.to(`room=${roomId}`).emit("room_message", serverMessage.id, {
                 id: serverMessage.id,
                 roomId,
@@ -612,14 +708,20 @@ class ChatDAO {
                 updatedAt: serverMessage.updatedAt,
             });
             const usersSocket = yield (0, getUserSocket_1.default)(kickedUid);
-            if (usersSocket)
+            if (usersSocket) {
                 usersSocket.leave(`room=${roomId}`);
+                usersSocket.data.vidChatOpen = false;
+                __1.io.to(`room=${roomId}`).emit("room_video_chat_user_left", String((_a = usersSocket.data.user) === null || _a === void 0 ? void 0 : _a.id));
+            }
+            __1.io.emit("room_updated", {
+                members: room.members.filter((m) => m.id !== kickedUid),
+            });
         });
     }
     static leaveRoom(roomId, uid) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            let room;
-            room = yield prisma_1.default.room
+            yield prisma_1.default.room
                 .findUniqueOrThrow({
                 where: { id: roomId },
                 include: {
@@ -630,12 +732,6 @@ class ChatDAO {
                 .catch((e) => {
                 throw new Error("Room does not exist");
             });
-            if (room.authorId === uid)
-                throw new Error("You cannot leave a room that you own");
-            if (!room.members.find((u) => u.id === uid))
-                throw new Error("You cannot leave a room that you aren't already in");
-            if (room.banned.find((banned) => banned.id === uid))
-                throw new Error("You cannot leave a room which you are already banned from");
             const user = yield prisma_1.default.user.findFirst({
                 where: { id: uid },
                 select: { name: true },
@@ -661,8 +757,11 @@ class ChatDAO {
                 updatedAt: serverMessage.updatedAt,
             });
             const usersSocket = yield (0, getUserSocket_1.default)(uid);
-            if (usersSocket)
+            if (usersSocket) {
                 usersSocket.leave(`room=${roomId}`);
+                usersSocket.data.vidChatOpen = false;
+                __1.io.to(`room=${roomId}`).emit("room_video_chat_user_left", String((_a = usersSocket.data.user) === null || _a === void 0 ? void 0 : _a.id));
+            }
         });
     }
     static getRoomMessage(msgId) {
@@ -734,6 +833,26 @@ class ChatDAO {
             __1.io.to(`room=${msg.roomId}`).emit("room_message_update", id, {
                 message,
             });
+        });
+    }
+    static getRoomUsers(roomId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const room = yield prisma_1.default.room.findUniqueOrThrow({
+                    where: { id: roomId },
+                    select: {
+                        banned: { select: { id: true } },
+                        members: { select: { id: true } },
+                    },
+                });
+                return {
+                    banned: room.banned.map((obj) => obj.id),
+                    members: room.members.map((obj) => obj.id),
+                };
+            }
+            catch (e) {
+                throw new Error("Room does not exist");
+            }
         });
     }
     static deleteRoomMessage(id, uid) {
@@ -839,6 +958,19 @@ class ChatDAO {
                 console.warn(e);
                 throw new Error("Internal error handling error :-(");
             }
+        });
+    }
+    static roomOpenVideoChat(uid, roomId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const socket = yield (0, getUserSocket_1.default)(uid);
+            if (!socket)
+                throw new Error("User has no socket connection");
+            const sids = (yield __1.io.in(`room=${roomId}`).fetchSockets())
+                .filter((s) => s.data.vidChatOpen)
+                .map((s) => ({ sid: s.id, uid: s.data.user.id }))
+                .filter((ids) => ids.sid !== socket.id);
+            socket.data.vidChatOpen = true;
+            socket.emit("room_video_chat_all_users", sids);
         });
     }
 }

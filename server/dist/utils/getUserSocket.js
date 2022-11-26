@@ -13,6 +13,10 @@ const __1 = require("..");
 exports.default = (uid) => __awaiter(void 0, void 0, void 0, function* () {
     const sockets = yield __1.io.fetchSockets();
     for (const socket of sockets) {
+        if (!socket.data.user.id) {
+            console.warn("No uid for socket " + socket.id);
+            return undefined;
+        }
         if (socket.data.user.id === uid)
             return socket;
     }

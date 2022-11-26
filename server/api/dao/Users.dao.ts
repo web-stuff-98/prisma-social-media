@@ -2,6 +2,7 @@ import prisma from "../../utils/prisma";
 import bcrypt from "bcrypt";
 import imageProcessing from "../../utils/imageProcessing";
 import { io } from "../..";
+import getUserSocket from "../../utils/getUserSocket";
 
 export default class UsersDAO {
   static async getUsers() {
@@ -88,7 +89,11 @@ export default class UsersDAO {
         });
       }
     }
-    io.to(uid).emit("user_subscription_update", {
+    if (data.name) {
+      const socket = await getUserSocket(uid);
+      if (socket) socket.data.user.name = data.name;
+    }
+    io.to(`user=${uid}`).emit("user_subscription_update", {
       id: uid,
       ...(data.name ? { name: data.name } : {}),
       ...(data.pfp ? { pfp: base64 } : {}),

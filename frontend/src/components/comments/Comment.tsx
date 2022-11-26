@@ -24,7 +24,7 @@ export function Comment({
   likeCount,
   likedByMe,
 }: IPostComment) {
-  /*
+/*
 This function is from the web dev simplified video. It is supposed to be in the useAsync hook but that was causing infinite rerenders in the original PostContext, so I changed it to the useAync hook from usehooks.com and it worked. But I'll keep this function here anyway because it works here and dont need to change anything aside from the name.
 */
   function useAsyncFn(func: Function, dependencies: any[] = []) {

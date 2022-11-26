@@ -41,6 +41,7 @@ const yup_password_1 = __importDefault(require("yup-password"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const Users_dao_1 = __importDefault(require("../dao/Users.dao"));
 const __1 = require("../..");
+const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
 const loginValidateSchema = Yup.object().shape({
     username: Yup.string().required().max(100),
     password: Yup.string().password().required(),
@@ -149,7 +150,7 @@ class UsersController {
                 sameSite: "strict",
             });
             if (user)
-                __1.io.to(user.id).emit("user_subscription_update", {
+                __1.io.to(`user=${user.id}`).emit("user_subscription_update", {
                     id: user.id,
                     online: true,
                 });
@@ -159,12 +160,17 @@ class UsersController {
     static logout(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            if (req.user)
-                __1.io.to((_a = req.user) === null || _a === void 0 ? void 0 : _a.id).emit("user_subscription_update", {
+            if (req.user) {
+                const socket = yield (0, getUserSocket_1.default)(req.user.id);
+                if (socket) {
+                    socket.disconnect();
+                }
+                __1.io.to(`user=${(_a = req.user) === null || _a === void 0 ? void 0 : _a.id}`).emit("user_subscription_update", {
                     id: req.user.id,
                     online: false,
                 });
-            res.clearCookie("token").status(200).end();
+            }
+            res.status(200).clearCookie("token", { path: "/" }).end();
         });
     }
     static checkLogin(req, res) {

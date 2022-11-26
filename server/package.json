@@ -21,6 +21,7 @@
     "@types/mime-types": "^2.1.1",
     "@types/node": "^18.11.9",
     "@types/sharp": "^0.31.0",
+    "@types/simple-peer": "^9.11.5",
     "concurrently": "^7.5.0",
     "nodemon": "^2.0.20",
     "prisma": "^4.5.0",

@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useInterface } from "../../context/InterfaceContext";
 import Header from "./Header";
 import Nav from "./Nav";
+
 export default function Layout() {
   const { pathname } = useLocation();
   const { state: iState } = useInterface();
@@ -30,7 +31,7 @@ export default function Layout() {
       </div>
       <main
         className={
-          pathname.includes("/editor") ? "container mx-auto mt-navheader w-full h-screen bg-foreground dark:bg-darkmodeForeground border-l border-r border-stone-200 shadow dark:border-stone-800 px-2" : (pathname === "/login" ||
+          (pathname.includes("/editor") || pathname.includes("/posts")) ? "container mx-auto mt-navheader w-full h-screen bg-foreground dark:bg-darkmodeForeground border-l border-r border-stone-200 shadow dark:border-stone-800 px-2" : (pathname === "/login" ||
           pathname === "/register" ||
           pathname === "/settings"
             ? "w-fit rounded my-auto shadow-xl mx-auto bg-foreground dark:bg-darkmodeForeground border border-stone-300 dark:border-stone-800"

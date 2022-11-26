@@ -190,10 +190,9 @@ export default function Message({
           )}
           {!isEditing && (
             <button
-              onClick={() => {
-                roomId ? deleteRoomMessage(id) : deletePrivateMessage(id);
-                /*socket?.emit("private_message_delete", id);*/
-              }}
+              onClick={() =>
+                roomId ? deleteRoomMessage(id) : deletePrivateMessage(id)
+              }
               className="px-0 bg-transparent"
               aria-label={isEditing ? "Submit change" : "Delete message"}
               type="button"

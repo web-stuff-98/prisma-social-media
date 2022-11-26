@@ -1,22 +1,18 @@
 import { useState } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 
-import { createRoom, joinRoom } from "../../../services/chat";
+import { createRoom } from "../../../services/chat";
 
 import { MdError, MdSend } from "react-icons/md";
 import { ImSpinner8 } from "react-icons/im";
-import { TbDoorOff, TbDoor } from "react-icons/tb";
 
-import { IconBtn } from "../../IconBtn";
 import { IRoom, useChat } from "../../../context/ChatContext";
 import MessengerError from "../MessengerError";
+import Room from "./Room";
 
-export default function Rooms({
-  setRoomId = () => {},
-}: {
-  setRoomId: (to: string) => void;
-}) {
-  const { setChatSection, rooms, roomsError, roomsStatus } = useChat();
+export default function Rooms() {
+  const { setChatSection, rooms, roomsError, roomsStatus, setRoomId } =
+    useChat();
 
   const [err, setErr] = useState("");
 
@@ -47,27 +43,7 @@ export default function Rooms({
         )}
         <div className="flex flex-col justify-start gap-1 p-1 w-full">
           {rooms.map((room: IRoom) => (
-            <article
-              key={room.id}
-              style={room.public ? {} : { filter: "opacity(0.5)" }}
-              className="leading-5 flex justify-between items-center text-xs font-bold rounded-sm border dark:border-stone-800 shadow px-1 w-full py-1"
-            >
-              <div>{room.name}</div>
-              <div className="text-lg">
-                <IconBtn
-                  aria-label="Join room"
-                  onClick={() =>
-                    joinRoom(room.id)
-                      .then(() => {
-                        setChatSection("Chatroom");
-                        setRoomId(room.id);
-                      })
-                      .catch((e) => setErr(`${e}`))
-                  }
-                  Icon={room.public ? TbDoor : TbDoorOff}
-                />
-              </div>
-            </article>
+            <Room key={room.id} room={room} />
           ))}
         </div>
         {err && <MessengerError err={err} closeError={() => setErr("")} />}

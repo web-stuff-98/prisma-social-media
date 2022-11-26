@@ -55,6 +55,7 @@ class ChatController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                console.log("Delete controller : " + req.body.messageId);
                 yield Chat_dao_1.default.deletePrivateMessage(req.body.messageId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(200).end();
             }
@@ -292,6 +293,18 @@ class ChatController {
             }
         });
     }
+    static unbanUser(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.unbanUser(req.params.roomId, req.params.unbanUid, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
     static kickUser(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
@@ -334,6 +347,17 @@ class ChatController {
             try {
                 yield Chat_dao_1.default.deleteRoomMessage(req.body.messageId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static getRoomUsers(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const uids = yield Chat_dao_1.default.getRoomUsers(req.params.roomId);
+                res.status(200).json(uids);
             }
             catch (e) {
                 res.status(400).json({ msg: `${e}` });
@@ -404,6 +428,18 @@ class ChatController {
                         .end();
                 });
             }));
+        });
+    }
+    static roomOpenVideoChat(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.roomOpenVideoChat(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.roomId);
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
         });
     }
 }

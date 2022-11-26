@@ -9,6 +9,7 @@ export default function MessageForm({
   handleMessageInput,
   handleFileInput,
   handleMessageSubmit,
+  handleVidChatIconClicked = () => {},
   file,
   messageInput,
 }: {
@@ -16,6 +17,7 @@ export default function MessageForm({
   handleMessageInput: (e: ChangeEvent<HTMLInputElement>) => void;
   handleFileInput: (e: ChangeEvent<HTMLInputElement>) => void;
   handleMessageSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  handleVidChatIconClicked?: () => void;
   file?: File;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,7 +54,7 @@ export default function MessageForm({
         <button className="px-1 pl-0" type="submit" aria-label="Send message">
           <MdSend className="text-2xl" />
         </button>
-        <button className="px-2" type="button" aria-label="Send message">
+        <button onClick={() => handleVidChatIconClicked()} className="px-2" type="button" aria-label="Open video chat">
           <RiWebcamFill className="text-2xl"/>
         </button>
       </div>

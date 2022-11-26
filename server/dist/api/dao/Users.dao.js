@@ -16,6 +16,7 @@ const prisma_1 = __importDefault(require("../../utils/prisma"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
 const __1 = require("../..");
+const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
 class UsersDAO {
     static getUsers() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -99,7 +100,12 @@ class UsersDAO {
                     });
                 }
             }
-            __1.io.to(uid).emit("user_subscription_update", Object.assign(Object.assign({ id: uid }, (data.name ? { name: data.name } : {})), (data.pfp ? { pfp: base64 } : {})));
+            if (data.name) {
+                const socket = yield (0, getUserSocket_1.default)(uid);
+                if (socket)
+                    socket.data.user.name = data.name;
+            }
+            __1.io.to(`user=${uid}`).emit("user_subscription_update", Object.assign(Object.assign({ id: uid }, (data.name ? { name: data.name } : {})), (data.pfp ? { pfp: base64 } : {})));
         });
     }
     static createUser(username, password) {

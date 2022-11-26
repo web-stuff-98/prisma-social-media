@@ -63,8 +63,7 @@ export default function Settings() {
         />
       )}
       <p className="text-center text-xs leading-4 mt-1">
-        Click on your profile picture to select a new one, then press confirm to
-        update it.
+        Click on your profile picture to select a new one, it will be updated as soon as you have confirmed the selection. There is a file size limit of around 4mb.
       </p>
     </div>
   );

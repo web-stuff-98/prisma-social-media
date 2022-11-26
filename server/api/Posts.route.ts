@@ -1,6 +1,7 @@
 import express from "express";
 import authMiddleware, { withUser } from "../utils/authMiddleware";
 import PostsController from "./controllers/Posts.controller";
+import { simpleRateLimit } from "./limiter/limiters";
 const router = express.Router();
 
 router.route("/").get(withUser, PostsController.getPosts);
@@ -14,10 +15,28 @@ router
 router
   .route("/:id/toggleShare")
   .post(authMiddleware, PostsController.togglePostShare);
-router.route("/:id/comments").post(authMiddleware, PostsController.addComment);
-router
-  .route("/:id/comments/:commentId")
-  .put(authMiddleware, PostsController.updateComment);
+router.route("/:id/comments").post(
+  simpleRateLimit({
+    routeName: "postComment",
+    blockDuration: 300000,
+    maxReqs: 30,
+    windowMs: 300000,
+    msg: "Max 30 comments every 5 minutes. You must wait 5 more minutes to comment again.",
+  }),
+  authMiddleware,
+  PostsController.addComment
+);
+router.route("/:id/comments/:commentId").put(
+  simpleRateLimit({
+    routeName: "editPostComment",
+    blockDuration: 300000,
+    maxReqs: 30,
+    windowMs: 300000,
+    msg: "You have edited comments too many times. Wait 5 minutes.",
+  }),
+  authMiddleware,
+  PostsController.updateComment
+);
 router
   .route("/:id/comments/:commentId")
   .delete(authMiddleware, PostsController.deleteComment);

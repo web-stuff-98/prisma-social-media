@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useModal } from "./ModalContext";
 import { makeRequest } from "../services/makeRequest";
+import { useSocket } from "./SocketContext";
 
 const AuthContext = createContext<{
   login: (username: string, password: string) => void;
@@ -24,6 +25,7 @@ export interface IUser {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { openModal } = useModal();
+  const { socket } = useSocket();
 
   const [user, setUser] = useState();
 
@@ -34,6 +36,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       setUser(user);
+      if (socket) {
+        socket.emit("auth");
+      }
     } catch (error) {
       console.warn(error);
     }
@@ -54,6 +59,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       setUser(user);
+      if (socket) {
+        socket.emit("auth");
+      }
     } catch (e) {
       openModal("Message", {
         err: true,

@@ -45,6 +45,7 @@ export default class ChatController {
 
   static async deletePrivateMessage(req: Req, res: Res) {
     try {
+      console.log("Delete controller : " + req.body.messageId)
       await ChatDAO.deletePrivateMessage(
         req.body.messageId,
         String(req.user?.id)
@@ -193,7 +194,7 @@ export default class ChatController {
     }
   }
 
-  static async getRoomMessages(req:Req, res:Res) {
+  static async getRoomMessages(req: Req, res: Res) {
     try {
       const messages = await ChatDAO.getRoomMessages(req.params.roomId);
       res.status(200).json(messages).end();
@@ -259,7 +260,7 @@ export default class ChatController {
     }
   }
 
-  static async leaveRoom(req:Req, res:Res) {
+  static async leaveRoom(req: Req, res: Res) {
     try {
       await ChatDAO.leaveRoom(req.params.roomId, String(req.user?.id));
       res.status(200).end();
@@ -281,7 +282,20 @@ export default class ChatController {
     }
   }
 
-  static async kickUser(req:Req, res:Res) {
+  static async unbanUser(req: Req, res: Res) {
+    try {
+      await ChatDAO.unbanUser(
+        req.params.roomId,
+        req.params.unbanUid,
+        String(req.user?.id)
+      );
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async kickUser(req: Req, res: Res) {
     try {
       await ChatDAO.kickUser(
         req.params.roomId,
@@ -323,11 +337,17 @@ export default class ChatController {
 
   static async deleteRoomMessage(req: Req, res: Res) {
     try {
-      await ChatDAO.deleteRoomMessage(
-        req.body.messageId,
-        String(req.user?.id)
-      );
+      await ChatDAO.deleteRoomMessage(req.body.messageId, String(req.user?.id));
       res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async getRoomUsers(req: Req, res: Res) {
+    try {
+      const uids = await ChatDAO.getRoomUsers(req.params.roomId);
+      res.status(200).json(uids);
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
     }
@@ -406,5 +426,14 @@ export default class ChatController {
             .end();
         });
     });
+  }
+
+  static async roomOpenVideoChat(req: Req, res: Res) {
+    try {
+      await ChatDAO.roomOpenVideoChat(String(req.user?.id), req.params.roomId);
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
   }
 }

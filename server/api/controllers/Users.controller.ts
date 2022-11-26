@@ -8,6 +8,7 @@ YupPassword(Yup);
 import jwt from "jsonwebtoken";
 import UsersDAO from "../dao/Users.dao";
 import { io } from "../..";
+import getUserSocket from "../../utils/getUserSocket";
 
 const loginValidateSchema = Yup.object().shape({
   username: Yup.string().required().max(100),
@@ -117,7 +118,7 @@ export default class UsersController {
       }
     );
     if (user)
-      io.to(user.id).emit("user_subscription_update", {
+      io.to(`user=${user.id}`).emit("user_subscription_update", {
         id: user.id,
         online: true,
       });
@@ -125,12 +126,17 @@ export default class UsersController {
   }
 
   static async logout(req: Req, res: Res) {
-    if (req.user)
-      io.to(req.user?.id).emit("user_subscription_update", {
+    if (req.user) {
+      const socket = await getUserSocket(req.user.id);
+      if (socket) {
+        socket.disconnect();
+      }
+      io.to(`user=${req.user?.id}`).emit("user_subscription_update", {
         id: req.user.id,
         online: false,
       });
-    res.clearCookie("token").status(200).end();
+    }
+    res.status(200).clearCookie("token", { path: "/"}).end();
   }
 
   static async checkLogin(req: Req, res: Res) {

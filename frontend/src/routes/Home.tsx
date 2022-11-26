@@ -51,18 +51,13 @@ export default function Home() {
       <div className="flex flex-col gap-3">
         {posts &&
           posts.length > 0 &&
-          posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-            />
-          ))}
+          posts.map((post) => <PostCard key={post.id} post={post} />)}
       </div>
       <div className="bg-foreground border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-2">
         <h2 className="whitespace-nowrap font-extrabold tracking-tight text-md">
           Popular posts
         </h2>
-        <div
+        <aside
           style={{ maxWidth: "25pc" }}
           className="flex flex-col items-center justify-center"
         >
@@ -97,7 +92,7 @@ export default function Home() {
                 />
               </article>
             ))}
-        </div>
+        </aside>
       </div>
     </div>
   );

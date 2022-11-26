@@ -14,12 +14,13 @@ import ConversationSection from "../components/chat/conversation/Conversation";
 import ConversationsSection from "../components/chat/conversations/ConversationsSection";
 import ChatMenu from "../components/chat/menu/ChatMenu";
 import SearchUsers from "../components/chat/searchUsers/SearchUsers";
-import UsersChatrooms from "../components/chat/usersChatrooms/UsersChatrooms";
+import UsersChatrooms from "../components/chat/rooms/usersChatrooms/UsersChatrooms";
 import useScrollbarSize from "react-scrollbar-size";
 import Rooms from "../components/chat/rooms/Rooms";
 import Room from "../components/chat/room/Room";
 import useCustomArrayAsync from "../hooks/useCustomArrayAsync";
 import { getRooms } from "../services/chat";
+import EditRoom from "../components/chat/editRoom/EditRoom";
 
 export type ChatSection =
   | "Menu"
@@ -28,7 +29,8 @@ export type ChatSection =
   | "Conversations"
   | "Conversation"
   | "Chatrooms"
-  | "Chatroom";
+  | "Chatroom"
+  | "EditRoom";
 
 export interface IMessage {
   id: string;
@@ -50,6 +52,8 @@ export interface IRoom {
   name: string;
   authorId: string;
   public: boolean;
+  banned: { id: string }[];
+  members: { id: string }[];
 }
 
 export type MessengerError = {
@@ -86,29 +90,30 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     setChatSection("Conversation");
   };
 
-  const [streamWindowsOffset, setStreamWindowsOffset] = useState({
-    left: "0",
-    bottom: "0",
-  });
-  useEffect(() => {
-    setStreamWindowsOffset(
-      chatSection === "Conversation"
-        ? { left: "0", bottom: "2.25em" }
-        : { left: "0", bottom: "0" }
-    );
-  }, [chatSection]);
+  const [editRoomId, setEditRoomId] = useState("");
+  const openRoomEditor = (roomId: string) => {
+    setEditRoomId(roomId);
+    setChatSection("EditRoom");
+  };
 
   const {
     error: roomsError,
     status: roomsStatus,
     value: rooms,
-    setValueState: setRooms,
   } = useCustomArrayAsync(
     getRooms,
     [],
     "room_updated",
     "room_deleted",
     "room_created"
+  );
+
+  const getRoom = useCallback(
+    (id: string) => {
+      const found = rooms.find((r) => r.id === id);
+      return found || undefined;
+    },
+    [rooms]
   );
 
   return (
@@ -120,12 +125,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         openConversation,
         setChatSection,
         chatSection,
-        streamWindowsOffset,
         topText,
         setTopText,
         rooms,
         roomsError,
         roomsStatus,
+        roomId,
+        setRoomId,
+        openRoomEditor,
+        editRoomId,
+        getRoom,
       }}
     >
       <div
@@ -140,9 +149,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }}
         className={`mx-auto font-rubik dark:text-white relative ${
           chatOpen
-            ? "bg-foreground dark:bg-darkmodeForeground border border-zinc-600 dark:border-stone-800"
+            ? "bg-foreground dark:bg-darkmodeForeground border border-zinc-300 dark:border-stone-800"
             : "bg-transparent"
-        } rounded p-3 ${chatOpen ? "shadow-xl" : ""}`}
+        } rounded p-3 ${chatOpen ? "shadow-md" : ""}`}
       >
         {/* close chat icon tray / open chat icon */}
         {chatOpen ? (
@@ -173,9 +182,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             {/* Conversations */}
             {chatSection === "Conversations" && <ConversationsSection />}
             {/* Find & create rooms */}
-            {chatSection === "Chatrooms" && <Rooms setRoomId={setRoomId} />}
+            {chatSection === "Chatrooms" && <Rooms />}
             {/* Chatroom */}
             {chatSection === "Chatroom" && <Room roomId={roomId} />}
+            {/* Edit room */}
+            {chatSection === "EditRoom" && (
+              <EditRoom room={getRoom(editRoomId)} />
+            )}
           </>
         )}
         {/*<VideoChatWindow />*/}
@@ -192,12 +205,16 @@ const ChatContext = createContext<{
   openConversation: (uid: string) => void;
   setChatSection: (to: ChatSection) => void;
   chatSection: ChatSection;
-  streamWindowsOffset: { left: string; bottom: string };
   topText: string;
   setTopText: (to: string) => void;
   roomsStatus: "idle" | "pending" | "success" | "error";
   roomsError: unknown;
   rooms: IRoom[];
+  roomId: string;
+  setRoomId: (to: string) => void;
+  openRoomEditor: (roomId: string) => void;
+  editRoomId: string;
+  getRoom: (id: string) => IRoom | undefined;
 }>({
   chatOpen: false,
   openChat: () => {},
@@ -205,12 +222,16 @@ const ChatContext = createContext<{
   openConversation: () => {},
   setChatSection: () => {},
   chatSection: "Menu",
-  streamWindowsOffset: { left: "0", bottom: "0" },
   topText: "",
   setTopText: () => {},
   roomsStatus: "idle",
   roomsError: null,
   rooms: [],
+  roomId: "",
+  setRoomId: () => {},
+  openRoomEditor: () => {},
+  editRoomId: "",
+  getRoom: () => undefined,
 });
 
 export const useChat = () => useContext(ChatContext);

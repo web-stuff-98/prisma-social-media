@@ -44,6 +44,7 @@ export default function User({
   pfpCursor,
   isServer,
   chatroomId,
+  micro,
 }: {
   date?: Date;
   user?: IUser;
@@ -67,6 +68,7 @@ export default function User({
   pfpCursor?: boolean;
   isServer?: boolean;
   chatroomId?: string;
+  micro?: boolean;
 }) {
   const { openUserdropdown } = useUserdropdown();
   const { user: currentUser } = useAuth();
@@ -178,10 +180,12 @@ export default function User({
           if (currentUser && uid)
             if (user?.id !== currentUser?.id) openUserdropdown(uid, chatroomId);
         }}
-        className={`${date && !isServer ? "w-10 h-10" : "w-8 h-8"} relative ${
+        className={`${micro ? "w-5 h-5" : (date && !isServer ? "w-10 h-10" : "w-8 h-8")} relative ${
           ((currentUser && user?.id !== currentUser?.id && uid) || pfpCursor) &&
           "cursor-pointer"
-        } rounded-full ${!isServer && "border border-zinc-500 dark:border-zinc-600 shadow-md"}`}
+        } ${micro ? "rounded" : "rounded-full"} ${
+          !isServer && "border border-zinc-500 dark:border-zinc-600 shadow-md"
+        }`}
       >
         {user?.online && (
           <span
@@ -218,7 +222,7 @@ export default function User({
           />
         </div>
       )}
-      <div className="leading-3 mt-0.5 px-1">
+      {!micro && <div className="leading-3 mt-0.5 px-1">
         {user && (
           <h1
             className={`font-bold ${
@@ -230,7 +234,7 @@ export default function User({
           </h1>
         )}
         {date && renderDateTime(getDateString(date))}
-      </div>
+      </div>}
     </div>
   );
 }

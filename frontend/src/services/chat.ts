@@ -36,6 +36,17 @@ const banUserFromRoom = (roomId: string, uid: string) =>
     withCredentials: true,
     method: "POST",
   });
+const unbanUserFromRoom = (roomId: string, uid: string) =>
+  makeRequest(`/api/chat/room/${roomId}/unban/${uid}`, {
+    withCredentials: true,
+    method: "POST",
+  });
+
+const roomOpenVideoChat = (roomId: string) =>
+  makeRequest(`/api/chat/room/${roomId}/video/join`, {
+    withCredentials: true,
+    method: "POST",
+  });
 
 const sendRoomMessage = (
   message: string,
@@ -85,6 +96,11 @@ const uploadRoomMessageAttachment = async (
     },
   });
 };
+
+const getRoomUsers = async (roomId: string) =>
+  makeRequest(`/api/chat/room/${roomId}/users`, {
+    withCredentials: true,
+  });
 
 const sendPrivateMessage = (
   message: string,
@@ -165,5 +181,8 @@ export {
   leaveRoom,
   kickUserFromRoom,
   banUserFromRoom,
+  unbanUserFromRoom,
   createRoom,
+  roomOpenVideoChat,
+  getRoomUsers,
 };

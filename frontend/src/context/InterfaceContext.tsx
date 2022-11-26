@@ -27,7 +27,7 @@ const InterfaceContext = createContext<{
 }>({
   state: {
     breakPoint: "md",
-    darkMode: false,
+    darkMode: true,
   },
   dispatch: () => {},
 });
