@@ -29,10 +29,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = __importStar(require("../utils/authMiddleware"));
 const Users_controller_1 = __importDefault(require("./controllers/Users.controller"));
+const express_slow_down_1 = __importDefault(require("express-slow-down"));
 const router = express_1.default.Router();
 router.route("/").get(Users_controller_1.default.getUsers);
-router.route("/").post(authMiddleware_1.default, Users_controller_1.default.updateUser);
-router.route("/:id").get(Users_controller_1.default.getUserById);
+router.route("/").post((0, express_slow_down_1.default)({
+    windowMs: 20000,
+    delayAfter: 5,
+    delayMs: 2000,
+}), authMiddleware_1.default, Users_controller_1.default.updateUser);
+router.route("/:id").get((0, express_slow_down_1.default)({
+    windowMs: 10000,
+    delayAfter: 50,
+    delayMs: 5000,
+}), Users_controller_1.default.getUserById);
 router.route("/register").post(Users_controller_1.default.register);
 router.route("/check").post(authMiddleware_1.withUser, Users_controller_1.default.checkLogin);
 router.route("/login").post(Users_controller_1.default.login);

@@ -1,4 +1,4 @@
-import { Request as Req, Response as Res, NextFunction } from "express";
+import { Request as Req, Response as Res, NextFunction, Router } from "express";
 
 /**
  * My rate limiters
@@ -6,101 +6,115 @@ import { Request as Req, Response as Res, NextFunction } from "express";
  * simpleRateLimit   <- For really simple rate limiting, block an IP on
  *                      a specific route for a certain amount of time
  *                      if they make too many requests in a given time
- *                      window. Could improve.
+ *                      window.
+ *
+ * bruteRateLimit    <- For protecting logins. You must call bruteFail
+ *                      for every failed attempt, and call bruteSuccess
+ *                      when there is a success. The block duration
+ *                      increases exponentially. The number of fails
+ *                      required can also be configured. Default
+ *                      behaviour: 2hrs, 4hrs, 8hrs, 16 hrs, et cet.
+ *                      The user gets 3 attempts.
  */
 
 import {
   findIPBlockInfo,
   addSimpleRateLimiterBlock,
   IPBlockInfo,
-  BruteRateLimitBlockInfo,
   SimpleRateLimitWindowData,
   addIPBlockInfo,
   updateIPBlockInfo,
+  prepBruteRateLimit,
+  BruteRateLimitData,
 } from "./limiterStore";
 
 import getReqIp from "../../utils/getReqIp";
+import convertMsToHM from "../../utils/convertMsToReadableTime";
 
-const checkBlockedBySimpleOrBruteBlock = async ({
+const checkBlockedBySimpleBlock = async ({
   info,
-  mode,
-  checkBruteCooldown,
-  routeName = "any",
+  routeName = "",
 }: {
   info: IPBlockInfo;
-  mode: "simple" | "brute";
-  checkBruteCooldown?: boolean;
-  routeName: "any" | string;
+  routeName: "" | string;
 }) => {
-  const key = `${mode}RateLimitBlocks` as keyof Pick<
-    IPBlockInfo,
-    "simpleRateLimitBlocks" | "bruteRateLimitBlocks"
-  >;
   let isBlocked = false;
-  const hasKey = info[key] ? true : false;
   let i = 0;
   /* iterate through all the stored block information to check for active blocks
   matching the routeName */
-  if (hasKey)
-    while (isBlocked === false && i < info[key]!.length - 1) {
+  if (info.simpleRateLimitBlocks)
+    while (isBlocked === false && i < info.simpleRateLimitBlocks!.length - 1) {
       i++;
-      if (routeName === "any" || info[key]![i].routeName === routeName) {
-        const blockedAt = new Date(info[key]![i].blockedAt);
-        let blockEnd;
-        if (!checkBruteCooldown) {
-          blockEnd = blockedAt.getTime() + info[key]![i].blockDuration;
-        } else {
-          if (mode !== "brute") {
-            throw new Error("checkBruteCooldown is used only with brute mode");
-          }
-          const item = info[key]![i] as BruteRateLimitBlockInfo;
-          blockEnd =
-            blockedAt.getTime() +
-            item.blockDuration * Math.max(2, item.failTimes);
-        }
+      if (
+        routeName === "" ||
+        info.simpleRateLimitBlocks![i].routeName === routeName
+      ) {
+        const blockedAt = new Date(info.simpleRateLimitBlocks![i].blockedAt);
+        const blockEnd =
+          blockedAt.getTime() + info.simpleRateLimitBlocks![i].blockDuration;
         if (Date.now() < blockEnd) isBlocked = true;
       }
     }
   return isBlocked;
 };
 
-/**
- * This isn't used anymore, because the rate limiter
- * is using redis now. I am just keeping it here to
- * remind me that I need to set up expiration dates
- * for the keys.
- */
-export const ipBlockCleanupInterval = async () => {
-  const i = setInterval(() => {
-    let cleanupIps = [];
-    blockedIPsInfo.forEach(async (info) => {
-      if (
-        (await checkBlockedBySimpleOrBruteBlock({
-          info,
-          mode: "simple",
-          routeName: "any",
-        })) ||
-        (await checkBlockedBySimpleOrBruteBlock({
-          info,
-          mode: "brute",
-          checkBruteCooldown: true,
-          routeName: "any",
-        }))
-      ) {
-        cleanupIps.push(info.ip);
+const checkBlockedByBruteBlock = async ({
+  info,
+  routeName = "",
+}: {
+  info: IPBlockInfo;
+  routeName: "" | string;
+}) => {
+  let isBlocked = false;
+  let i = 0;
+  /* iterate through all the stored block information to check for active blocks
+  matching the routeName */
+  if (info.bruteRateLimitData)
+    while (isBlocked === false && i < info.bruteRateLimitData!.length - 1) {
+      i++;
+      const {
+        routeName: checkRouteName,
+        blockDuration,
+        failsRequired,
+        attempts,
+        lastAttempt,
+      } = info.bruteRateLimitData[i];
+      if (checkRouteName === routeName) {
+        if (attempts % failsRequired === 0) {
+          const multiplier = Math.ceil(attempts / failsRequired);
+          const duration = blockDuration * Math.max(1, multiplier);
+          const blockEnd = new Date(lastAttempt).getTime() + duration;
+          if (Date.now() < blockEnd) {
+            isBlocked = true;
+          }
+        }
       }
-    });
-    blockedIPsInfo;
-  }, 1000);
-  return () => clearInterval(i);
+    }
+  return isBlocked;
 };
 
 export type SimpleRateLimitParams = {
   maxReqs?: number;
   windowMs?: number;
+  msg: string;
+  routeName: string;
+  blockDuration: number;
+};
+
+export type BruteRateLimitParams = {
   msg?: string;
   routeName: string;
   blockDuration: number;
+  failsRequired: number;
+};
+
+const simpleRateLimitResponse = (
+  res: Res,
+  msg: string,
+  blockDuration: number
+) => {
+  const outMsg = msg.replace("BLOCKDURATION", convertMsToHM(blockDuration));
+  return res.status(429).json({ msg: outMsg }).end();
 };
 
 /**
@@ -126,22 +140,21 @@ export const simpleRateLimit = (
   params: SimpleRateLimitParams = {
     maxReqs: 10,
     windowMs: 1000,
-    msg: "Too many requests",
+    msg: "Too many requests. You are blocked from performing this action for BLOCKDURATION.",
     routeName: "",
     blockDuration: 5000,
   }
 ) => {
   return async (req: Req, res: Res, next: NextFunction) => {
-    const routeName = params.routeName === "" ? req.path : params.routeName;
     const ip = getReqIp(req);
     const ipBlockInfo = await findIPBlockInfo(ip);
     if (ipBlockInfo) {
-      const blocked = await checkBlockedBySimpleOrBruteBlock({
+      const blocked = await checkBlockedBySimpleBlock({
         info: ipBlockInfo,
-        mode: "simple",
-        routeName,
+        routeName: params.routeName,
       });
-      if (blocked) return res.status(429).json({ msg: params.msg }).end();
+      if (blocked)
+        return simpleRateLimitResponse(res, params.msg, params.blockDuration);
     }
     if (await simpleRateLimitTrigger(ip, params)) {
       await addSimpleRateLimiterBlock(ip, {
@@ -149,8 +162,79 @@ export const simpleRateLimit = (
         blockedAt: new Date().toISOString(),
         blockDuration: params.blockDuration,
       });
-      return res.status(429).json({ msg: params.msg }).end();
+      return simpleRateLimitResponse(res, params.msg, params.blockDuration);
     }
+    next();
+  };
+};
+
+export const bruteFail = async (ip: string, routeName: string) => {
+  const found = await findIPBlockInfo(ip);
+  if (found) {
+    const i = found.bruteRateLimitData
+      ? found.bruteRateLimitData?.findIndex(
+          (data) => data.routeName === routeName
+        )
+      : -1;
+    let bruteRateLimitData: BruteRateLimitData[] =
+      found.bruteRateLimitData || [];
+    bruteRateLimitData[i] = {
+      ...bruteRateLimitData[i],
+      attempts: bruteRateLimitData[i].attempts + 1,
+      lastAttempt: new Date().toISOString(),
+    };
+    await updateIPBlockInfo(
+      {
+        bruteRateLimitData,
+      },
+      found
+    );
+  } else {
+    throw new Error("Could not find ip block info");
+  }
+};
+export const bruteSuccess = async (ip: string, routeName: string) => {
+  const found = await findIPBlockInfo(ip);
+  if (found) {
+    let bruteRateLimitData: BruteRateLimitData[] =
+      found.bruteRateLimitData || [];
+    await updateIPBlockInfo(
+      {
+        bruteRateLimitData: bruteRateLimitData.filter(
+          (data) => data.routeName !== routeName
+        ),
+      },
+      found
+    );
+  } else {
+    throw new Error("Could not find ip block info");
+  }
+};
+
+/**
+ * bruteRateLimit must be using bruteFail() and bruteSuccess()
+ * for it to function. Call bruteFail when there is a failure
+ * case, and bruteSuccess when there is a success case.
+ */
+export const bruteRateLimit = (
+  params: BruteRateLimitParams = {
+    msg: "Too many requests",
+    routeName: "",
+    blockDuration: 1200000, //2hrs
+    failsRequired: 3,
+  }
+) => {
+  return async (req: Req, res: Res, next: NextFunction) => {
+    const ip = getReqIp(req);
+    const ipBlockInfo = await findIPBlockInfo(ip);
+    if (ipBlockInfo) {
+      const blocked = await checkBlockedByBruteBlock({
+        info: ipBlockInfo,
+        routeName: params.routeName,
+      });
+      if (blocked) return res.status(429).json({ msg: params.msg }).end();
+    }
+    await prepBruteRateLimit(params, ip);
     next();
   };
 };

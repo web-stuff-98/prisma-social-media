@@ -8,8 +8,6 @@ import http from "http";
 
 import { Server } from "socket.io";
 
-globalThis.blockedIPsInfo = [];
-
 const app: Express = express();
 const server = http.createServer(app);
 const io = new Server<

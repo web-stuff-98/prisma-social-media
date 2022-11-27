@@ -3,12 +3,13 @@
  **/
 
 import redisClient from "../../utils/redis";
+import { BruteRateLimitParams } from "./limiters";
 
 export interface IPBlockInfo {
   ip: string;
+  bruteRateLimitData?: BruteRateLimitData[];
   simpleRateLimitWindowData?: SimpleRateLimitWindowData[];
   simpleRateLimitBlocks?: SimpleRateLimitBlockInfo[];
-  bruteRateLimitBlocks?: BruteRateLimitBlockInfo[];
 }
 export type SimpleRateLimitBlockInfo = {
   routeName: string;
@@ -16,7 +17,8 @@ export type SimpleRateLimitBlockInfo = {
   blockDuration: number;
 };
 export type BruteRateLimitBlockInfo = SimpleRateLimitBlockInfo & {
-  failTimes: number; // the number of fails (fails are added when bruteFail is called)
+  failTimes: number; // the number of fails (fails are added when you call bruteFail)
+  maxFailTimes: number;
 };
 export type SimpleRateLimitWindowData = {
   routeName: string;
@@ -25,6 +27,10 @@ export type SimpleRateLimitWindowData = {
   maxReqs: number;
   reqs: number;
 };
+export type BruteRateLimitData = {
+  attempts: number;
+  lastAttempt: string;
+} & Omit<BruteRateLimitParams, "msg">;
 
 const findIPBlockInfo = (ip: string): Promise<IPBlockInfo | undefined> =>
   new Promise((resolve, reject) =>
@@ -48,6 +54,48 @@ const updateIPBlockInfo = (info: Partial<IPBlockInfo>, original: IPBlockInfo) =>
       ...info,
     })
   );
+
+export const prepBruteRateLimit = async (
+  params: Omit<BruteRateLimitParams, "msg">,
+  ip: string
+) => {
+  const found = await findIPBlockInfo(ip);
+  if (!found) {
+    await addIPBlockInfo({
+      ip,
+      bruteRateLimitData: [
+        {
+          ...params,
+          attempts: 0,
+          lastAttempt: "",
+        },
+      ],
+    });
+  } else {
+    const i = found.bruteRateLimitData
+      ? found.bruteRateLimitData?.findIndex(
+          (data) => data.routeName === params.routeName
+        )
+      : -1;
+    let bruteRateLimitData: BruteRateLimitData[] =
+      found.bruteRateLimitData || [];
+    if (i === -1) {
+      await updateIPBlockInfo(
+        {
+          bruteRateLimitData: [
+            ...bruteRateLimitData,
+            {
+              ...params,
+              attempts: 0,
+              lastAttempt: "",
+            },
+          ],
+        },
+        found
+      );
+    }
+  }
+};
 
 const addSimpleRateLimiterBlock = async (
   ip: string,

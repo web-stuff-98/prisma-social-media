@@ -68,7 +68,7 @@ router.route("/:id/comments").post(
     blockDuration: 300000,
     maxReqs: 30,
     windowMs: 300000,
-    msg: "Max 30 comments every 5 minutes. You must wait 5 more minutes to comment again.",
+    msg: "Max 30 comments every 5 minutes. You must wait BLOCKDURATION to comment again.",
   }),
   authMiddleware,
   PostsController.addComment
@@ -79,7 +79,7 @@ router.route("/:id/comments/:commentId").put(
     blockDuration: 300000,
     maxReqs: 30,
     windowMs: 300000,
-    msg: "You have edited comments too many times. Wait 5 minutes.",
+    msg: "You have edited comments too many times. Wait BLOCKDURATION.",
   }),
   authMiddleware,
   PostsController.updateComment

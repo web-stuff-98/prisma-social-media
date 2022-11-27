@@ -30,31 +30,52 @@ const express_1 = __importDefault(require("express"));
 const authMiddleware_1 = __importStar(require("../utils/authMiddleware"));
 const Posts_controller_1 = __importDefault(require("./controllers/Posts.controller"));
 const limiters_1 = require("./limiter/limiters");
+const express_slow_down_1 = __importDefault(require("express-slow-down"));
 const router = express_1.default.Router();
-router.route("/").get(authMiddleware_1.withUser, Posts_controller_1.default.getPosts);
-router.route("/popular").get(authMiddleware_1.withUser, Posts_controller_1.default.getPopularPosts);
-router.route("/").post(authMiddleware_1.default, Posts_controller_1.default.createPost);
-router.route("/:slug").put(authMiddleware_1.default, Posts_controller_1.default.updatePost);
+router.route("/").get((0, express_slow_down_1.default)({
+    windowMs: 2000,
+    delayAfter: 10,
+    delayMs: 1000,
+}), authMiddleware_1.withUser, Posts_controller_1.default.getPosts);
+router.route("/popular").get((0, express_slow_down_1.default)({
+    windowMs: 2000,
+    delayAfter: 10,
+    delayMs: 1000,
+}), authMiddleware_1.withUser, Posts_controller_1.default.getPopularPosts);
+router.route("/").post((0, express_slow_down_1.default)({
+    windowMs: 120000,
+    delayAfter: 10,
+    delayMs: 5000,
+}), authMiddleware_1.default, Posts_controller_1.default.createPost);
+router.route("/:slug").put((0, express_slow_down_1.default)({
+    windowMs: 120000,
+    delayAfter: 10,
+    delayMs: 5000,
+}), authMiddleware_1.default, Posts_controller_1.default.updatePost);
 router.route("/:slug").get(authMiddleware_1.withUser, Posts_controller_1.default.getPostBySlug);
-router
-    .route("/:id/toggleLike")
-    .post(authMiddleware_1.default, Posts_controller_1.default.togglePostLike);
-router
-    .route("/:id/toggleShare")
-    .post(authMiddleware_1.default, Posts_controller_1.default.togglePostShare);
+router.route("/:id/toggleLike").post((0, express_slow_down_1.default)({
+    windowMs: 10000,
+    delayAfter: 20,
+    delayMs: 3000,
+}), authMiddleware_1.default, Posts_controller_1.default.togglePostLike);
+router.route("/:id/toggleShare").post((0, express_slow_down_1.default)({
+    windowMs: 10000,
+    delayAfter: 20,
+    delayMs: 3000,
+}), authMiddleware_1.default, Posts_controller_1.default.togglePostShare);
 router.route("/:id/comments").post((0, limiters_1.simpleRateLimit)({
     routeName: "postComment",
     blockDuration: 300000,
     maxReqs: 30,
     windowMs: 300000,
-    msg: "Max 30 comments every 5 minutes. You must wait 5 more minutes to comment again.",
+    msg: "Max 30 comments every 5 minutes. You must wait BLOCKDURATION to comment again.",
 }), authMiddleware_1.default, Posts_controller_1.default.addComment);
 router.route("/:id/comments/:commentId").put((0, limiters_1.simpleRateLimit)({
     routeName: "editPostComment",
     blockDuration: 300000,
     maxReqs: 30,
     windowMs: 300000,
-    msg: "You have edited comments too many times. Wait 5 minutes.",
+    msg: "You have edited comments too many times. Wait BLOCKDURATION.",
 }), authMiddleware_1.default, Posts_controller_1.default.updateComment);
 router
     .route("/:id/comments/:commentId")

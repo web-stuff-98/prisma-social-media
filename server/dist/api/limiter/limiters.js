@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.bruteRateLimit = exports.simpleRateLimit = exports.ipBlockCleanupInterval = void 0;
+exports.bruteRateLimit = exports.bruteSuccess = exports.bruteFail = exports.simpleRateLimit = void 0;
 /**
  * My rate limiters
  *
@@ -21,84 +21,61 @@ exports.bruteRateLimit = exports.simpleRateLimit = exports.ipBlockCleanupInterva
  *                      if they make too many requests in a given time
  *                      window.
  *
- * bruteRateLimit    <- bruteRate limit doubles the IP block time for
- *                      every failed request, but it needs to be used
- * + bruteFail          with bruteFail and bruteSuccess to work
- * + bruteSuccess       properly. Call bruteFail from inside your API
- *                      route for example when the user puts in the
- *                      wrong password. Call bruteSuccess to remove the
- *                      IP block for that route, for example when a
- *                      user logs in successfully.
- *
- * There are better explanations in the comments for the functions
- * that have information for parameters.
- *
- * routeName needs to be provided and should be unique for the route
- * it's applied on, but the same routeName can be used for multiple
- * routes.
+ * bruteRateLimit    <- For protecting logins. You must call bruteFail
+ *                      for every failed attempt, and call bruteSuccess
+ *                      when there is a success. The block duration
+ *                      increases exponentially. The number of fails
+ *                      required can also be configured. Default
+ *                      behaviour: 2hrs, 4hrs, 8hrs, 16 hrs, et cet.
+ *                      The user gets 3 attempts.
  */
 const limiterStore_1 = require("./limiterStore");
 const getReqIp_1 = __importDefault(require("../../utils/getReqIp"));
-const checkBlockedBySimpleOrBruteBlock = ({ info, mode, checkBruteCooldown, routeName = "any", }) => __awaiter(void 0, void 0, void 0, function* () {
-    const key = `${mode}RateLimitBlocks`;
+const convertMsToReadableTime_1 = __importDefault(require("../../utils/convertMsToReadableTime"));
+const checkBlockedBySimpleBlock = ({ info, routeName = "", }) => __awaiter(void 0, void 0, void 0, function* () {
     let isBlocked = false;
-    const hasKey = info[key] ? true : false;
     let i = 0;
     /* iterate through all the stored block information to check for active blocks
     matching the routeName */
-    if (hasKey)
-        while (isBlocked === false && i < info[key].length - 1) {
+    if (info.simpleRateLimitBlocks)
+        while (isBlocked === false && i < info.simpleRateLimitBlocks.length - 1) {
             i++;
-            if (routeName === "any" || info[key][i].routeName === routeName) {
-                const blockedAt = new Date(info[key][i].blockedAt);
-                let blockEnd;
-                if (!checkBruteCooldown) {
-                    blockEnd = blockedAt.getTime() + info[key][i].blockDuration;
-                }
-                else {
-                    if (mode !== "brute") {
-                        throw new Error("checkBruteCooldown is used only with brute mode");
-                    }
-                    const item = info[key][i];
-                    blockEnd =
-                        blockedAt.getTime() +
-                            item.blockDuration * Math.max(2, item.failTimes);
-                }
+            if (routeName === "" ||
+                info.simpleRateLimitBlocks[i].routeName === routeName) {
+                const blockedAt = new Date(info.simpleRateLimitBlocks[i].blockedAt);
+                const blockEnd = blockedAt.getTime() + info.simpleRateLimitBlocks[i].blockDuration;
                 if (Date.now() < blockEnd)
                     isBlocked = true;
             }
         }
     return isBlocked;
 });
-/**
- * Determine if a block for an IP should be removed, then remove it.
- * There is a better way of doing this, which is by checking if the
- * block should be removed directly from the middleware instead of
- * checking at an interval. You should upgrade this.
- */
-const ipBlockCleanupInterval = () => __awaiter(void 0, void 0, void 0, function* () {
-    const i = setInterval(() => {
-        let cleanupIps = [];
-        blockedIPsInfo.forEach((info) => __awaiter(void 0, void 0, void 0, function* () {
-            if ((yield checkBlockedBySimpleOrBruteBlock({
-                info,
-                mode: "simple",
-                routeName: "any",
-            })) ||
-                (yield checkBlockedBySimpleOrBruteBlock({
-                    info,
-                    mode: "brute",
-                    checkBruteCooldown: true,
-                    routeName: "any",
-                }))) {
-                cleanupIps.push(info.ip);
+const checkBlockedByBruteBlock = ({ info, routeName = "", }) => __awaiter(void 0, void 0, void 0, function* () {
+    let isBlocked = false;
+    let i = 0;
+    /* iterate through all the stored block information to check for active blocks
+    matching the routeName */
+    if (info.bruteRateLimitData)
+        while (isBlocked === false && i < info.bruteRateLimitData.length - 1) {
+            i++;
+            const { routeName: checkRouteName, blockDuration, failsRequired, attempts, lastAttempt, } = info.bruteRateLimitData[i];
+            if (checkRouteName === routeName) {
+                if (attempts % failsRequired === 0) {
+                    const multiplier = Math.ceil(attempts / failsRequired);
+                    const duration = blockDuration * Math.max(1, multiplier);
+                    const blockEnd = new Date(lastAttempt).getTime() + duration;
+                    if (Date.now() < blockEnd) {
+                        isBlocked = true;
+                    }
+                }
             }
-        }));
-        blockedIPsInfo;
-    }, 1000);
-    return () => clearInterval(i);
+        }
+    return isBlocked;
 });
-exports.ipBlockCleanupInterval = ipBlockCleanupInterval;
+const simpleRateLimitResponse = (res, msg, blockDuration) => {
+    const outMsg = msg.replace("BLOCKDURATION", (0, convertMsToReadableTime_1.default)(blockDuration));
+    return res.status(429).json({ msg: outMsg }).end();
+};
 /**
  * simpleRateLimit is for specific api routes. Refuses the IP if they
  * have made more than n requests within the time window. This is used
@@ -121,22 +98,20 @@ exports.ipBlockCleanupInterval = ipBlockCleanupInterval;
 const simpleRateLimit = (params = {
     maxReqs: 10,
     windowMs: 1000,
-    msg: "Too many requests",
+    msg: "Too many requests. You are blocked from performing this action for BLOCKDURATION.",
     routeName: "",
     blockDuration: 5000,
 }) => {
     return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-        const routeName = params.routeName === "" ? req.path : params.routeName;
         const ip = (0, getReqIp_1.default)(req);
         const ipBlockInfo = yield (0, limiterStore_1.findIPBlockInfo)(ip);
         if (ipBlockInfo) {
-            const blocked = yield checkBlockedBySimpleOrBruteBlock({
+            const blocked = yield checkBlockedBySimpleBlock({
                 info: ipBlockInfo,
-                mode: "simple",
-                routeName,
+                routeName: params.routeName,
             });
             if (blocked)
-                return res.status(429).json({ msg: params.msg }).end();
+                return simpleRateLimitResponse(res, params.msg, params.blockDuration);
         }
         if (yield simpleRateLimitTrigger(ip, params)) {
             yield (0, limiterStore_1.addSimpleRateLimiterBlock)(ip, {
@@ -144,62 +119,66 @@ const simpleRateLimit = (params = {
                 blockedAt: new Date().toISOString(),
                 blockDuration: params.blockDuration,
             });
-            return res.status(429).json({ msg: params.msg }).end();
+            return simpleRateLimitResponse(res, params.msg, params.blockDuration);
         }
         next();
     });
 };
 exports.simpleRateLimit = simpleRateLimit;
+const bruteFail = (ip, routeName) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const found = yield (0, limiterStore_1.findIPBlockInfo)(ip);
+    if (found) {
+        const i = found.bruteRateLimitData
+            ? (_a = found.bruteRateLimitData) === null || _a === void 0 ? void 0 : _a.findIndex((data) => data.routeName === routeName)
+            : -1;
+        let bruteRateLimitData = found.bruteRateLimitData || [];
+        bruteRateLimitData[i] = Object.assign(Object.assign({}, bruteRateLimitData[i]), { attempts: bruteRateLimitData[i].attempts + 1, lastAttempt: new Date().toISOString() });
+        yield (0, limiterStore_1.updateIPBlockInfo)({
+            bruteRateLimitData,
+        }, found);
+    }
+    else {
+        throw new Error("Could not find ip block info");
+    }
+});
+exports.bruteFail = bruteFail;
+const bruteSuccess = (ip, routeName) => __awaiter(void 0, void 0, void 0, function* () {
+    const found = yield (0, limiterStore_1.findIPBlockInfo)(ip);
+    if (found) {
+        let bruteRateLimitData = found.bruteRateLimitData || [];
+        yield (0, limiterStore_1.updateIPBlockInfo)({
+            bruteRateLimitData: bruteRateLimitData.filter((data) => data.routeName !== routeName),
+        }, found);
+    }
+    else {
+        throw new Error("Could not find ip block info");
+    }
+});
+exports.bruteSuccess = bruteSuccess;
 /**
- * This is similar to simpleRateLimit, but intended for guarding logins.
- *
- * The more fails the longer it takes, using
- * (duration * min(4, max(1, number of fails)))
- * to calculate the cooldown period where 4 is the maximum number of
- * times the duration can be multiplied by default.
- *
- * Because bruteRateLimit is not automatic like simpleRateLimit you
- * need to call failBrute("the name of the routeName you passed in")
- * whenever a failure happens for this to work as intended. Call
- * successBrute("the routeName") when you need the block cleared after
- * success (for example after successfully logging in)
- *
- * "routeName" should be the API route path as it is in the router, for
- * example "room/:roomId/message". req.url is used automatically as
- * a fallback but routeName should always be set MANUALLY for ALL API
- * routes that have query params! Otherwise you will be rate limiting
- * for specific pages and ids and so on, which is not its intended
- * behaviour
- *
- * parameters:
- *  maxMultiplication? = maximum number to use in calculating cooldown
- *  duration? = number of milliseconds the client is blocked for
- *  msg? = the message sent back
- *  routeName = the express route, example : room/:roomId/message/like
- *
- * maxMultiplication is at 4 by default, and the duration is set to
- * 3 hours. Which means after failing 4 times the block duration would
- * be 12 hours after the last failure.
+ * bruteRateLimit must be using bruteFail() and bruteSuccess()
+ * for it to function. Call bruteFail when there is a failure
+ * case, and bruteSuccess when there is a success case.
  */
 const bruteRateLimit = (params = {
-    maxMultiplication: 4,
-    duration: 3600000,
     msg: "Too many requests",
     routeName: "",
+    blockDuration: 1200000,
+    failsRequired: 3,
 }) => {
     return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-        const routeName = params.routeName || req.path;
         const ip = (0, getReqIp_1.default)(req);
         const ipBlockInfo = yield (0, limiterStore_1.findIPBlockInfo)(ip);
         if (ipBlockInfo) {
-            const blocked = yield checkBlockedBySimpleOrBruteBlock({
+            const blocked = yield checkBlockedByBruteBlock({
                 info: ipBlockInfo,
-                mode: "brute",
-                routeName,
+                routeName: params.routeName,
             });
             if (blocked)
                 return res.status(429).json({ msg: params.msg }).end();
         }
+        yield (0, limiterStore_1.prepBruteRateLimit)(params, ip);
         next();
     });
 };

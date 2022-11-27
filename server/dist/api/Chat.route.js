@@ -17,7 +17,7 @@ router.route("/conversation/message").post((0, limiters_1.simpleRateLimit)({
     routeName: "privateMessage",
     maxReqs: 5,
     windowMs: 10000,
-    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait 20 seconds before you can send another message.",
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
 }), Chat_controller_1.default.sendPrivateMessage);
 router
@@ -27,14 +27,14 @@ router.route("/conversation/message").put((0, limiters_1.simpleRateLimit)({
     routeName: "editPrivateMessage",
     maxReqs: 3,
     windowMs: 10000,
-    msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait 20 seconds.",
+    msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait BLOCKDURATION.",
     blockDuration: 20000,
 }), Chat_controller_1.default.updatePrivateMessage);
 router.route("/conversation/message/attachment/:msgId/:bytes").post((0, limiters_1.simpleRateLimit)({
     routeName: "sendPrivateAttachment",
     maxReqs: 10,
     windowMs: 120000,
-    msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait 2 minutes.",
+    msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait BLOCKDURATION.",
     blockDuration: 120000,
 }), Chat_controller_1.default.uploadPrivateMessageAttachment);
 //Chatroom messages
@@ -42,7 +42,7 @@ router.route("/room/message").post((0, limiters_1.simpleRateLimit)({
     routeName: "roomMessage",
     maxReqs: 5,
     windowMs: 10000,
-    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait 20 seconds before you can send another message.",
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
 }), Chat_controller_1.default.sendRoomMessage);
 router.route("/room/message").delete(Chat_controller_1.default.deleteRoomMessage);
@@ -50,14 +50,14 @@ router.route("/room/message").put((0, limiters_1.simpleRateLimit)({
     routeName: "editRoomMessage",
     maxReqs: 3,
     windowMs: 10000,
-    msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait 20 seconds.",
+    msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait BLOCKDURATION.",
     blockDuration: 20000,
 }), Chat_controller_1.default.updateRoomMessage);
 router.route("/room/message/attachment/:msgId/:bytes").post((0, limiters_1.simpleRateLimit)({
     routeName: "sendPrivateAttachment",
     maxReqs: 10,
     windowMs: 120000,
-    msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait 2 minutes.",
+    msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait BLOCKDURATION.",
     blockDuration: 120000,
 }), Chat_controller_1.default.uploadRoomMessageAttachment);
 //Chatrooms

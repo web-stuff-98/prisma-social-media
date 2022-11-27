@@ -16,7 +16,7 @@ router.route("/conversation/message").post(
     routeName: "privateMessage",
     maxReqs: 5,
     windowMs: 10000,
-    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait 20 seconds before you can send another message.",
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
   }),
   ChatController.sendPrivateMessage
@@ -29,7 +29,7 @@ router.route("/conversation/message").put(
     routeName: "editPrivateMessage",
     maxReqs: 3,
     windowMs: 10000,
-    msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait 20 seconds.",
+    msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait BLOCKDURATION.",
     blockDuration: 20000,
   }),
   ChatController.updatePrivateMessage
@@ -39,7 +39,7 @@ router.route("/conversation/message/attachment/:msgId/:bytes").post(
     routeName: "sendPrivateAttachment",
     maxReqs: 10,
     windowMs: 120000,
-    msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait 2 minutes.",
+    msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait BLOCKDURATION.",
     blockDuration: 120000,
   }),
   ChatController.uploadPrivateMessageAttachment
@@ -51,7 +51,7 @@ router.route("/room/message").post(
     routeName: "roomMessage",
     maxReqs: 5,
     windowMs: 10000,
-    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait 20 seconds before you can send another message.",
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
   }),
   ChatController.sendRoomMessage
@@ -62,7 +62,7 @@ router.route("/room/message").put(
     routeName: "editRoomMessage",
     maxReqs: 3,
     windowMs: 10000,
-    msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait 20 seconds.",
+    msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait BLOCKDURATION.",
     blockDuration: 20000,
   }),
   ChatController.updateRoomMessage
@@ -72,7 +72,7 @@ router.route("/room/message/attachment/:msgId/:bytes").post(
     routeName: "sendPrivateAttachment",
     maxReqs: 10,
     windowMs: 120000,
-    msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait 2 minutes.",
+    msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait BLOCKDURATION.",
     blockDuration: 120000,
   }),
   ChatController.uploadRoomMessageAttachment

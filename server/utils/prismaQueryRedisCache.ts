@@ -8,7 +8,6 @@
  * expiration = Key expiration time in seconds, if you leave null the cached value will last forever
  */
 
-import prisma from "./prisma";
 import redisClient from "./redis";
 
 export default async (
