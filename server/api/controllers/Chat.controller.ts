@@ -90,7 +90,7 @@ export default class ChatController {
   static async uploadPrivateMessageAttachment(req: Req, res: Res) {
     /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
     inside the Chat DAO for some reason. I wrote the same code in my other project and it
-    worked on the first try (webrtc-chat-js). I gave up after trying for 3 days and I don't care
+    worked on the first try (webrtc-chat-js). I gave up after trying for 3 + 2 + 3 days and I don't care
     anymore because it doesn't make sense and I can't fix it */
     let message: PrivateMessage;
     let gotFile = false;
@@ -361,7 +361,7 @@ export default class ChatController {
   static async uploadRoomMessageAttachment(req: Req, res: Res) {
     /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
     inside the Chat DAO for some reason. I wrote the same code in my other project and it
-    worked on the first try (webrtc-chat-js). I gave up after trying for 3 days and I don't care
+    worked on the first try (webrtc-chat-js). I gave up after trying for 3 + 2 + 3 days and I don't care
     anymore because it doesn't make sense and I can't fix it */
     let message: RoomMessage;
     let gotFile = false;
