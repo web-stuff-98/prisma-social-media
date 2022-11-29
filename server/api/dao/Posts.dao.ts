@@ -74,40 +74,13 @@ export default class PostsDAO {
     });
   }
 
-  static async getPopularPosts(uid?: string) {
+  static async getPopularPosts() {
     const posts = await prisma.post.findMany({
       select: {
-        id: true,
         slug: true,
-        title: true,
-        createdAt: true,
-        description: true,
-        author: {
-          select: {
-            id: true,
-          },
-        },
-        likes: true,
-        shares: true,
-        tags: true,
       },
     });
-    return posts.map((post) => {
-      let likedByMe = false;
-      let sharedByMe = false;
-      likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
-      sharedByMe = post.shares.find((share) => share.userId === uid)
-        ? true
-        : false;
-      return {
-        ...post,
-        likes: post.likes.length,
-        shares: post.shares.length,
-        tags: post.tags.map((tag) => tag.name),
-        likedByMe,
-        sharedByMe,
-      };
-    });
+    return posts;
   }
 
   static async getPostById(id: string, uid?: string | undefined) {

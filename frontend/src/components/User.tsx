@@ -131,8 +131,8 @@ export default function User({
           >
             {likes > 0 && (
               <div
-                style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
-                className="absolute text-sm drop-shadow-md leading-3 tracking-tighter"
+                style={{ zIndex: "96", top: "-25%", left: "-27.5%" }}
+                className="absolute text-md text-green-500 font-bold drop-shadow leading-3 tracking-tighter"
               >
                 {likes}
               </div>
@@ -141,12 +141,12 @@ export default function User({
           <IconBtn
             onClick={onShareClick}
             Icon={shared ? BsShareFill : BsShare}
-            aria-label="Share"
+            aria-label={shared ? "Unshare" : "Share"}
           >
             {shares > 0 && (
               <div
-                style={{ zIndex: "96", top: "-25%", left: "-33.33%" }}
-                className="absolute text-sm drop-shadow-md leading-3 tracking-tighter"
+                style={{ zIndex: "96", top: "-25%", left: "-27.5%" }}
+                className="absolute text-md text-green-500 font-bold drop-shadow leading-3 tracking-tighter"
               >
                 {shares}
               </div>

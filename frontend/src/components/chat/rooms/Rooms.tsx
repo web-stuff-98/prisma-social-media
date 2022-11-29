@@ -41,9 +41,9 @@ export default function Rooms() {
             </>
           </div>
         )}
-        <div className="flex flex-col justify-start gap-1 p-1 w-full">
+        <div style={{maxHeight:"20rem"}} className="flex overflow-y-auto flex-col justify-start gap-1 p-1 w-full">
           {rooms.map((room: IRoom) => (
-            <Room key={room.id} room={room} />
+            <Room setErr={setErr} key={room.id} room={room} />
           ))}
         </div>
         {err && <MessengerError err={err} closeError={() => setErr("")} />}

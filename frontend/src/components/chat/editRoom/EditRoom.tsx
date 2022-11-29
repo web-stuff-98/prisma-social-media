@@ -6,9 +6,11 @@ import {
   banUserFromRoom,
   kickUserFromRoom,
   unbanUserFromRoom,
+  updateRoom,
 } from "../../../services/chat";
 import { useState } from "react";
 import MessengerError from "../MessengerError";
+import Toggler from "../../Toggler";
 
 export default function EditRoom({ room }: { room: IRoom }) {
   const { editRoomId } = useChat();
@@ -21,11 +23,21 @@ export default function EditRoom({ room }: { room: IRoom }) {
     <div className="w-full h-full p-2">
       {room ? (
         <>
-          <h1 className="font-bold text-2xl mb-4 p-1 leading-5 text-center">
+          <h1 className="font-bold text-2xl p-1 leading-5 text-center">
             {room.name}
           </h1>
+          <div className="mx-auto w-fit mb-4">
+            <Toggler
+              label={room.public ? "Public" : "Private"}
+              value={room.public}
+              toggleValue={() =>
+                updateRoom(room.id, { public: !room.public }).catch((e) => setErr(`${e}`))
+              }
+              aria-label="Toggle public"
+            />
+          </div>
           <h2 className="text-center text-md font-bold">Members</h2>
-          <div className="flex flex-col mb-2 gap-2">
+          <div className="flex flex-col gap-2">
             {room.members.map(({ id: memberUid }) => (
               <div
                 key={memberUid}
@@ -61,7 +73,8 @@ export default function EditRoom({ room }: { room: IRoom }) {
               </div>
             ))}
           </div>
-          <h2 className="text-center text-md font-bold">Banned users</h2>
+          {room.banned.length > 0 && <>
+          <h2 className="text-center text-md mt-2 font-bold">Banned users</h2>
           <div className="flex flex-col gap-2">
             {room.banned.map(({ id: bannedUid }) => (
               <div
@@ -85,6 +98,7 @@ export default function EditRoom({ room }: { room: IRoom }) {
               </div>
             ))}
           </div>
+          </>}
         </>
       ) : (
         <>Room does not exist</>

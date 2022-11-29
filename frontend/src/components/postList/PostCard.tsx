@@ -10,7 +10,6 @@ export default function PostCard({
 }) {
   const navigate = useNavigate();
   const { getUserData } = useUsers();
-
   const { likePost, sharePost } = usePosts()
 
   return (
@@ -23,10 +22,10 @@ export default function PostCard({
       </p>
       <div
         aria-label="Tags"
-        className="flex gap-2 w-full wrap items-center justify-center my-1 mb-4"
+        className="flex gap-1 w-full flex-wrap items-center justify-center my-1 mb-4"
       >
         {post.tags.map((tag) => (
-          <span key={tag} className="bg-zinc-700 cursor-pointer shadow-md border border-black dark:border-zinc-600 text-white rounded uppercase font-bold text-xs px-1.5 py-0.5">
+          <span key={tag} className="bg-zinc-500 cursor-pointer shadow-md border border-black dark:border-zinc-600 text-white rounded font-bold text-xs px-1">
             {tag}
           </span>
         ))}

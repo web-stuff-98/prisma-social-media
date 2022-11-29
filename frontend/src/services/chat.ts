@@ -1,3 +1,4 @@
+import { IRoom } from "../context/ChatContext";
 import { makeRequest } from "./makeRequest";
 
 const getConversations = () =>
@@ -102,6 +103,13 @@ const getRoomUsers = async (roomId: string) =>
     withCredentials: true,
   });
 
+const updateRoom = async (roomId: string, data: Partial<IRoom>) =>
+  makeRequest(`/api/chat/room/${roomId}`, {
+    method: "PATCH",
+    withCredentials: true,
+    data,
+  });
+
 const sendPrivateMessage = (
   message: string,
   recipientId: string,
@@ -185,4 +193,5 @@ export {
   createRoom,
   roomOpenVideoChat,
   getRoomUsers,
+  updateRoom,
 };

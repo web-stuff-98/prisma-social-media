@@ -1,4 +1,4 @@
-import { PrivateMessage, RoomMessage } from "@prisma/client";
+import { PrivateMessage, Room, RoomMessage } from "@prisma/client";
 import Busboy from "busboy";
 
 import { Request as Req, Response as Res } from "express";
@@ -45,7 +45,7 @@ export default class ChatController {
 
   static async deletePrivateMessage(req: Req, res: Res) {
     try {
-      console.log("Delete controller : " + req.body.messageId)
+      console.log("Delete controller : " + req.body.messageId);
       await ChatDAO.deletePrivateMessage(
         req.body.messageId,
         String(req.user?.id)
@@ -237,6 +237,11 @@ export default class ChatController {
             .end();
         }
       }
+      await ChatDAO.updateRoom(
+        req.params.roomId,
+        req.body as Partial<Pick<Room, "name" | "public">>
+      );
+      res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
     }

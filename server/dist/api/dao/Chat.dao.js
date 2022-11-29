@@ -375,6 +375,7 @@ class ChatDAO {
                     authorId: true,
                     members: { select: { id: true } },
                     banned: { select: { id: true } },
+                    public: true,
                 },
             });
         });
@@ -389,6 +390,7 @@ class ChatDAO {
                     name: true,
                     members: { select: { id: true } },
                     banned: { select: { id: true } },
+                    public: true,
                 },
             });
         });
@@ -403,6 +405,7 @@ class ChatDAO {
                     name: true,
                     members: { select: { id: true } },
                     banned: { select: { id: true } },
+                    public: true,
                 },
             });
         });
@@ -833,6 +836,15 @@ class ChatDAO {
             __1.io.to(`room=${msg.roomId}`).emit("room_message_update", id, {
                 message,
             });
+        });
+    }
+    static updateRoom(roomId, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield prisma_1.default.room.update({
+                where: { id: roomId },
+                data,
+            });
+            __1.io.emit("room_updated", Object.assign({ id: roomId }, data));
         });
     }
     static getRoomUsers(roomId) {

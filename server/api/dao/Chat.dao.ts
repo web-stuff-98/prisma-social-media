@@ -7,7 +7,7 @@ import mime from "mime-types";
 
 import AWS from "../../utils/aws";
 import { io } from "../..";
-import { PrivateMessage, Room, RoomMessage } from "@prisma/client";
+import { PrivateMessage, RoomMessage, Room } from "@prisma/client";
 import getUserSocket from "../../utils/getUserSocket";
 
 export default class ChatDAO {
@@ -400,6 +400,7 @@ export default class ChatDAO {
         authorId: true,
         members: { select: { id: true } },
         banned: { select: { id: true } },
+        public: true,
       },
     });
   }
@@ -413,6 +414,7 @@ export default class ChatDAO {
         name: true,
         members: { select: { id: true } },
         banned: { select: { id: true } },
+        public: true,
       },
     });
   }
@@ -426,6 +428,7 @@ export default class ChatDAO {
         name: true,
         members: { select: { id: true } },
         banned: { select: { id: true } },
+        public: true,
       },
     });
   }
@@ -860,6 +863,17 @@ export default class ChatDAO {
     io.to(`room=${msg.roomId}`).emit("room_message_update", id, {
       message,
     });
+  }
+
+  static async updateRoom(
+    roomId: string,
+    data: Partial<Pick<Room, "name" | "public">>
+  ) {
+    await prisma.room.update({
+      where: { id: roomId },
+      data,
+    });
+    io.emit("room_updated", { id: roomId, ...data });
   }
 
   static async getRoomUsers(roomId: string) {

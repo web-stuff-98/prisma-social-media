@@ -25,7 +25,7 @@ export default class PostsController {
 
   static async getPopularPosts(req:Req, res:Res) {
     try {
-      const posts = await PostsDAO.getPopularPosts(req.user?.id);
+      const posts = await PostsDAO.getPopularPosts();
       res.status(200).json(posts);
     } catch (e) {
       res.status(500).json({ msg: "Internal error" });

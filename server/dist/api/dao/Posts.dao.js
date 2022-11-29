@@ -76,35 +76,14 @@ class PostsDAO {
             });
         });
     }
-    static getPopularPosts(uid) {
+    static getPopularPosts() {
         return __awaiter(this, void 0, void 0, function* () {
             const posts = yield prisma_1.default.post.findMany({
                 select: {
-                    id: true,
                     slug: true,
-                    title: true,
-                    createdAt: true,
-                    description: true,
-                    author: {
-                        select: {
-                            id: true,
-                        },
-                    },
-                    likes: true,
-                    shares: true,
-                    tags: true,
                 },
             });
-            return posts.map((post) => {
-                let likedByMe = false;
-                let sharedByMe = false;
-                likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
-                sharedByMe = post.shares.find((share) => share.userId === uid)
-                    ? true
-                    : false;
-                return Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
-                    sharedByMe });
-            });
+            return posts;
         });
     }
     static getPostById(id, uid) {

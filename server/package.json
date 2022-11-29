@@ -31,6 +31,7 @@
   "dependencies": {
     "@prisma/client": "^4.5.0",
     "aws-sdk": "^2.1252.0",
+    "axios": "^1.2.0",
     "bcrypt": "^5.1.0",
     "busboy": "^1.6.0",
     "cookie-parser": "^1.4.6",
@@ -40,6 +41,7 @@
     "express-slow-down": "^1.5.0",
     "ioredis": "^5.2.4",
     "jsonwebtoken": "^8.5.1",
+    "lorem-ipsum": "^2.0.8",
     "sharp": "^0.31.2",
     "socket.io": "^4.5.3",
     "yup": "^0.32.11",

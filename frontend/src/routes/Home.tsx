@@ -1,50 +1,49 @@
-import { useEffect, useState } from "react";
 import PostCard from "../components/postList/PostCard";
 import User from "../components/User";
-import { IPost } from "../context/PostsContext";
+import { IPost, usePosts } from "../context/PostsContext";
 
 import useUsers from "../context/UsersContext";
-import { getPosts, getPopularPosts } from "../services/posts";
 
 export default function Home() {
-  const { cacheUserData, getUserData } = useUsers();
+  const { getUserData } = useUsers();
+  const { posts, popularPosts, getPostData, likePost, sharePost } = usePosts();
 
-  const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: true });
-  const [posts, setPosts] = useState<IPost[]>([]);
-  const [popularPosts, setPopularPosts] = useState<IPost[]>([]);
-
-  useEffect(() => {
-    getPosts()
-      .then((posts) => {
-        setPosts(posts);
-        let uids: string[] = [];
-        posts.forEach((post: any) => {
-          if (!uids.includes(post.author.id)) uids.push(post.author.id);
-        });
-        uids.forEach((uid) => {
-          cacheUserData(uid);
-        });
-        setResMsg({ msg: "", err: false, pen: false });
-      })
-      .catch((e) => {
-        setResMsg({ msg: `${e}`, err: true, pen: false });
-      });
-    getPopularPosts()
-      .then((posts) => {
-        setPopularPosts(posts);
-        let uids: string[] = [];
-        popularPosts.forEach((post: any) => {
-          if (!uids.includes(post.author.id)) uids.push(post.author.id);
-        });
-        uids.forEach((uid) => {
-          cacheUserData(uid);
-        });
-        setResMsg({ msg: "", err: false, pen: false });
-      })
-      .catch((e) => {
-        setResMsg({ msg: `${e}`, err: true, pen: false });
-      });
-  }, []);
+  const renderPopularPost = (post?: IPost) => {
+    return (
+      <>
+        {post ? (
+          <article
+            key={post.id}
+            className="leading-5 py-1 my-1 mb-4 rounded-sm"
+          >
+            <h2 className="text-xs leading-3 my-0 mb-0.5 py-0.5">
+              {post.title}
+              <br/>
+              <a
+                href={`/posts/${post.slug}`}
+                className="font-bold text-xs italic cursor-pointer"
+              >
+                Read more
+              </a>
+            </h2>
+            <User
+              likeShareIcons
+              likes={post.likes}
+              shares={post.shares}
+              liked={post.likedByMe}
+              shared={post.sharedByMe}
+              uid={post.author.id}
+              onLikeClick={() => likePost(post.id)}
+              onShareClick={() => sharePost(post.id)}
+              user={getUserData(post.author.id)}
+            />
+          </article>
+        ) : (
+          <></>
+        )}
+      </>
+    );
+  };
 
   return (
     <div className="w-full h-full flex gap-3 p-3">
@@ -53,7 +52,7 @@ export default function Home() {
           posts.length > 0 &&
           posts.map((post) => <PostCard key={post.id} post={post} />)}
       </div>
-      <div className="bg-foreground border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-2">
+      <div style={{maxHeight:"calc(100% - 11.5rem)"}} className="bg-foreground border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-2">
         <h2 className="whitespace-nowrap font-extrabold tracking-tight text-md">
           Popular posts
         </h2>
@@ -63,35 +62,9 @@ export default function Home() {
         >
           {popularPosts &&
             popularPosts.length > 0 &&
-            popularPosts.map((post) => (
-              <article
-                key={post.id}
-                className="leading-5 py-1 my-1 mb-4 rounded-sm"
-              >
-                <h3 className="font-bold text-sm leading-4 my-0">
-                  {post.title}
-                </h3>
-                <p className="text-xs leading-3 my-0 mb-2 py-0.5">
-                  {post.description}
-                  <a
-                    href={`/posts/${post.slug}`}
-                    className="font-bold italic cursor-pointer"
-                  >
-                    {" "}
-                    - Read more
-                  </a>
-                </p>
-                <User
-                  likeShareIcons
-                  likes={post.likes}
-                  shares={post.shares}
-                  liked={post.likedByMe}
-                  shared={post.sharedByMe}
-                  uid={post.author.id}
-                  user={getUserData(post.author.id)}
-                />
-              </article>
-            ))}
+            popularPosts.map((postSlug) =>
+              renderPopularPost(getPostData(postSlug))
+            )}
         </aside>
       </div>
     </div>

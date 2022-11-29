@@ -1,7 +1,19 @@
-import { createContext, useContext, useCallback, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useState,
+  useEffect,
+} from "react";
 import type { ReactNode } from "react";
 import useCustomArrayAsync from "../hooks/useCustomArrayAsync";
-import { getPost, getPosts, toggleLike, toggleShare } from "../services/posts";
+import {
+  getPopularPosts,
+  getPost,
+  getPosts,
+  toggleLike,
+  toggleShare,
+} from "../services/posts";
 import { useSocket } from "./SocketContext";
 import useUsers from "./UsersContext";
 import { IPostComment } from "./PostContext";
@@ -25,19 +37,8 @@ export interface IPost {
 /*
     Posts context.
     Works in the same way as the UsersContext to receive live updates from
-    socket.io depending on whether or not the post is visible. Comments
-    are updated from PostContext (this is PostsContext with an S)
-
-    This context is not currently being used, I will hook it up eventually
-
-    openPost is going to be called when
-    the user opens the post to open the connection by joining a room, and
-    closePost is called when the user stops reading a post to stop
-    receiving post updates.
-
-    it uses THE POSTS SLUG, NOT THE POSTS ID to identify what posts the
-    client has open (not sure why I even have the id, its just an extra
-    column).
+    socket.io depending on whether or not the post is visible.
+    Comments are updated from PostContext
 */
 
 const PostsContext = createContext<{
@@ -50,6 +51,7 @@ const PostsContext = createContext<{
   openPost: (slug: string) => void;
   closePost: (slug: string) => void;
   postsOpen: string[];
+  popularPosts: string[];
 }>({
   posts: [],
   error: null,
@@ -60,6 +62,7 @@ const PostsContext = createContext<{
   openPost: () => {},
   closePost: () => {},
   postsOpen: [],
+  popularPosts: [],
 });
 
 export const PostsProvider = ({ children }: { children: ReactNode }) => {
@@ -67,6 +70,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const { cacheUserData } = useUsers();
 
   const [postsOpen, setPostsOpen] = useState<string[]>([]);
+
+  const [popularPosts, setPopularPosts] = useState<string[]>([]);
 
   const {
     error,
@@ -82,6 +87,14 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const [err, setErr] = useState("");
+
+  useEffect(() => {
+    getPopularPosts()
+      .then((posts) => {
+        setPopularPosts(posts.map((p: IPost) => p.slug));
+      })
+      .catch((e) => setErr(`Error getting popular posts : ${e}`));
+  }, []);
 
   const openPost = (slug: string) => {
     const post: IPost = posts.find((p) => p.slug === slug);
@@ -154,6 +167,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         openPost,
         closePost,
         postsOpen,
+        popularPosts,
       }}
     >
       {children}

@@ -13,11 +13,11 @@ export default function Post() {
   const { rootComments, createLocalComment } = usePost();
 
   const { getPostData, likePost, sharePost, openPost, closePost } = usePosts();
+  const { getUserData } = useUsers();
   const { slug } = useParams();
 
   const post = getPostData(String(slug));
 
-  const { getUserData } = useUsers();
 
   const postComment = (message: string) =>
     createComment({ postId: String(post?.id), message }).then(

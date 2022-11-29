@@ -43,17 +43,60 @@ const findIPBlockInfo = (ip: string): Promise<IPBlockInfo | undefined> =>
     })
   );
 
-const addIPBlockInfo = (info: IPBlockInfo) =>
-  redisClient.set(`ip-info:${info.ip}`, JSON.stringify(info));
+/**
+ * look through all the block data for the IP to find out what the
+ * expiration date for the key should be. returns ms to expiry.
+ */
+const getExpirationDateFromIPBlockInfo = (info: IPBlockInfo) => {
+  let latestBlockEnd = Date.now();
+  if (info.bruteRateLimitData) {
+    info.bruteRateLimitData.forEach((data) => {
+      const blockEnd =
+        new Date(data.lastAttempt).getTime() +
+        data.blockDuration *
+          Math.max(
+            data.failsRequired * Math.ceil(data.attempts / data.failsRequired),
+            1
+          );
+      if (blockEnd > latestBlockEnd) latestBlockEnd = blockEnd;
+    });
+  }
+  if (info.simpleRateLimitBlocks) {
+    info.simpleRateLimitBlocks.forEach((data) => {
+      const blockEnd = new Date(data.blockedAt).getTime() + data.blockDuration;
+      if (blockEnd > latestBlockEnd) latestBlockEnd = blockEnd;
+    });
+  }
+  if (info.simpleRateLimitWindowData) {
+    info.simpleRateLimitWindowData.forEach((data) => {
+      const end = new Date(data.timestamp).getTime() + data.windowDuration;
+      if (end > latestBlockEnd) latestBlockEnd = end;
+    });
+  }
+  return latestBlockEnd - Date.now();
+};
 
-const updateIPBlockInfo = (info: Partial<IPBlockInfo>, original: IPBlockInfo) =>
+const addIPBlockInfo = (info: IPBlockInfo) => {
+  const expiration = getExpirationDateFromIPBlockInfo(info);
+  redisClient.set(`ip-info:${info.ip}`, JSON.stringify(info), "PX", expiration);
+};
+
+const updateIPBlockInfo = (
+  info: Partial<IPBlockInfo>,
+  original: IPBlockInfo
+) => {
+  const data = {
+    ...original,
+    ...info,
+  };
+  const expiration = getExpirationDateFromIPBlockInfo(data);
   redisClient.set(
     `ip-info:${original.ip}`,
-    JSON.stringify({
-      ...original,
-      ...info,
-    })
+    JSON.stringify(data),
+    "PX",
+    expiration
   );
+};
 
 export const prepBruteRateLimit = async (
   params: Omit<BruteRateLimitParams, "msg">,
@@ -104,12 +147,16 @@ const addSimpleRateLimiterBlock = async (
   const found = (await findIPBlockInfo(ip)) as IPBlockInfo;
   if (found) {
     if (!found.simpleRateLimitBlocks) {
+      const data = {
+        ...found,
+        simpleRateLimitBlocks: [simpleBlockData],
+      } as IPBlockInfo;
+      const expiration = getExpirationDateFromIPBlockInfo(data);
       return await redisClient.set(
         `ip-info:${ip}`,
-        JSON.stringify({
-          ...found,
-          simpleRateLimitBlocks: [simpleBlockData],
-        } as IPBlockInfo)
+        JSON.stringify(data),
+        "PX",
+        expiration
       );
     }
     const simpleBlockInfoIndex = found.simpleRateLimitBlocks.findIndex(
@@ -119,30 +166,42 @@ const addSimpleRateLimiterBlock = async (
     if (simpleBlockInfoIndex !== -1) {
       simpleRateLimitBlocks[simpleBlockInfoIndex].blockedAt =
         new Date().toISOString();
+      const data = {
+        ...found,
+        simpleRateLimitBlocks,
+      } as IPBlockInfo;
+      const expiration = getExpirationDateFromIPBlockInfo(data);
       return await redisClient.set(
         `ip-info:${ip}`,
-        JSON.stringify({
-          ...found,
-          simpleRateLimitBlocks,
-        } as IPBlockInfo)
+        JSON.stringify(data),
+        "PX",
+        expiration
       );
     } else {
       simpleRateLimitBlocks.push(simpleBlockData);
+      const data = {
+        ...found,
+        simpleRateLimitBlocks,
+      } as IPBlockInfo;
+      const expiration = getExpirationDateFromIPBlockInfo(data);
       return await redisClient.set(
         `ip-info:${ip}`,
-        JSON.stringify({
-          ...found,
-          simpleRateLimitBlocks,
-        } as IPBlockInfo)
+        JSON.stringify(data),
+        "PX",
+        expiration
       );
     }
   } else {
+    const data = {
+      ip,
+      simpleRateLimitBlocks: [simpleBlockData],
+    } as IPBlockInfo;
+    const expiration = getExpirationDateFromIPBlockInfo(data);
     await redisClient.set(
       `ip-info:${ip}`,
-      JSON.stringify({
-        ip,
-        simpleRateLimitBlocks: [simpleBlockData],
-      } as IPBlockInfo)
+      JSON.stringify(data),
+      "PX",
+      expiration
     );
   }
 };

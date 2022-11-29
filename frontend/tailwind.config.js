@@ -12,6 +12,7 @@ module.exports = {
         header: "4.25rem",
         nav: "2.25rem",
         navheader: "6.5rem", //this should be nav+header height
+        footer: "5rem"
       },
       width: {
         threadGap: "20%",

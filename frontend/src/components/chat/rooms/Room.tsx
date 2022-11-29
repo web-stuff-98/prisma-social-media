@@ -7,11 +7,9 @@ import { IconBtn } from "../../IconBtn";
 import { TbDoor, TbDoorOff } from "react-icons/tb";
 import { RiSettings4Fill } from "react-icons/ri";
 
-export default function Room({ room }: { room: IRoom }) {
+export default function Room({ room, setErr }: { room: IRoom, setErr: (to:string) => void }) {
   const { user } = useAuth();
   const { setChatSection, setRoomId, openRoomEditor } = useChat();
-
-  const [err, setErr] = useState("");
 
   return (
     <div
