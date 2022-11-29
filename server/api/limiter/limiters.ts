@@ -1,4 +1,4 @@
-import { Request as Req, Response as Res, NextFunction, Router } from "express";
+import { Request as Req, Response as Res, NextFunction } from "express";
 
 /**
  * My rate limiters
@@ -14,7 +14,7 @@ import { Request as Req, Response as Res, NextFunction, Router } from "express";
  *                      increases exponentially. The number of fails
  *                      required can also be configured. Default
  *                      behaviour: 2hrs, 4hrs, 8hrs, 16 hrs, et cet.
- *                      The user gets 3 attempts.
+ *                      The user gets 3 attempts. Needs testing.
  */
 
 import {
@@ -81,7 +81,7 @@ const checkBlockedByBruteBlock = async ({
       } = info.bruteRateLimitData[i];
       if (checkRouteName === routeName) {
         if (attempts % failsRequired === 0) {
-          const multiplier = Math.ceil(attempts / failsRequired);
+          const multiplier = attempts / failsRequired;
           const duration = blockDuration * Math.max(1, multiplier);
           const blockEnd = new Date(lastAttempt).getTime() + duration;
           if (Date.now() < blockEnd) {

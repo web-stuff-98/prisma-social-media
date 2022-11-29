@@ -81,7 +81,7 @@ const addIPBlockInfo = (info: IPBlockInfo) => {
   redisClient.set(`ip-info:${info.ip}`, JSON.stringify(info), "PX", expiration);
 };
 
-const updateIPBlockInfo = (
+const updateIPBlockInfo = async (
   info: Partial<IPBlockInfo>,
   original: IPBlockInfo
 ) => {
@@ -90,7 +90,7 @@ const updateIPBlockInfo = (
     ...info,
   };
   const expiration = getExpirationDateFromIPBlockInfo(data);
-  redisClient.set(
+  await redisClient.set(
     `ip-info:${original.ip}`,
     JSON.stringify(data),
     "PX",
