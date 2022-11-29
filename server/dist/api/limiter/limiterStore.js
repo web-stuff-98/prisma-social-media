@@ -23,9 +23,47 @@ const findIPBlockInfo = (ip) => new Promise((resolve, reject) => redis_1.default
         : resolve(data ? JSON.parse(data) : undefined);
 }));
 exports.findIPBlockInfo = findIPBlockInfo;
-const addIPBlockInfo = (info) => redis_1.default.set(`ip-info:${info.ip}`, JSON.stringify(info));
+/**
+ * look through all the block data for the IP to find out what the
+ * expiration date for the key should be. returns ms to expiry.
+ */
+const getExpirationMsFromIPBlockInfo = (info) => {
+    let latestBlockEnd = Date.now();
+    if (info.bruteRateLimitData) {
+        info.bruteRateLimitData.forEach((data) => {
+            const blockEnd = new Date(data.lastAttempt).getTime() +
+                data.blockDuration *
+                    Math.max(data.failsRequired * Math.ceil(data.attempts / data.failsRequired), 1);
+            if (blockEnd > latestBlockEnd)
+                latestBlockEnd = blockEnd;
+        });
+    }
+    if (info.simpleRateLimitBlocks) {
+        info.simpleRateLimitBlocks.forEach((data) => {
+            const blockEnd = new Date(data.blockedAt).getTime() + data.blockDuration;
+            if (blockEnd > latestBlockEnd)
+                latestBlockEnd = blockEnd;
+        });
+    }
+    if (info.simpleRateLimitWindowData) {
+        info.simpleRateLimitWindowData.forEach((data) => {
+            const end = new Date(data.timestamp).getTime() + data.windowDuration;
+            if (end > latestBlockEnd)
+                latestBlockEnd = end;
+        });
+    }
+    return latestBlockEnd - Date.now();
+};
+const addIPBlockInfo = (info) => {
+    const expiration = getExpirationMsFromIPBlockInfo(info);
+    redis_1.default.set(`ip-info:${info.ip}`, JSON.stringify(info), "PX", expiration);
+};
 exports.addIPBlockInfo = addIPBlockInfo;
-const updateIPBlockInfo = (info, original) => redis_1.default.set(`ip-info:${original.ip}`, JSON.stringify(Object.assign(Object.assign({}, original), info)));
+const updateIPBlockInfo = (info, original) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = Object.assign(Object.assign({}, original), info);
+    const expiration = getExpirationMsFromIPBlockInfo(data);
+    yield redis_1.default.set(`ip-info:${original.ip}`, JSON.stringify(data), "PX", expiration);
+});
 exports.updateIPBlockInfo = updateIPBlockInfo;
 const prepBruteRateLimit = (params, ip) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -58,25 +96,33 @@ const addSimpleRateLimiterBlock = (ip, simpleBlockData) => __awaiter(void 0, voi
     const found = (yield findIPBlockInfo(ip));
     if (found) {
         if (!found.simpleRateLimitBlocks) {
-            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(Object.assign(Object.assign({}, found), { simpleRateLimitBlocks: [simpleBlockData] })));
+            const data = Object.assign(Object.assign({}, found), { simpleRateLimitBlocks: [simpleBlockData] });
+            const expiration = getExpirationMsFromIPBlockInfo(data);
+            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(data), "PX", expiration);
         }
         const simpleBlockInfoIndex = found.simpleRateLimitBlocks.findIndex((block) => block.routeName === simpleBlockData.routeName);
         let simpleRateLimitBlocks = found.simpleRateLimitBlocks;
         if (simpleBlockInfoIndex !== -1) {
             simpleRateLimitBlocks[simpleBlockInfoIndex].blockedAt =
                 new Date().toISOString();
-            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(Object.assign(Object.assign({}, found), { simpleRateLimitBlocks })));
+            const data = Object.assign(Object.assign({}, found), { simpleRateLimitBlocks });
+            const expiration = getExpirationMsFromIPBlockInfo(data);
+            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(data), "PX", expiration);
         }
         else {
             simpleRateLimitBlocks.push(simpleBlockData);
-            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(Object.assign(Object.assign({}, found), { simpleRateLimitBlocks })));
+            const data = Object.assign(Object.assign({}, found), { simpleRateLimitBlocks });
+            const expiration = getExpirationMsFromIPBlockInfo(data);
+            return yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(data), "PX", expiration);
         }
     }
     else {
-        yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify({
+        const data = {
             ip,
             simpleRateLimitBlocks: [simpleBlockData],
-        }));
+        };
+        const expiration = getExpirationMsFromIPBlockInfo(data);
+        yield redis_1.default.set(`ip-info:${ip}`, JSON.stringify(data), "PX", expiration);
     }
 });
 exports.addSimpleRateLimiterBlock = addSimpleRateLimiterBlock;

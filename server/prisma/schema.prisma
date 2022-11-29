@@ -24,6 +24,7 @@ model Post {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   tags        Tag[]
+  blur        String      
 }
 
 model Tag {

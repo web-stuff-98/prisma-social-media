@@ -27,7 +27,7 @@ exports.bruteRateLimit = exports.bruteSuccess = exports.bruteFail = exports.simp
  *                      increases exponentially. The number of fails
  *                      required can also be configured. Default
  *                      behaviour: 2hrs, 4hrs, 8hrs, 16 hrs, et cet.
- *                      The user gets 3 attempts.
+ *                      The user gets 3 attempts. Needs testing.
  */
 const limiterStore_1 = require("./limiterStore");
 const getReqIp_1 = __importDefault(require("../../utils/getReqIp"));
@@ -61,7 +61,7 @@ const checkBlockedByBruteBlock = ({ info, routeName = "", }) => __awaiter(void 0
             const { routeName: checkRouteName, blockDuration, failsRequired, attempts, lastAttempt, } = info.bruteRateLimitData[i];
             if (checkRouteName === routeName) {
                 if (attempts % failsRequired === 0) {
-                    const multiplier = Math.ceil(attempts / failsRequired);
+                    const multiplier = attempts / failsRequired;
                     const duration = blockDuration * Math.max(1, multiplier);
                     const blockEnd = new Date(lastAttempt).getTime() + duration;
                     if (Date.now() < blockEnd) {
