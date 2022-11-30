@@ -53,7 +53,18 @@ class PostsController {
                 res.status(200).json(posts);
             }
             catch (e) {
-                console.error(e);
+                res.status(500).json({ msg: "Internal error" });
+            }
+        });
+    }
+    static getPage(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const data = yield Posts_dao_1.default.getPage(Number(req.params.page), req.query, (_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+                res.status(200).json(data);
+            }
+            catch (error) {
                 res.status(500).json({ msg: "Internal error" });
             }
         });

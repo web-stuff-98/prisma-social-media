@@ -8,15 +8,17 @@ import {
 import type { ReactNode } from "react";
 import useCustomArrayAsync from "../hooks/useCustomArrayAsync";
 import {
+  getPage,
   getPopularPosts,
   getPost,
-  getPosts,
   toggleLike,
   toggleShare,
 } from "../services/posts";
 import { useSocket } from "./SocketContext";
 import useUsers from "./UsersContext";
 import { IPostComment } from "./PostContext";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useFilter } from "./FilterContext";
 
 export interface IPost {
   id: string;
@@ -68,23 +70,40 @@ const PostsContext = createContext<{
 export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const { socket } = useSocket();
   const { cacheUserData } = useUsers();
+  const { setPageCount, setFullCount, setMaxPage } = useFilter();
+  const query = useParams();
 
+  const [searchParams] = useSearchParams();
   const [postsOpen, setPostsOpen] = useState<string[]>([]);
-
   const [popularPosts, setPopularPosts] = useState<string[]>([]);
 
-  const {
-    error,
-    status,
-    value: posts,
-    setValueState: setPosts,
-  } = useCustomArrayAsync(
-    getPosts,
-    [],
-    "post_updated",
-    "post_deleted",
-    "post_created"
-  );
+  const [posts, setPosts] = useState<IPost[]>([]);
+  const [status, setStatus] = useState<
+    "idle" | "pending" | "error" | "success"
+  >("idle");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setStatus("pending");
+    console.log("Fuckass")
+    getPage(
+      Number(query.page),
+      searchParams.get("tags") || "",
+      searchParams.get("term") || ""
+    )
+      .then((data: any) => {
+        console.log("data.posts : " + data.posts)
+        setPosts(data.posts);
+        setStatus("success");
+        setMaxPage(data.maxPage)
+        setPageCount(data.pageCount)
+        setFullCount(data.fullCount)
+      })
+      .catch((e) => {
+        setError(`${e}`);
+        setStatus("error");
+      });
+  }, [query.page]);
 
   const [err, setErr] = useState("");
 
@@ -97,7 +116,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const openPost = (slug: string) => {
-    const post: IPost = posts.find((p) => p.slug === slug);
+    const post: IPost = posts.find((p) => p.slug === slug)!;
     socket?.emit("open_post_comments", post.slug);
     setPostsOpen((p) => [...p.filter((checkSlug) => checkSlug !== slug), slug]);
     getPost(slug)
@@ -108,7 +127,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       .catch((e) => setErr(`${e}`));
   };
   const closePost = (slug: string) => {
-    const post: IPost = posts.find((p) => p.slug === slug);
+    const post: IPost = posts.find((p) => p.slug === slug)!;
     socket?.emit("leave_post_comments", post.slug);
     setPostsOpen((p) => [...p.filter((checkSlug) => checkSlug !== slug)]);
   };
@@ -149,9 +168,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getPostData = useCallback(
-    (slug: string) => {
-      return posts.find((p: IPost) => p.slug === slug);
-    },
+    (slug: string) => posts.find((p: IPost) => p.slug === slug),
     [posts]
   );
 

@@ -1,4 +1,3 @@
-import React from "react";
 import "./index.css";
 import App from "./App";
 import { createRoot } from "react-dom/client";
@@ -18,7 +17,7 @@ root.render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<App />}>
-        <Route index element={<Home />} />
+        <Route index path=":page" element={<Home />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="settings" element={<Settings />} />
@@ -32,8 +31,8 @@ root.render(
         />
         <Route path="editor/:slug" element={<Editor />} />
         <Route path="editor" element={<Editor />} />
+        <Route path="*" element={<h1>Not found</h1>} />
       </Route>
-      <Route path="*" element={<h1>Not found</h1>} />
     </Routes>
   </BrowserRouter>
 );

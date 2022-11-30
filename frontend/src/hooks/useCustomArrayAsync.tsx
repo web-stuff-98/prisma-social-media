@@ -64,7 +64,6 @@ const useCustomArrayAsync = (
 
   const { socket } = useSocket();
   const handleItemCreated = useCallback((data: any) => {
-    console.log("Created : " + JSON.stringify(data))
     setValue((p) =>
       sortFunction
         ? [...p, { ...data }].sort(sortFunction).filter(filterFunction)
@@ -72,7 +71,6 @@ const useCustomArrayAsync = (
     );
   }, []);
   const handleItemUpdated = useCallback((data: any) => {
-    console.log("Updated : " + JSON.stringify(data))
     setValue((p) => {
       let newVal = p;
       const i = p.findIndex((item) => item.id === data.id);
@@ -85,7 +83,6 @@ const useCustomArrayAsync = (
     });
   }, [value]);
   const handleItemDeleted = useCallback((id: string) => {
-    console.log("Deleted : " + JSON.stringify(data))
     setValue((p) => [
       ...(sortFunction
         ? p

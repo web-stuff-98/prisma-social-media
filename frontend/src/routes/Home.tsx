@@ -52,7 +52,7 @@ export default function Home() {
           posts.length > 0 &&
           posts.map((post) => <PostCard key={post.id} post={post} />)}
       </div>
-      <div style={{maxHeight:"calc(100% - 11.5rem)"}} className="bg-foreground overflow-y-auto border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-2">
+      <div style={{maxHeight:"calc(100% - 6.5rem)"}} className="bg-foreground overflow-y-auto border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-2">
         <h2 className="whitespace-nowrap font-extrabold tracking-tight text-md">
           Popular posts
         </h2>

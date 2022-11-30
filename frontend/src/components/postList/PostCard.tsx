@@ -9,14 +9,19 @@ export default function PostCard({ post }: { post: IPost }) {
   const { likePost, sharePost } = usePosts();
 
   return (
-    <article className="bg-foreground h-68 flex items-center border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center">
-      <div style={{width:"min(40ch, 33vw)"}} className="h-full bg-gray-500"/>
+    <article className="bg-foreground h-72 flex items-center border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-left rounded">
+      <div
+        style={{ width: "min(30ch, 33vw)" }}
+        className="h-full bg-gray-500"
+      />
       <div className="p-3 my-auto">
         <h3 className="text-2xl font-bold leading-5">{post.title}</h3>
-        <p className="mb-1 leading-4 tracking-tight">{post.description}</p>
+        <p className="mb-1 leading-4 tracking-tight p-0 py-2">
+          {post.description}
+        </p>
         <div
           aria-label="Tags"
-          className="flex gap-1 w-full flex-wrap items-center justify-center my-1 mb-4"
+          className="flex gap-1 w-full flex-wrap items-center justify-start my-1 mb-4"
         >
           {post.tags.map((tag) => (
             <span
@@ -27,7 +32,7 @@ export default function PostCard({ post }: { post: IPost }) {
             </span>
           ))}
         </div>
-        <span className="mx-auto w-fit">
+        <span className="w-full flex items-center justify-start">
           <User
             likeShareIcons
             liked={post.likedByMe}
@@ -44,7 +49,7 @@ export default function PostCard({ post }: { post: IPost }) {
         </span>
         <span
           onClick={() => navigate(`/posts/${post.slug}`)}
-          className="italic text-xs cursor-pointer"
+          className="italic text-xs cursor-pointer pt-2"
         >
           Read more...
         </span>

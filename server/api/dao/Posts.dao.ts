@@ -1,41 +1,9 @@
-import { CommentLike } from "@prisma/client";
 import prisma from "../../utils/prisma";
 import crypto from "crypto";
 import { io } from "../..";
 
-const parsePost = async (post: any, uid?: string) => {
-  const usersCommentLikes = await prisma.commentLike.findMany({
-    where: {
-      userId: uid,
-      commentId: { in: post.comments.map((cmt: any) => cmt.id) },
-    },
-  });
-  return {
-    ...post,
-    tags: post.tags.map((tag: any) => tag.name),
-    likedByMe: post.likes.find((like: any) => like.userId === uid)
-      ? true
-      : false,
-    likes: post.likes.length,
-    sharedByMe: post.shares.find((share: any) => share.userId === uid)
-      ? true
-      : false,
-    shares: post.shares.length,
-    comments: post.comments.map((cmt: any) => {
-      const { _count, ...commentFields } = cmt;
-      return {
-        ...commentFields,
-        likedByMe:
-          usersCommentLikes.length > 0
-            ? usersCommentLikes.find(
-                (like: CommentLike) => like.commentId === cmt.id
-              )
-            : undefined,
-        likeCount: _count.likes,
-      };
-    }),
-  };
-};
+import parsePost from "../../utils/parsePost";
+import getPage from "../../utils/getPageData";
 
 export default class PostsDAO {
   static async getPosts(uid?: string) {
@@ -72,6 +40,15 @@ export default class PostsDAO {
         sharedByMe,
       };
     });
+  }
+
+  static async getPage(page: number, query: { term?: string; tags?: string }, uid?:string) {
+    const data = await getPage(
+      { rawTags: query.tags || "", rawTerm: query.term || "" },
+      { page },
+      uid
+    );
+    return data
   }
 
   static async getPopularPosts() {

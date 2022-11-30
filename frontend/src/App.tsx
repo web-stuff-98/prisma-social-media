@@ -7,6 +7,7 @@ import { SocketProvider } from "./context/SocketContext";
 import { UsersProvider } from "./context/UsersContext";
 import { UserdropdownProvider } from "./context/UserdropdownContext";
 import { PostsProvider } from "./context/PostsContext";
+import { FilterProvider } from "./context/FilterContext";
 
 function App() {
   return (
@@ -17,9 +18,11 @@ function App() {
             <UserdropdownProvider>
               <AuthProvider>
                 <ChatProvider>
-                  <PostsProvider>
-                    <Layout />
-                  </PostsProvider>
+                  <FilterProvider>
+                    <PostsProvider>
+                      <Layout />
+                    </PostsProvider>
+                  </FilterProvider>
                 </ChatProvider>
               </AuthProvider>
             </UserdropdownProvider>

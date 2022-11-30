@@ -51,6 +51,7 @@ const InterfaceProvider = ({ children }: { children: ReactNode }) => {
     const calcInnerWidth = throttle(() => {
       dispatch({ breakPoint: getDeviceConfig(width) });
     }, 500);
+
     window.addEventListener("resize", calcInnerWidth);
     return () => window.removeEventListener("resize", calcInnerWidth);
   }, []);

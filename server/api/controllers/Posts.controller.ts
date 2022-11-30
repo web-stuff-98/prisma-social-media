@@ -18,12 +18,20 @@ export default class PostsController {
       const posts = await PostsDAO.getPosts(req.user?.id);
       res.status(200).json(posts);
     } catch (e) {
-      console.error(e);
       res.status(500).json({ msg: "Internal error" });
     }
   }
 
-  static async getPopularPosts(req:Req, res:Res) {
+  static async getPage(req: Req, res: Res) {
+    try {
+      const data = await PostsDAO.getPage(Number(req.params.page), req.query, req.user?.id);
+      res.status(200).json(data);
+    } catch (error) {
+      res.status(500).json({ msg: "Internal error" });
+    }
+  }
+
+  static async getPopularPosts(req: Req, res: Res) {
     try {
       const posts = await PostsDAO.getPopularPosts();
       res.status(200).json(posts);
@@ -164,7 +172,7 @@ export default class PostsController {
       }
       return res.status(200).json(cmt).end();
     } catch (e) {
-      console.error(e)
+      console.error(e);
       return res.status(500).json({ msg: "Internal Error" });
     }
   }
