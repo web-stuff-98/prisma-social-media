@@ -12,7 +12,7 @@ import { useModal } from "../context/ModalContext";
 export default function Settings() {
   const { user } = useAuth();
   const { getUserData, cacheUserData } = useUsers();
-  const { setData: setModalData } = useModal();
+  const { openModal } = useModal();
 
   const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: false });
 
@@ -28,21 +28,41 @@ export default function Settings() {
     else return;
     const fr = new FileReader();
     fr.readAsDataURL(file);
-    fr.onloadend = async () => {
-      setResMsg({ msg: "", err: false, pen: true });
-      setBase64(`${fr.result}`);
-      try {
-        await updateUser({ pfp: `${fr.result}` });
-        setResMsg({ msg: "", err: false, pen: false });
-      } catch (e) {
-        setResMsg({ msg: `${e}`, err: true, pen: false });
-      }
+    fr.onloadend = () => {
+      openModal("Confirm", {
+        msg: `Are you sure you want to use ${file.name} as your profile picture?`,
+        err: false,
+        pen: false,
+        confirmationCallback: () => {
+          openModal("Message", {
+            msg: "Updating profile picture...",
+            pen: true,
+            err: false,
+          });
+          updateUser({ pfp: `${fr.result}` })
+            .then(() => {
+              openModal("Message", {
+                msg: "Your profile picture has been updated.",
+                err: false,
+                pen: false,
+              });
+              setBase64(`${fr.result}`);
+            })
+            .catch((e) => {
+              openModal("Message", {
+                err: true,
+                pen: false,
+                msg: `Error updating profile picture : ${e}`,
+              });
+            });
+        },
+      });
     };
   };
 
   const hiddenPfpInput = useRef<HTMLInputElement>(null);
   return (
-    <div style={{maxWidth:"15pc"}} className="w-full flex flex-col">
+    <div style={{ maxWidth: "15pc" }} className="w-full flex flex-col">
       <div className="flex gap-2 items-center justify-center text-center">
         <RiSettings4Fill className="text-3xl" />
         <h1 className="text-center py-2 font-extrabold">Settings</h1>
@@ -63,7 +83,9 @@ export default function Settings() {
         />
       )}
       <p className="text-center text-xs leading-4 mt-1">
-        Click on your profile picture to select a new one, it will be updated as soon as you have confirmed the selection. There is a file size limit of around 4mb.
+        Click on your profile picture to select a new one, it will be updated as
+        soon as you have confirmed the selection. There is a file size limit of
+        around 4mb.
       </p>
     </div>
   );

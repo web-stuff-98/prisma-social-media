@@ -12,24 +12,18 @@ export default function Nav() {
 
   const { state: iState, dispatch: iDispatch } = useInterface();
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-    if (iState.darkMode) {
-      containerRef.current.classList.remove("border-t");
-    } else {
-      containerRef.current.classList.add("border-t");
-    }
-  }, [iState]);
-
   return (
     <nav
       ref={containerRef}
-      className="w-full bg-neutral-900 dark:bg-zinc-900 border-t border-b border-zinc-800 dark:border-stone-800 dark:bg-zinc-900 min-h-nav"
+      className="w-full bg-neutral-900 dark:bg-zinc-900 border-b border-zinc-800 dark:border-stone-800 dark:bg-zinc-900 min-h-nav"
     >
       <div className="mx-auto h-full container flex items-center justify-between px-1.5">
         <div className="flex text-white gap-5">
           <Link to="/" aria-label="Home" className="text-md font-bold">
             Home
+          </Link>
+          <Link to="/blog/1" aria-label="Blog" className="text-md font-bold">
+            Blog
           </Link>
           {user && (
             <Link

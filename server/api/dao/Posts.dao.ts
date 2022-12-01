@@ -2,7 +2,6 @@ import prisma from "../../utils/prisma";
 import crypto from "crypto";
 import { io } from "../..";
 import AWS from "../../utils/aws";
-import fetch from "node-fetch";
 
 import parsePost, { ParsedPost } from "../../utils/parsePost";
 import getPage from "../../utils/getPageData";
@@ -10,6 +9,7 @@ import internal from "stream";
 import busboy from "busboy";
 import imageProcessing from "../../utils/imageProcessing";
 import readableStreamToBlob from "../../utils/readableStreamToBlob";
+import getUserSocket from "../../utils/getUserSocket";
 
 export default class PostsDAO {
   static async getPosts(uid?: string) {
@@ -74,14 +74,14 @@ export default class PostsDAO {
     return posts;
   }
 
-  static async deletePostBySlug(slug: string, uid:string) {
-    let post
+  static async deletePostBySlug(slug: string, uid: string) {
+    let post;
     try {
-      post = await prisma.post.findUniqueOrThrow({where: {slug}})      
+      post = await prisma.post.findUniqueOrThrow({ where: { slug } });
     } catch (error) {
-      throw new Error("Could not find post")
+      throw new Error("Could not find post");
     }
-    if(post.authorId !== uid) throw new Error("Unauthorized")
+    if (post.authorId !== uid) throw new Error("Unauthorized");
     await prisma.post.delete({
       where: { slug },
     });

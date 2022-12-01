@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { PostProvider } from "./context/PostContext";
 
 import Home from "./routes/Home";
+import Blog from "./routes/Blog";
 import Login from "./routes/Login";
 import Register from "./routes/Register";
 import Post from "./routes/Post";
@@ -17,7 +18,8 @@ root.render(
   <BrowserRouter>
     <Routes>
       <Route path="/" element={<App />}>
-        <Route index path=":page" element={<Home />} />
+        <Route index element={<Home />} />
+        <Route path="blog/:page" element={<Blog />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="settings" element={<Settings />} />

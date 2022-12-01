@@ -61,7 +61,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on("user_subscription_update", (data: Partial<IUser>) => {
+    socket.on("user_visible_update", (data: Partial<IUser>) => {
       setUsers((p) => {
         let newUsers = p;
         const i = p.findIndex((u) => u.id === data.id);
@@ -70,7 +70,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
       });
     });
     return () => {
-      socket.off("user_subscription_update");
+      socket.off("user_visible_update");
     };
   }, [socket]);
 
@@ -155,10 +155,10 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
 
   const subscribeToUser = (uid: string) => {
     if (!socket) throw new Error("no socket");
-    socket?.emit("subscribe_to_user", uid);
+    socket?.emit("user_visible", uid);
   };
   const unsubscribeFromUser = (uid: string) =>
-    socket?.emit("unsubscribe_to_user", uid);
+    socket?.emit("user_not_visible", uid);
 
   return (
     <UsersContext.Provider

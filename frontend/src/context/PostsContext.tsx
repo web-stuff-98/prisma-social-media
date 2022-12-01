@@ -6,7 +6,6 @@ import {
   useEffect,
 } from "react";
 import type { ReactNode } from "react";
-import useCustomArrayAsync from "../hooks/useCustomArrayAsync";
 import {
   getPage,
   getPopularPosts,
@@ -34,6 +33,8 @@ export interface IPost {
   sharedByMe?: boolean;
   likes: number;
   shares: number;
+  blur: string;
+  imageKey: string;
 }
 
 /*
@@ -70,7 +71,8 @@ const PostsContext = createContext<{
 export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const { socket } = useSocket();
   const { cacheUserData } = useUsers();
-  const { setPageCount, setFullCount, setMaxPage } = useFilter();
+  const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm } =
+    useFilter();
   const query = useParams();
 
   const [searchParams] = useSearchParams();
@@ -84,26 +86,25 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!query.page) return;
     setStatus("pending");
-    console.log("Fuckass")
     getPage(
       Number(query.page),
       searchParams.get("tags") || "",
       searchParams.get("term") || ""
     )
       .then((data: any) => {
-        console.log("data.posts : " + data.posts)
         setPosts(data.posts);
         setStatus("success");
-        setMaxPage(data.maxPage)
-        setPageCount(data.pageCount)
-        setFullCount(data.fullCount)
+        setMaxPage(data.maxPage);
+        setPageCount(data.pageCount);
+        setFullCount(data.fullCount);
       })
       .catch((e) => {
         setError(`${e}`);
         setStatus("error");
       });
-  }, [query.page]);
+  }, [searchTags, searchTerm, query.page]);
 
   const [err, setErr] = useState("");
 

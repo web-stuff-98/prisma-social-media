@@ -18,7 +18,7 @@ module.exports = {
         threadGap: "20%",
       },
       fontFamily: {
-        rubik: '"Archivo"',
+        rubik: '"DM Sans"',
       },
       colors: {
         foreground: "white",
@@ -27,7 +27,21 @@ module.exports = {
         darkmodeForeground: "#17181a",
         darkmodeBackground: "#17181a",
         darkmodeForegroundContrast: "#18181b"
-      }
+      },
+      height: {
+        postHeight: "14em",
+      },
+      maxHeight: {
+        asideMaxHeight: "calc(100vh - 8rem)",
+        gap: "calc(100% - 1.5pc)"
+      },
+      minWidth: {
+        postWidth: "15.5em",
+      },
+      maxWidth: {
+        postWidth: "15/5em",
+        gap: "min(calc(100% - 1.5pc), 30pc)"
+      },
     },
   },
   plugins: [require("@tailwindcss/typography")],

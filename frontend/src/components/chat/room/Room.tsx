@@ -226,7 +226,6 @@ export default function Room({ roomId }: { roomId: string }) {
     (ids: { sid: string; uid: string }[]) => {
       const peers: PeerWithIDs[] = [];
       ids.forEach((ids) => {
-        console.log(`createPeer userStream : ${userStream.current}`);
         const peer = createPeer(
           ids.sid,
           String(socket?.id),
@@ -245,7 +244,6 @@ export default function Room({ roomId }: { roomId: string }) {
   );
   const handleVidChatUserJoined = useCallback(
     (signal: any, callerSid: string, callerUid: string) => {
-      console.log(`addPeer userStream : ${userStream.current}`);
       const peer = addPeer(signal, callerSid, userStream.current);
       setPeers((peers: PeerWithIDs[]) => [
         ...peers,

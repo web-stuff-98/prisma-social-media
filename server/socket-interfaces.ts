@@ -1,6 +1,7 @@
 import { Post, PrivateMessage, User, RoomMessage, Room } from "@prisma/client";
 
 import type Peer from "simple-peer";
+import { ParsedPost } from "./utils/parsePost";
 
 interface RoomWithUsers extends Room {
   members?: Partial<User>[];
@@ -93,7 +94,6 @@ export interface ServerToClientEvents {
     name?: string;
     online?: boolean;
   }) => void;
-  post_card_visible_update: (data: Partial<Post>) => void;
 }
 
 export interface ClientToServerEvents {
@@ -104,8 +104,6 @@ export interface ClientToServerEvents {
 
   user_visible: (uid: string) => void;
   user_not_visible: (uid: string) => void;
-  post_card_visible: (id: string) => void;
-  post_card_not_visible: (id: string) => void;
 
   room_video_chat_sending_signal: (payload: {
     userToSignal: string;

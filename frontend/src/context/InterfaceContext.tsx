@@ -3,8 +3,8 @@ import {
   useContext,
   useReducer,
   useEffect,
-  ReactNode,
 } from "react";
+import type { ReactNode } from "react";
 import resolveConfig from "tailwindcss/resolveConfig";
 import throttle from "lodash/throttle";
 
@@ -12,7 +12,7 @@ import throttle from "lodash/throttle";
 // ^ copied this hook and merged into file, it needed adjustments to work with typescript and tailwindconfig being outside src directory
 
 //this shouldn't be "defaultConfig", it should be tailwind.config.js, but i cannot import that because it's outside of the src directory
-//need to fix this somehow
+//need to fix this somehow, or just hardcode it.
 import tailwindConfig from "tailwindcss/defaultConfig";
 
 type Breakpoint = "sm" | "md" | "lg" | "xl";

@@ -164,10 +164,10 @@ export default function User({
                 backgroundImage: `url(${
                   isServer
                     ? iState.darkMode
-                      ? "./pfp_server_dark.png"
-                      : "./pfp_server.png"
+                      ? "/pfp_server_dark.png"
+                      : "/pfp_server.png"
                     : user?.pfp ||
-                      (iState.darkMode ? "./pfp_dark.png" : "./pfp.png")
+                      (iState.darkMode ? "/pfp_dark.png" : "/pfp.png")
                 })`,
               }),
           backgroundPosition: "center",

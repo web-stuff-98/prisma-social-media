@@ -1,31 +1,51 @@
 import { useFormik } from "formik";
-import { useState, useEffect, ChangeEvent, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect, ChangeEvent, useRef, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-import { createPost, getPost, updatePost } from "../services/posts";
+import {
+  uploadPostData,
+  getPost,
+  updatePostData,
+  uploadPostImage,
+  deletePost,
+} from "../services/posts";
 import { ImSpinner8 } from "react-icons/im";
+import { useSocket } from "../context/SocketContext";
+import ProgressBar from "../components/ProgressBar";
+import { useModal } from "../context/ModalContext";
 
 export default function Editor() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const { openModal } = useModal();
 
   const [resMsg, setResMsg] = useState({ err: false, pen: false, msg: "" });
 
+  //The slug of the URL, except when uploading the post, not updating it
+  const [slugTemp, setSlugTemp] = useState("");
   const formik = useFormik({
     initialValues: {
       title: "",
       description: "",
       body: "",
       tags: "",
-      base64coverImage: "",
     },
     onSubmit: async (values: any) => {
       try {
+        if (!file) throw new Error("Provide a cover image");
         setResMsg({
           msg: slug ? "Updating post" : "Creating post",
           err: false,
           pen: true,
         });
-        slug ? await updatePost(values, slug) : await createPost(values);
+        const req = slug
+          ? updatePostData(values, slug)
+          : uploadPostData(values);
+        const data = await new Promise<any>((resolve, reject) =>
+          req.then((data) => resolve(data)).catch((e) => reject)
+        );
+        if (!slug) setSlugTemp(data.slug);
+        await uploadPostImage(slug || data.slug, file, file.size);
         setResMsg({
           msg: slug ? "Updated post" : "Created post",
           err: false,
@@ -36,6 +56,26 @@ export default function Editor() {
       }
     },
   });
+
+  const { socket } = useSocket();
+
+  const [progress, setProgress] = useState(0);
+  const handleCoverImageAttachmentProgress = useCallback(
+    (progress: number, slug: string) => {
+      if (slug === slugTemp) setProgress(progress);
+    },
+    [slugTemp]
+  );
+  useEffect(() => {
+    if (!socket) return;
+    socket?.on("post_cover_image_progress", handleCoverImageAttachmentProgress);
+    return () => {
+      socket?.off(
+        "post_cover_image_progress",
+        handleCoverImageAttachmentProgress
+      );
+    };
+  }, [socket]);
 
   const loadIntoEditor = async () => {
     try {
@@ -55,23 +95,13 @@ export default function Editor() {
     if (slug) loadIntoEditor();
   }, [slug]);
 
+  const [file, setFile] = useState<File>();
   const hiddenCoverImageRef = useRef<HTMLInputElement>(null);
   const handleImage = async (e: ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const file = e.target.files[0];
     if (!file) return;
-    try {
-      const fileBase64 = await new Promise((resolve, reject) => {
-        const fr = new FileReader();
-        fr.readAsDataURL(file);
-        fr.onloadend = () => resolve(fr.result);
-        fr.onerror = () => reject("Error reading file");
-        fr.onabort = () => reject("File reader aborted");
-      });
-      formik.setFieldValue("base64coverImage", fileBase64);
-    } catch (e: unknown) {
-      setResMsg({ msg: `${e}`, err: true, pen: false });
-    }
+    setFile(file);
   };
 
   return (
@@ -81,7 +111,7 @@ export default function Editor() {
           onSubmit={formik.handleSubmit}
           className="w-full flex flex-col gap-2 mt-2"
         >
-          <label className="mx-auto text-md" htmlFor="title">
+          <label className="mx-auto font-bold text-md" htmlFor="title">
             Title
           </label>
           <input
@@ -92,7 +122,7 @@ export default function Editor() {
             onChange={formik.handleChange}
             value={formik.values.title}
           />
-          <label className="mx-auto text-md" htmlFor="description">
+          <label className="mx-auto font-bold text-md" htmlFor="description">
             Description
           </label>
           <input
@@ -103,7 +133,7 @@ export default function Editor() {
             onChange={formik.handleChange}
             value={formik.values.description}
           />
-          <label className="mx-auto text-md" htmlFor="tags">
+          <label className="mx-auto font-bold text-md" htmlFor="tags">
             Tags
           </label>
           <input
@@ -113,7 +143,7 @@ export default function Editor() {
             onChange={formik.handleChange}
             value={formik.values.tags}
           />
-          <label className="mx-auto text-md" htmlFor="body">
+          <label className="mx-auto font-bold text-md" htmlFor="body">
             Body
           </label>
           <textarea
@@ -144,6 +174,55 @@ export default function Editor() {
           >
             {slug ? "Update post" : "Create post"}
           </button>
+          {slug && (
+            <button
+              onClick={() => {
+                openModal("Confirm", {
+                  pen: false,
+                  err: false,
+                  msg: "Are you sure you want to delete this post?",
+                  confirmationCallback: () => {
+                    navigate("/blog/1");
+                    openModal("Message", {
+                      err: false,
+                      pen: true,
+                      msg: "Deleting post...",
+                    });
+                    deletePost(slug)
+                      .then(() => {
+                        openModal("Message", {
+                          err: false,
+                          pen: false,
+                          msg: "Deleted post",
+                        });
+                      })
+                      .catch((e) => {
+                        openModal("Message", {
+                          err: true,
+                          pen: false,
+                          msg: `${e}`,
+                        });
+                      });
+                  },
+                });
+              }}
+              type="button"
+              aria-label="Delete post"
+              className="bg-rose-500"
+            >
+              Delete post
+            </button>
+          )}
+
+          {progress !== 0 && progress !== 1 && (
+            <ProgressBar percent={progress * 100} />
+          )}
+          {file && (
+            <img
+              className="shadow rounded mb-2 mx-auto"
+              src={URL.createObjectURL(file)}
+            />
+          )}
         </form>
       ) : (
         <div className="my-10 drop-shadow">

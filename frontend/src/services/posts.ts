@@ -1,3 +1,4 @@
+import axios from "axios";
 import { IPost } from "../context/PostsContext";
 import { makeRequest } from "./makeRequest";
 
@@ -18,9 +19,24 @@ const getPopularPosts = () =>
   makeRequest("/api/posts/popular", { withCredentials: true });
 const getPost = (slug: string) =>
   makeRequest(`/api/posts/${slug}`, { withCredentials: true });
-const createPost = (data: IPost) =>
+const deletePost = (slug: string) =>
+  makeRequest(`/api/posts/${slug}`, {
+    method: "DELETE",
+    withCredentials: true,
+  });
+const uploadPostData = (data: IPost) =>
   makeRequest(`/api/posts`, { withCredentials: true, method: "POST", data });
-const updatePost = (data: IPost, slug: string) =>
+const uploadPostImage = async (slug: string, file: File, bytes: number) => {
+  var formData = new FormData();
+  formData.append("file", file);
+  await makeRequest(`/api/posts/${slug}/image/${bytes}`, {
+    withCredentials: true,
+    method: "POST",
+    headers: { "Content-Type": "multipart/form-data" },
+    data: formData,
+  });
+};
+const updatePostData = (data: IPost, slug: string) =>
   makeRequest(`/api/posts/${slug}`, {
     withCredentials: true,
     method: "PUT",
@@ -44,6 +60,8 @@ export {
   getPopularPosts,
   toggleLike,
   toggleShare,
-  createPost,
-  updatePost,
+  uploadPostData,
+  updatePostData,
+  uploadPostImage,
+  deletePost,
 };

@@ -52,7 +52,9 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
     modalType: "Message" | "Confirm",
     modalData: Partial<IModalData>
   ) => {
+    console.log("OPEN MODAL")
     setModalData((old) => ({ ...old, ...modalData }));
+    setShowModal(true)
     setModalType(modalType);
   };
   const closeModal = () => {
@@ -75,13 +77,13 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
             >
               <div
                 style={modalStyle}
-                className="rounded-sm p-3 drop-shadow bg-gray-100 flex flex-col"
+                className="rounded-sm bg-foreground dark:text-white dark:border-stone-800 border dark:bg-darkmodeForeground font-rubik p-3 drop-shadow bg-gray-100 flex flex-col"
               >
                 {/* Confirmation modal */}
                 {showModal && modalType === "Confirm" && (
                   <>
-                    <b className="text-center">{modalData.msg}</b>
-                    <div className="w-full flex items-center justify-center">
+                    <b className="text-center leading-5 pb-2">{modalData.msg}</b>
+                    <div className="w-full flex gap-2 items-center justify-center">
                       <button
                         aria-label="Cancel"
                         className="bg-rose-600"
@@ -95,9 +97,9 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                       </button>
                       <button
                         aria-label="Confirm"
-                        onClick={async () => {
+                        onClick={() => {
                           if (modalData.confirmationCallback)
-                            return await modalData.confirmationCallback;
+                            modalData.confirmationCallback();
                           closeModal();
                         }}
                       >
@@ -115,7 +117,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                     {modalData.err && (
                       <BiError className="mx-auto text-3xl mb-2 drop-shadow" />
                     )}
-                    <b className="text-center">{modalData.msg}</b>
+                    <b className="text-center leading-5">{modalData.msg}</b>
                   </>
                 )}
               </div>
@@ -150,11 +152,13 @@ const modalBackdropStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  zIndex:"99"
 };
 
 const modalStyle: CSSProperties = {
   width: "fit-content",
   maxWidth: "min(20pc, 95vw)",
+  zIndex:"100"
 };
 
 const modalContainerStyle: CSSProperties = {
@@ -165,5 +169,6 @@ const modalContainerStyle: CSSProperties = {
   height: "100vh",
   display: "flex",
   alignItems: "center",
+  zIndex:"100",
   justifyContent: "center",
 };

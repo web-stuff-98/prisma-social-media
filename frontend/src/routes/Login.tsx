@@ -25,6 +25,7 @@ export default function Login() {
         id="username"
         type="text"
         required
+        className="text-center"
       />
       <label htmlFor="password">Password</label>
       <input
@@ -34,6 +35,7 @@ export default function Login() {
         id="password"
         type="text"
         required
+        className="text-center"
       />
       <button className="w-full mt-2 py-1">Login</button>
     </form>

@@ -37,13 +37,13 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
       setSearchTags([])
       if (!dontPush)
         navigate(
-          `/1?term=${to
+          `/blog/1?term=${to
             .replaceAll(' ', '+')
             .trim()
             .replace(/[^\w-]+/g, '')}`,
         )
     } else if (!dontPush) {
-      navigate('/1')
+      navigate('/blog/1')
     }
   }
 
@@ -64,7 +64,7 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     //not sure how localeCompare is used to sort alphabetically since i copied it from stack overflow
     tags = tags.sort((a: string, b: string) => a.localeCompare(b))
     setSearchTags(tags)
-    navigate(`/1${tags.length > 0 ? `?tags=` + tags.join('+') : ''}`)
+    navigate(`/blog/1${tags.length > 0 ? `?tags=` + tags.join('+') : ''}`)
   }
 
   return (

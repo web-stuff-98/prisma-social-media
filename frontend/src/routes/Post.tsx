@@ -1,23 +1,30 @@
 import { useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Comment } from "../components/comments/Comment";
 import { CommentForm } from "../components/comments/CommentForm";
+import { IconBtn } from "../components/IconBtn";
 import User from "../components/User";
 import { usePost } from "../context/PostContext";
 import { usePosts } from "../context/PostsContext";
 import useUsers from "../context/UsersContext";
 import { createComment } from "../services/comments";
 
+import { RiEditBoxFill, RiDeleteBin4Fill } from "react-icons/ri";
+import { useAuth } from "../context/AuthContext";
+import { useModal } from "../context/ModalContext";
+import { deletePost } from "../services/posts";
+
 export default function Post() {
   const { rootComments, createLocalComment } = usePost();
-
   const { getPostData, likePost, sharePost, openPost, closePost } = usePosts();
   const { getUserData } = useUsers();
+  const { openModal } = useModal();
   const { slug } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const post = getPostData(String(slug));
-
 
   const postComment = (message: string) =>
     createComment({ postId: String(post?.id), message }).then(
@@ -36,8 +43,8 @@ export default function Post() {
   return (
     <div className="w-full px-2 py-2">
       <div className="flex dark:border-stone-800 items-center pb-2 my-2">
-        <h1 className="text-4xl font-bold mr-4">{post?.title}</h1>
-        <div className="my-2 w-fit">
+        <h1 className="text-4xl font-bold grow mr-4">{post?.title}</h1>
+        <div className="my-2 flex flex-col justify-end items-end w-fit">
           <User
             uid={String(post?.author.id)}
             likeShareIcons
@@ -52,6 +59,50 @@ export default function Post() {
             user={getUserData(String(post?.author.id))}
             reverse
           />
+          {user && post?.author.id === user?.id && (
+            <div className="flex gap-1 my-2">
+              <IconBtn
+                aria-label="Edit post"
+                onClick={() => navigate(`/editor/${post.slug}`)}
+                Icon={RiEditBoxFill}
+              />
+              <IconBtn
+                onClick={() => {
+                  openModal("Confirm", {
+                    pen: false,
+                    err: false,
+                    msg: `Are you sure you want to delete ${post.title}?`,
+                    confirmationCallback: () => {
+                      navigate("/blog/1")
+                      openModal("Message", {
+                        err: false,
+                        pen: true,
+                        msg: "Deleting post...",
+                      });
+                      deletePost(post.slug)
+                        .then(() => {
+                          openModal("Message", {
+                            err: false,
+                            pen: false,
+                            msg: "Deleted post",
+                          });
+                        })
+                        .catch((e) => {
+                          openModal("Message", {
+                            err: true,
+                            pen: false,
+                            msg: `${e}`,
+                          });
+                        });
+                    },
+                  });
+                }}
+                Icon={RiDeleteBin4Fill}
+                aria-label="Delete"
+                color="text-rose-600"
+              />
+            </div>
+          )}
         </div>
       </div>
       <div

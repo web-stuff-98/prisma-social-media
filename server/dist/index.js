@@ -70,8 +70,6 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     }));
     socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
     socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
-    socket.on("post_card_visible", (id) => socket.join(`post_card=${id}`));
-    socket.on("post_card_not_visible", (id) => socket.join(`post_card=${id}`));
     socket.on("open_post_comments", (slug) => socket.join(slug));
     socket.on("leave_post_comments", (slug) => socket.leave(slug));
     socket.on("room_video_chat_sending_signal", (payload) => {
