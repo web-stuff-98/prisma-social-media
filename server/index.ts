@@ -56,7 +56,6 @@ const socketAuth = async (socket: any) => {
         id: socket.data.user.id,
         online: true,
       });
-      console.log(`Auth : ${socket.data.user.name}`);
     } catch (e) {
       console.warn(
         "User trying to connect to socket with malformed token : " + e

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const buffer_1 = require("buffer");
 /**
  * Progress is in the range of 0 - 1
  * Not sure if progress event actually gives the correct value... will need to check.
@@ -17,8 +18,8 @@ exports.default = (stream, mimeType, useProgress) => new Promise((resolve, rejec
     })
         .once("end", () => {
         const blob = mimeType != null
-            ? new Blob(chunks, { type: mimeType })
-            : new Blob(chunks);
+            ? new buffer_1.Blob(chunks, { type: mimeType })
+            : new buffer_1.Blob(chunks);
         resolve(blob);
     })
         .once("error", () => {

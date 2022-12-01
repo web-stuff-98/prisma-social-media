@@ -16,7 +16,6 @@ const prisma_1 = __importDefault(require("../../utils/prisma"));
 const crypto_1 = __importDefault(require("crypto"));
 const __1 = require("../..");
 const aws_1 = __importDefault(require("../../utils/aws"));
-const mime_types_1 = __importDefault(require("mime-types"));
 const parsePost_1 = __importDefault(require("../../utils/parsePost"));
 const getPageData_1 = __importDefault(require("../../utils/getPageData"));
 const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
@@ -25,6 +24,7 @@ class PostsDAO {
     static getPosts(uid) {
         return __awaiter(this, void 0, void 0, function* () {
             const posts = yield prisma_1.default.post.findMany({
+                where: { imagePending: false },
                 select: {
                     id: true,
                     slug: true,
@@ -39,6 +39,8 @@ class PostsDAO {
                     likes: true,
                     shares: true,
                     tags: true,
+                    imageKey: true,
+                    blur: true,
                 },
             });
             return posts.map((post) => {
@@ -62,6 +64,7 @@ class PostsDAO {
     static getPopularPosts() {
         return __awaiter(this, void 0, void 0, function* () {
             const posts = yield prisma_1.default.post.findMany({
+                where: { imagePending: false },
                 select: {
                     slug: true,
                 },
@@ -335,7 +338,7 @@ class PostsDAO {
             }
         });
     }
-    static uploadCoverImage(stream, info, bytes, postId, socketId) {
+    static uploadCoverImage(stream, info, bytes, slug, socketId) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!info.mimeType.startsWith("image/jpeg") &&
                 !info.mimeType.startsWith("image/jpg") &&
@@ -345,24 +348,24 @@ class PostsDAO {
                 throw new Error("Input is not an image, or is of an unsupported format.");
             }
             const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType, {
-                onProgress: (progress) => __1.io
-                    .to(socketId)
-                    .emit("post_cover_image_attachment_progress", progress * 0.5, postId),
+                onProgress: (progress) => __1.io.to(socketId).emit("post_cover_image_progress", progress * 0.5, slug),
                 totalBytes: bytes,
             });
-            const scaled = yield (0, imageProcessing_1.default)(blob, { width: 768, height: 512 });
-            const thumb = yield (0, imageProcessing_1.default)(blob, { width: 200, height: 200 });
+            const scaled = yield (0, imageProcessing_1.default)(blob, { width: 768, height: 512 }, true);
+            const thumb = yield (0, imageProcessing_1.default)(blob, { width: 200, height: 200 }, true);
+            const blur = yield (0, imageProcessing_1.default)(blob, { width: 14, height: 10 });
+            const hasExtension = info.filename.includes(".");
+            let p = 0;
+            const s3 = new aws_1.default.S3();
             //upload the thumb first
             yield new Promise((resolve, reject) => {
-                const s3 = new aws_1.default.S3();
-                let p = 0;
-                const hasExtension = info.filename.includes(".");
-                const ext = String(mime_types_1.default.extension(info.mimeType));
-                const key = `${postId}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}.thumb`;
+                const key = `thumb.${slug}.${hasExtension ? info.filename.split(".")[0] : info.filename}.jpg`;
                 s3.upload({
                     Bucket: "prisma-socialmedia",
                     Key: key,
-                    Body: thumb,
+                    Body: Buffer.from(thumb, "base64"),
+                    ContentType: "image/jpeg",
+                    ContentEncoding: "base64",
                 }, (e, _) => __awaiter(this, void 0, void 0, function* () {
                     if (e)
                         reject(e);
@@ -372,43 +375,41 @@ class PostsDAO {
                     //only send progress updates every 2nd event, otherwise it's probably too many emits
                     if (p === 2) {
                         p = 0;
-                        __1.io.to(socketId).emit("post_cover_image_attachment_progress", 0.25 * (e.loaded / Buffer.byteLength(thumb)) + 0.5, postId);
+                        __1.io.to(socketId).emit("post_cover_image_progress", 0.25 * (e.loaded / Buffer.byteLength(thumb)) + 0.5, slug);
                     }
                 });
             });
             return new Promise((resolve, reject) => {
-                const s3 = new aws_1.default.S3();
-                let p = 0;
-                const hasExtension = info.filename.includes(".");
-                const ext = String(mime_types_1.default.extension(info.mimeType));
-                const key = `${postId}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
+                p = 0;
+                const key = `${slug}.${hasExtension ? info.filename.split(".")[0] : info.filename}.jpg`;
                 s3.upload({
                     Bucket: "prisma-socialmedia",
                     Key: key,
-                    Body: scaled,
-                }, (e, _) => __awaiter(this, void 0, void 0, function* () {
-                    const blur = yield (0, imageProcessing_1.default)(scaled, { width: 16, height: 10 });
+                    Body: Buffer.from(scaled, "base64"),
+                    ContentType: "image/jpeg",
+                    ContentEncoding: "base64",
+                }, (e, _) => {
                     if (e)
                         reject(e);
                     resolve({ key, blur });
-                })).on("httpUploadProgress", (e) => {
+                }).on("httpUploadProgress", (e) => {
                     p++;
                     //only send progress updates every 2nd event, otherwise it's probably too many emits
                     if (p === 2) {
                         p = 0;
-                        __1.io.to(socketId).emit("post_cover_image_attachment_progress", 0.25 * (e.loaded / Buffer.byteLength(scaled)) + 0.75, postId);
+                        __1.io.to(socketId).emit("post_cover_image_progress", 0.25 * (e.loaded / Buffer.byteLength(scaled)) + 0.75, slug);
                     }
                 });
             });
         });
     }
-    static coverImageComplete(postId, socketId, blur) {
+    static coverImageComplete(slug, blur, key) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                __1.io.to(socketId).emit("post_cover_image_attachment_complete", postId);
                 yield prisma_1.default.post.update({
-                    where: { id: postId },
+                    where: { slug },
                     data: {
+                        imageKey: key,
                         imagePending: false,
                         blur,
                     },
@@ -420,11 +421,10 @@ class PostsDAO {
             }
         });
     }
-    static coverImageError(postId, socketId) {
+    static coverImageError(slug) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                __1.io.to(socketId).emit("post_cover_image_attachment_failed", postId);
-                yield prisma_1.default.post.delete({ where: { id: postId } });
+                yield prisma_1.default.post.delete({ where: { slug } });
             }
             catch (e) {
                 console.warn(e);

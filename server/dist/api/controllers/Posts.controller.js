@@ -37,6 +37,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const Posts_dao_1 = __importDefault(require("../dao/Posts.dao"));
 const Yup = __importStar(require("yup"));
+const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
+const busboy_1 = __importDefault(require("busboy"));
 const createPostSchema = Yup.object().shape({
     title: Yup.string().required().max(100).required(),
     body: Yup.string().required().max(10000).required(),
@@ -125,7 +127,7 @@ class PostsController {
             }
             try {
                 const post = yield Posts_dao_1.default.createPost(req.body.title, req.body.body, req.body.description, req.body.tags, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
-                res.status(201).json(post).end();
+                res.status(201).json({ slug: post.slug }).end();
             }
             catch (e) {
                 console.error(e);
@@ -253,6 +255,55 @@ class PostsController {
                 console.error(e);
                 return res.status(500).json({ msg: "Internal Error" });
             }
+        });
+    }
+    // messy crap ahead
+    static uploadCoverImage(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            /* This is messy and breaks the design pattern because busboy.on("file") wouldn't fire from
+                inside the Chat DAO for some reason. I wrote the same code in my other project and it
+                worked on the first try (webrtc-chat-js). I gave up after trying for 3 + 2 + 3 days and I don't care
+                anymore because it doesn't make sense and I can't fix it */
+            let post;
+            let gotFile = false;
+            try {
+                post = yield Posts_dao_1.default.getPostBySlug(req.params.slug);
+            }
+            catch (e) {
+                res
+                    .status(400)
+                    .json({ msg: "Could not find post to upload attachment for" });
+            }
+            if (post === null || post === void 0 ? void 0 : post.authorId) {
+                if (post.authorId !== ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id))
+                    throw new Error("Unauthorized");
+            }
+            const bb = (0, busboy_1.default)({
+                headers: req.headers,
+                limits: { files: 1, fields: 0, fileSize: 10000000 },
+            });
+            bb.on("file", (name, stream, info) => __awaiter(this, void 0, void 0, function* () {
+                var _b;
+                gotFile = true;
+                const socket = yield (0, getUserSocket_1.default)((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);
+                const { key, blur } = yield Posts_dao_1.default.uploadCoverImage(stream, info, Number(req.params.bytes), req.params.slug, socket.id);
+                yield Posts_dao_1.default.coverImageComplete(req.params.slug, blur, key);
+                res.writeHead(201, { Connection: "close" });
+                res.end();
+            }));
+            bb.on("finish", () => {
+                if (!gotFile) {
+                    req.unpipe(bb);
+                    res.status(400).json({ msg: "No file!" });
+                }
+            });
+            bb.on("error", (e) => __awaiter(this, void 0, void 0, function* () {
+                yield Posts_dao_1.default.coverImageError(req.params.slug);
+                req.unpipe(bb);
+                res.status(400).json({ msg: `${e}` });
+            }));
+            req.pipe(bb);
         });
     }
 }

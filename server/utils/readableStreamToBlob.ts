@@ -1,4 +1,5 @@
 import internal from "stream";
+import { Blob } from "buffer";
 
 /**
  * Progress is in the range of 0 - 1
@@ -14,7 +15,7 @@ export default (
   }
 ): Promise<Blob> =>
   new Promise<Blob>((resolve, reject) => {
-    let chunks: string[] = [];
+    let chunks:any[] = [];
     let bytesComplete: number = 0;
     stream
       .on("data", (chunk) => {

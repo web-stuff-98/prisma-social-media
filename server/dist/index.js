@@ -53,7 +53,6 @@ const socketAuth = (socket) => __awaiter(void 0, void 0, void 0, function* () {
                 id: socket.data.user.id,
                 online: true,
             });
-            console.log(`Auth : ${socket.data.user.name}`);
         }
         catch (e) {
             console.warn("User trying to connect to socket with malformed token : " + e);

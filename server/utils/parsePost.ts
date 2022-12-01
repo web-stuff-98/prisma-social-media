@@ -18,21 +18,6 @@ export type ParsedComment = Omit<Comment, "likes" | "children"> & {
   likedByMe: number;
 };
 
-/*
-  id        String        @id @default(uuid())
-  message   String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    String
-  parent    Comment?      @relation("ParentChild", fields: [parentId], references: [id])
-  children  Comment[]     @relation("ParentChild")
-  parentId  String?
-  likes     CommentLike[]
-*/
-
 export default async (post: any, uid?: string) => {
   const usersCommentLikes = await prisma.commentLike.findMany({
     where: {

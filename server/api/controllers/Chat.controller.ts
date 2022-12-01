@@ -43,7 +43,6 @@ export default class ChatController {
 
   static async deletePrivateMessage(req: Req, res: Res) {
     try {
-      console.log("Delete controller : " + req.body.messageId);
       await ChatDAO.deletePrivateMessage(
         req.body.messageId,
         String(req.user?.id)

@@ -47,8 +47,11 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
     for some reason
     */
     const where = rawTags
-        ? { tags: { some: { name: { in: clientQueryInput.tags } } } }
-        : Object.assign({}, (clientQueryInput.term
+        ? {
+            imagePending: false,
+            tags: { some: { name: { in: clientQueryInput.tags } } },
+        }
+        : Object.assign({ imagePending: false }, (clientQueryInput.term
             ? {
                 title: {
                     contains: clientQueryInput.term,
@@ -72,6 +75,8 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
             likes: true,
             shares: true,
             tags: true,
+            imageKey: true,
+            blur: true,
         },
         orderBy: { createdAt: "desc" },
         skip: clientQueryInput.pageOffset,

@@ -25,7 +25,9 @@ model Post {
   updatedAt    DateTime    @updatedAt
   tags         Tag[]
   blur         String?
+
   imagePending Boolean     @default(true)
+  imageKey     String?
 }
 
 model Tag {

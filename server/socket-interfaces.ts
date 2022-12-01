@@ -86,9 +86,7 @@ export interface ServerToClientEvents {
   post_deleted: (id: string) => void;
   post_updated: (data: Partial<Post>) => void;
 
-  post_cover_image_attachment_progress: (progress: number, id: string) => void;
-  post_cover_image_attachment_complete: (id: string) => void;
-  post_cover_image_attachment_failed: (id: string) => void;
+  post_cover_image_progress: (progress: number, slug: string) => void;
 
   user_subscription_update: (data: {
     id: string;

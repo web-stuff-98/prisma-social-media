@@ -164,14 +164,6 @@ class ChatDAO {
             catch (e) {
                 throw new Error("Message does not exist");
             }
-            console.log("DELETE : " +
-                id +
-                " | " +
-                uid +
-                " | " +
-                msg.recipientId +
-                " | " +
-                msg.senderId);
             if (msg.senderId !== uid)
                 throw new Error("Unauthorized");
             if (msg.hasAttachment) {

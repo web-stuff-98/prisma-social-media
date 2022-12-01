@@ -2,9 +2,9 @@ import prisma from "../../utils/prisma";
 import crypto from "crypto";
 import { io } from "../..";
 import AWS from "../../utils/aws";
-import mime from "mime-types";
+import fetch from "node-fetch";
 
-import parsePost from "../../utils/parsePost";
+import parsePost, { ParsedPost } from "../../utils/parsePost";
 import getPage from "../../utils/getPageData";
 import internal from "stream";
 import busboy from "busboy";
@@ -14,6 +14,7 @@ import readableStreamToBlob from "../../utils/readableStreamToBlob";
 export default class PostsDAO {
   static async getPosts(uid?: string) {
     const posts = await prisma.post.findMany({
+      where: { imagePending: false },
       select: {
         id: true,
         slug: true,
@@ -28,6 +29,8 @@ export default class PostsDAO {
         likes: true,
         shares: true,
         tags: true,
+        imageKey: true,
+        blur: true,
       },
     });
     return posts.map((post) => {
@@ -63,6 +66,7 @@ export default class PostsDAO {
 
   static async getPopularPosts() {
     const posts = await prisma.post.findMany({
+      where: { imagePending: false },
       select: {
         slug: true,
       },
@@ -70,7 +74,10 @@ export default class PostsDAO {
     return posts;
   }
 
-  static async getPostById(id: string, uid?: string | undefined) {
+  static async getPostById(
+    id: string,
+    uid?: string | undefined
+  ): Promise<ParsedPost> {
     const post = await prisma.post
       .findUnique({
         where: { id },
@@ -108,7 +115,10 @@ export default class PostsDAO {
     return post;
   }
 
-  static async getPostBySlug(slug: string, uid?: string | undefined) {
+  static async getPostBySlug(
+    slug: string,
+    uid?: string | undefined
+  ): Promise<ParsedPost> {
     const post = await prisma.post
       .findUnique({
         where: { slug },
@@ -373,7 +383,7 @@ export default class PostsDAO {
     stream: internal.Readable,
     info: busboy.FileInfo,
     bytes: number,
-    postId: string,
+    slug: string,
     socketId: string
   ): Promise<{ key: string; blur: string }> {
     if (
@@ -387,27 +397,35 @@ export default class PostsDAO {
     }
     const blob = await readableStreamToBlob(stream, info.mimeType, {
       onProgress: (progress) =>
-        io
-          .to(socketId)
-          .emit("post_cover_image_attachment_progress", progress * 0.5, postId),
+        io.to(socketId).emit("post_cover_image_progress", progress * 0.5, slug),
       totalBytes: bytes,
     });
-    const scaled = await imageProcessing(blob, { width: 768, height: 512 });
-    const thumb = await imageProcessing(blob, { width: 200, height: 200 });
+    const scaled = await imageProcessing(
+      blob,
+      { width: 768, height: 512 },
+      true
+    );
+    const thumb = await imageProcessing(
+      blob,
+      { width: 200, height: 200 },
+      true
+    );
+    const blur = await imageProcessing(blob, { width: 14, height: 10 });
+    const hasExtension = info.filename.includes(".");
+    let p = 0;
+    const s3 = new AWS.S3();
     //upload the thumb first
     await new Promise<void>((resolve, reject) => {
-      const s3 = new AWS.S3();
-      let p = 0;
-      const hasExtension = info.filename.includes(".");
-      const ext = String(mime.extension(info.mimeType));
-      const key = `${postId}.${
+      const key = `thumb.${slug}.${
         hasExtension ? info.filename.split(".")[0] : info.filename
-      }.${ext}.thumb`;
+      }.jpg`;
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
           Key: key,
-          Body: thumb,
+          Body: Buffer.from(thumb, "base64"),
+          ContentType: "image/jpeg",
+          ContentEncoding: "base64",
         },
         async (e, _) => {
           if (e) reject(e);
@@ -419,29 +437,27 @@ export default class PostsDAO {
         if (p === 2) {
           p = 0;
           io.to(socketId).emit(
-            "post_cover_image_attachment_progress",
+            "post_cover_image_progress",
             0.25 * (e.loaded / Buffer.byteLength(thumb)) + 0.5,
-            postId
+            slug
           );
         }
       });
     });
     return new Promise((resolve, reject) => {
-      const s3 = new AWS.S3();
-      let p = 0;
-      const hasExtension = info.filename.includes(".");
-      const ext = String(mime.extension(info.mimeType));
-      const key = `${postId}.${
+      p = 0;
+      const key = `${slug}.${
         hasExtension ? info.filename.split(".")[0] : info.filename
-      }.${ext}`;
+      }.jpg`;
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
           Key: key,
-          Body: scaled,
+          Body: Buffer.from(scaled, "base64"),
+          ContentType: "image/jpeg",
+          ContentEncoding: "base64",
         },
-        async (e, _) => {
-          const blur = await imageProcessing(scaled, { width: 16, height: 10 });
+        (e, _) => {
           if (e) reject(e);
           resolve({ key, blur });
         }
@@ -451,25 +467,21 @@ export default class PostsDAO {
         if (p === 2) {
           p = 0;
           io.to(socketId).emit(
-            "post_cover_image_attachment_progress",
+            "post_cover_image_progress",
             0.25 * (e.loaded / Buffer.byteLength(scaled)) + 0.75,
-            postId
+            slug
           );
         }
       });
     });
   }
 
-  static async coverImageComplete(
-    postId: string,
-    socketId: string,
-    blur: string
-  ) {
+  static async coverImageComplete(slug: string, blur: string, key: string) {
     try {
-      io.to(socketId).emit("post_cover_image_attachment_complete", postId);
       await prisma.post.update({
-        where: { id: postId },
+        where: { slug },
         data: {
+          imageKey: key,
           imagePending: false,
           blur,
         },
@@ -480,10 +492,9 @@ export default class PostsDAO {
     }
   }
 
-  static async coverImageError(postId: string, socketId: string) {
+  static async coverImageError(slug: string) {
     try {
-      io.to(socketId).emit("post_cover_image_attachment_failed", postId);
-      await prisma.post.delete({ where: { id: postId } });
+      await prisma.post.delete({ where: { slug } });
     } catch (e) {
       console.warn(e);
       throw new Error("Internal error handling error :-(");

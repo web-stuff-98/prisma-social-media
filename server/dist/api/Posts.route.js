@@ -63,6 +63,13 @@ router.route("/:id/toggleLike").post((0, express_slow_down_1.default)({
     delayAfter: 20,
     delayMs: 3000,
 }), authMiddleware_1.default, Posts_controller_1.default.togglePostLike);
+router
+    .route("/:slug/image/:bytes")
+    .post((0, express_slow_down_1.default)({
+    windowMs: 10000,
+    delayAfter: 3,
+    delayMs: 2000,
+}), authMiddleware_1.default, Posts_controller_1.default.uploadCoverImage);
 router.route("/:id/toggleShare").post((0, express_slow_down_1.default)({
     windowMs: 10000,
     delayAfter: 20,

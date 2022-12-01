@@ -57,8 +57,12 @@ export default async (
   for some reason 
   */
   const where: any = rawTags
-    ? { tags: { some: { name: { in: clientQueryInput.tags } } } }
+    ? {
+        imagePending: false,
+        tags: { some: { name: { in: clientQueryInput.tags } } },
+      }
     : {
+        imagePending: false,
         ...(clientQueryInput.term
           ? {
               title: {
@@ -87,6 +91,8 @@ export default async (
       likes: true,
       shares: true,
       tags: true,
+      imageKey:true,
+      blur:true,
     },
     orderBy: { createdAt: "desc" },
     skip: clientQueryInput.pageOffset,

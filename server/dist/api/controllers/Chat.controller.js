@@ -54,7 +54,6 @@ class ChatController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                console.log("Delete controller : " + req.body.messageId);
                 yield Chat_dao_1.default.deletePrivateMessage(req.body.messageId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(200).end();
             }

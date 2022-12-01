@@ -24,20 +24,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const prisma_1 = __importDefault(require("./prisma"));
-/*
-  id        String        @id @default(uuid())
-  message   String
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    String
-  parent    Comment?      @relation("ParentChild", fields: [parentId], references: [id])
-  children  Comment[]     @relation("ParentChild")
-  parentId  String?
-  likes     CommentLike[]
-*/
 exports.default = (post, uid) => __awaiter(void 0, void 0, void 0, function* () {
     const usersCommentLikes = yield prisma_1.default.commentLike.findMany({
         where: {
