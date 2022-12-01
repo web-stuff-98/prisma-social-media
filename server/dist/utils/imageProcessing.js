@@ -26,8 +26,10 @@ function imageProcessing(input, dimensions) {
                 reject("Format incompatible");
             const dimensionsPreventUpscaling = dimensions
                 ? {
-                    width: dimensions.width * (metadata.width / dimensions.width),
-                    height: dimensions.height * (metadata.height / dimensions.height),
+                    width: dimensions.width *
+                        Math.min(metadata.width / dimensions.width, 1),
+                    height: dimensions.height *
+                        Math.min(metadata.height / dimensions.height, 1),
                 }
                 : undefined;
             image

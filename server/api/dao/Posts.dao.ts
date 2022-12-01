@@ -409,7 +409,7 @@ export default class PostsDAO {
         },
         async (e, file) => {
           const blob = await readableStreamToBlob(stream, info.mimeType);
-          const blur = await imageProcessing(blob, { width: 16, height: 10 });
+          const blur = await imageProcessing(scaled, { width: 16, height: 10 });
           if (e) reject(e);
           resolve({ key, blur });
         }

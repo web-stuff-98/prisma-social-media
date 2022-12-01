@@ -363,7 +363,7 @@ class PostsDAO {
                     Body: scaled,
                 }, (e, file) => __awaiter(this, void 0, void 0, function* () {
                     const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType);
-                    const blur = yield (0, imageProcessing_1.default)(blob, { width: 16, height: 10 });
+                    const blur = yield (0, imageProcessing_1.default)(scaled, { width: 16, height: 10 });
                     if (e)
                         reject(e);
                     resolve({ key, blur });
