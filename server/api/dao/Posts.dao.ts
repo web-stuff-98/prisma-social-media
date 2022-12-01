@@ -410,7 +410,7 @@ export default class PostsDAO {
       { width: 200, height: 200 },
       true
     );
-    const blur = await imageProcessing(blob, { width: 14, height: 10 });
+    const blur = await imageProcessing(blob, { width: 14, height: 10 }) as string;
     const hasExtension = info.filename.includes(".");
     let p = 0;
     const s3 = new AWS.S3();
@@ -423,7 +423,7 @@ export default class PostsDAO {
         {
           Bucket: "prisma-socialmedia",
           Key: key,
-          Body: Buffer.from(thumb, "base64"),
+          Body: thumb,
           ContentType: "image/jpeg",
           ContentEncoding: "base64",
         },
@@ -453,7 +453,7 @@ export default class PostsDAO {
         {
           Bucket: "prisma-socialmedia",
           Key: key,
-          Body: Buffer.from(scaled, "base64"),
+          Body: scaled,
           ContentType: "image/jpeg",
           ContentEncoding: "base64",
         },

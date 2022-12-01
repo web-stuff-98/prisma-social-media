@@ -363,7 +363,7 @@ class PostsDAO {
                 s3.upload({
                     Bucket: "prisma-socialmedia",
                     Key: key,
-                    Body: Buffer.from(thumb, "base64"),
+                    Body: thumb,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",
                 }, (e, _) => __awaiter(this, void 0, void 0, function* () {
@@ -385,7 +385,7 @@ class PostsDAO {
                 s3.upload({
                     Bucket: "prisma-socialmedia",
                     Key: key,
-                    Body: Buffer.from(scaled, "base64"),
+                    Body: scaled,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",
                 }, (e, _) => {

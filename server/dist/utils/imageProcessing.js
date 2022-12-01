@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sharp_1 = __importDefault(require("sharp"));
 const isBuffer_1 = __importDefault(require("lodash/isBuffer"));
 const buffer_1 = require("buffer");
-function imageProcessing(input, dimensions, noHeader) {
+function imageProcessing(input, dimensions, asBuffer) {
     return __awaiter(this, void 0, void 0, function* () {
         let image;
         const inputIsBuffer = (0, isBuffer_1.default)(input);
@@ -60,7 +60,9 @@ function imageProcessing(input, dimensions, noHeader) {
                     if (!img) {
                         reject("NO IMG OUTPUT RESULT");
                     }
-                    const out = `${noHeader ? "" : "data:image/jpeg;base64,"}${img.toString("base64")}`;
+                    if (asBuffer)
+                        resolve(img);
+                    const out = `data:image/jpeg;base64,${img.toString("base64")}`;
                     resolve(out);
                 });
             });

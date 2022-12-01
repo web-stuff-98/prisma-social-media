@@ -15,8 +15,8 @@ interface IDimensions {
 export default async function imageProcessing(
   input: string | Buffer | Blob,
   dimensions: IDimensions,
-  noHeader?: boolean
-): Promise<string> {
+  asBuffer?: boolean
+): Promise<string | Buffer> {
   let image: Sharp;
   const inputIsBuffer = isBuffer(input);
   if (inputIsBuffer) {
@@ -66,9 +66,8 @@ export default async function imageProcessing(
           if (!img) {
             reject("NO IMG OUTPUT RESULT");
           }
-          const out = `${
-            noHeader ? "" : "data:image/jpeg;base64,"
-          }${img.toString("base64")}`;
+          if(asBuffer) resolve(img)
+          const out = `data:image/jpeg;base64,${img.toString("base64")}`;
           resolve(out);
         });
     });
