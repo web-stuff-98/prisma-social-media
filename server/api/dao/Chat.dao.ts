@@ -14,7 +14,7 @@ export default class ChatDAO {
   static async searchUser(name: string) {
     /*
     You could easily make this function faster, couldn't be bothered to figure out the proper way of doing it at the time
-    It also returns the user making the search, which is maybe shouldn't dos
+    It also returns the user making the search, which is maybe shouldn't do
     */
     const inQ = await prisma.user
       .findMany({
