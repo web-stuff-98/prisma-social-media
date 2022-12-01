@@ -15,8 +15,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const prisma_1 = __importDefault(require("../../utils/prisma"));
 const crypto_1 = __importDefault(require("crypto"));
 const __1 = require("../..");
+const aws_1 = __importDefault(require("../../utils/aws"));
+const mime_types_1 = __importDefault(require("mime-types"));
 const parsePost_1 = __importDefault(require("../../utils/parsePost"));
 const getPageData_1 = __importDefault(require("../../utils/getPageData"));
+const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
+const readableStreamToBlob_1 = __importDefault(require("../../utils/readableStreamToBlob"));
 class PostsDAO {
     static getPosts(uid) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -328,6 +332,79 @@ class PostsDAO {
                     },
                 });
                 return { addShare: false };
+            }
+        });
+    }
+    static uploadCoverImage(stream, info, bytes, postId, socketId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType, {
+                onProgress: (progress) => __1.io
+                    .to(socketId)
+                    .emit("post_cover_image_attachment_progress", progress * 0.5, postId),
+                totalBytes: bytes,
+            });
+            const scaled = yield (0, imageProcessing_1.default)(blob, { width: 768, height: 512 });
+            return new Promise((resolve, reject) => {
+                const s3 = new aws_1.default.S3();
+                let p = 0;
+                if (!info.mimeType.startsWith("image/jpeg") &&
+                    !info.mimeType.startsWith("image/jpg") &&
+                    !info.mimeType.startsWith("image/png") &&
+                    !info.mimeType.startsWith("image/avif") &&
+                    !info.mimeType.startsWith("image/heic")) {
+                    reject("Input is not an image, or is of an unsupported format.");
+                }
+                const hasExtension = info.filename.includes(".");
+                const ext = String(mime_types_1.default.extension(info.mimeType));
+                const key = `${postId}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
+                s3.upload({
+                    Bucket: "prisma-socialmedia",
+                    Key: key,
+                    Body: scaled,
+                }, (e, file) => __awaiter(this, void 0, void 0, function* () {
+                    const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType);
+                    const blur = yield (0, imageProcessing_1.default)(blob, { width: 16, height: 10 });
+                    if (e)
+                        reject(e);
+                    resolve({ key, blur });
+                })).on("httpUploadProgress", (e) => {
+                    p++;
+                    //only send progress updates every 2nd event, otherwise it's probably too many emits
+                    if (p === 2) {
+                        p = 0;
+                        __1.io.to(socketId).emit("post_cover_image_attachment_progress", 0.5 * (e.loaded / bytes) + 0.5, postId);
+                    }
+                });
+            });
+        });
+    }
+    static coverImageComplete(postId, key, socketId, blur) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                __1.io.to(socketId).emit("post_cover_image_attachment_complete", postId, key);
+                yield prisma_1.default.post.update({
+                    where: { id: postId },
+                    data: {
+                        imagePending: false,
+                        blur,
+                    },
+                });
+            }
+            catch (e) {
+                console.warn(e);
+                throw new Error("Internal error handling error :-(");
+            }
+        });
+    }
+    static coverImageError(postId, socketId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                __1.io.to(socketId).emit("post_cover_image_attachment_failed", postId);
+                yield prisma_1.default.post.delete({ where: { id: postId } });
+            }
+            catch (e) {
+                console.warn(e);
+                throw new Error("Internal error handling error :-(");
             }
         });
     }

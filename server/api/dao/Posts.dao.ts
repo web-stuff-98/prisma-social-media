@@ -1,9 +1,15 @@
 import prisma from "../../utils/prisma";
 import crypto from "crypto";
 import { io } from "../..";
+import AWS from "../../utils/aws";
+import mime from "mime-types";
 
 import parsePost from "../../utils/parsePost";
 import getPage from "../../utils/getPageData";
+import internal from "readable-stream";
+import busboy from "busboy";
+import imageProcessing from "../../utils/imageProcessing";
+import readableStreamToBlob from "../../utils/readableStreamToBlob";
 
 export default class PostsDAO {
   static async getPosts(uid?: string) {
@@ -42,13 +48,17 @@ export default class PostsDAO {
     });
   }
 
-  static async getPage(page: number, query: { term?: string; tags?: string }, uid?:string) {
+  static async getPage(
+    page: number,
+    query: { term?: string; tags?: string },
+    uid?: string
+  ) {
     const data = await getPage(
       { rawTags: query.tags || "", rawTerm: query.term || "" },
       { page },
       uid
     );
-    return data
+    return data;
   }
 
   static async getPopularPosts() {
@@ -356,6 +366,96 @@ export default class PostsDAO {
         },
       });
       return { addShare: false };
+    }
+  }
+
+  static async uploadCoverImage(
+    stream: internal.Readable,
+    info: busboy.FileInfo,
+    bytes: number,
+    postId: string,
+    socketId: string
+  ): Promise<{ key: string; blur: string }> {
+    const blob = await readableStreamToBlob(stream, info.mimeType, {
+      onProgress: (progress) =>
+        io
+          .to(socketId)
+          .emit("post_cover_image_attachment_progress", progress * 0.5, postId),
+      totalBytes: bytes,
+    });
+    const scaled = await imageProcessing(blob, { width: 768, height: 512 });
+    return new Promise((resolve, reject) => {
+      const s3 = new AWS.S3();
+      let p = 0;
+      if (
+        !info.mimeType.startsWith("image/jpeg") &&
+        !info.mimeType.startsWith("image/jpg") &&
+        !info.mimeType.startsWith("image/png") &&
+        !info.mimeType.startsWith("image/avif") &&
+        !info.mimeType.startsWith("image/heic")
+      ) {
+        reject("Input is not an image, or is of an unsupported format.");
+      }
+      const hasExtension = info.filename.includes(".");
+      const ext = String(mime.extension(info.mimeType));
+      const key = `${postId}.${
+        hasExtension ? info.filename.split(".")[0] : info.filename
+      }.${ext}`;
+      s3.upload(
+        {
+          Bucket: "prisma-socialmedia",
+          Key: key,
+          Body: scaled,
+        },
+        async (e, file) => {
+          const blob = await readableStreamToBlob(stream, info.mimeType);
+          const blur = await imageProcessing(blob, { width: 16, height: 10 });
+          if (e) reject(e);
+          resolve({ key, blur });
+        }
+      ).on("httpUploadProgress", (e) => {
+        p++;
+        //only send progress updates every 2nd event, otherwise it's probably too many emits
+        if (p === 2) {
+          p = 0;
+          io.to(socketId).emit(
+            "post_cover_image_attachment_progress",
+            0.5 * (e.loaded / bytes) + 0.5,
+            postId
+          );
+        }
+      });
+    });
+  }
+
+  static async coverImageComplete(
+    postId: string,
+    key: string,
+    socketId: string,
+    blur: string
+  ) {
+    try {
+      io.to(socketId).emit("post_cover_image_attachment_complete", postId, key);
+      await prisma.post.update({
+        where: { id: postId },
+        data: {
+          imagePending: false,
+          blur,
+        },
+      });
+    } catch (e) {
+      console.warn(e);
+      throw new Error("Internal error handling error :-(");
+    }
+  }
+
+  static async coverImageError(postId: string, socketId: string) {
+    try {
+      io.to(socketId).emit("post_cover_image_attachment_failed", postId);
+      await prisma.post.delete({ where: { id: postId } });
+    } catch (e) {
+      console.warn(e);
+      throw new Error("Internal error handling error :-(");
     }
   }
 }

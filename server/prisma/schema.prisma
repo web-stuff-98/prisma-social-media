@@ -11,20 +11,21 @@ datasource db {
 }
 
 model Post {
-  id          String      @id @default(uuid())
-  title       String
-  description String
-  slug        String      @unique @default(cuid())
-  body        String
-  comments    Comment[]
-  likes       PostLike[]
-  shares      PostShare[]
-  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId    String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  tags        Tag[]
-  blur        String      
+  id           String      @id @default(uuid())
+  title        String
+  description  String
+  slug         String      @unique @default(cuid())
+  body         String
+  comments     Comment[]
+  likes        PostLike[]
+  shares       PostShare[]
+  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId     String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tags         Tag[]
+  blur         String?
+  imagePending Boolean     @default(true)
 }
 
 model Tag {
