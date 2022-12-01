@@ -52,6 +52,15 @@ router.route("/:slug").put(
   authMiddleware,
   PostsController.updatePost
 );
+router.route("/:slug").delete(
+  slowDown({
+    windowMs: 120000,
+    delayAfter: 10,
+    delayMs: 5000,
+  }),
+  authMiddleware,
+  PostsController.deletePost
+);
 router.route("/:slug").get(withUser, PostsController.getPostBySlug);
 router.route("/:id/toggleLike").post(
   slowDown({

@@ -113,6 +113,18 @@ class PostsController {
             }
         });
     }
+    static deletePost(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Posts_dao_1.default.deletePostBySlug(req.params.slug, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
     static createPost(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {

@@ -49,7 +49,7 @@ const socketAuth = (socket) => __awaiter(void 0, void 0, void 0, function* () {
             socket.join(`user=${socket.data.user.id}`);
             socket.join(`inbox=${socket.data.user.id}`);
             socket.data.vidChatOpen = false;
-            io.to(`user=${socket.data.user.id}`).emit("user_subscription_update", {
+            io.to(`user=${socket.data.user.id}`).emit("user_visible_update", {
                 id: socket.data.user.id,
                 online: true,
             });
@@ -68,8 +68,10 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     socket.on("auth", () => __awaiter(void 0, void 0, void 0, function* () {
         yield socketAuth(socket);
     }));
-    socket.on("subscribe_to_user", (uid) => socket.join(`user=${uid}`));
-    socket.on("unsubscribe_to_user", (uid) => socket.leave(`user=${uid}`));
+    socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
+    socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
+    socket.on("post_card_visible", (id) => socket.join(`post_card=${id}`));
+    socket.on("post_card_not_visible", (id) => socket.join(`post_card=${id}`));
     socket.on("open_post_comments", (slug) => socket.join(slug));
     socket.on("leave_post_comments", (slug) => socket.leave(slug));
     socket.on("room_video_chat_sending_signal", (payload) => {
@@ -81,7 +83,7 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     });
     socket.on("disconnect", () => {
         if (socket.data.user)
-            io.to(`user=${socket.data.user.id}`).emit("user_subscription_update", {
+            io.to(`user=${socket.data.user.id}`).emit("user_visible_update", {
                 id: socket.data.user.id,
                 online: false,
             });

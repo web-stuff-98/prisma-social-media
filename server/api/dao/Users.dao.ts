@@ -66,7 +66,7 @@ export default class UsersDAO {
     let base64;
     if (data.pfp) {
       try {
-        base64 = await imageProcessing(data.pfp, { width: 48, height: 48 });
+        base64 = await imageProcessing(data.pfp, { width: 48, height: 48 }) as string;
       } catch (e) {
         throw new Error(`Error processing image : ${e}`);
       }
@@ -93,7 +93,7 @@ export default class UsersDAO {
       const socket = await getUserSocket(uid);
       if (socket) socket.data.user.name = data.name;
     }
-    io.to(`user=${uid}`).emit("user_subscription_update", {
+    io.to(`user=${uid}`).emit("user_visible_update", {
       id: uid,
       ...(data.name ? { name: data.name } : {}),
       ...(data.pfp ? { pfp: base64 } : {}),

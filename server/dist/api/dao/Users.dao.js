@@ -75,7 +75,7 @@ class UsersDAO {
             let base64;
             if (data.pfp) {
                 try {
-                    base64 = yield (0, imageProcessing_1.default)(data.pfp, { width: 48, height: 48 });
+                    base64 = (yield (0, imageProcessing_1.default)(data.pfp, { width: 48, height: 48 }));
                 }
                 catch (e) {
                     throw new Error(`Error processing image : ${e}`);
@@ -105,7 +105,7 @@ class UsersDAO {
                 if (socket)
                     socket.data.user.name = data.name;
             }
-            __1.io.to(`user=${uid}`).emit("user_subscription_update", Object.assign(Object.assign({ id: uid }, (data.name ? { name: data.name } : {})), (data.pfp ? { pfp: base64 } : {})));
+            __1.io.to(`user=${uid}`).emit("user_visible_update", Object.assign(Object.assign({ id: uid }, (data.name ? { name: data.name } : {})), (data.pfp ? { pfp: base64 } : {})));
         });
     }
     static createUser(username, password) {

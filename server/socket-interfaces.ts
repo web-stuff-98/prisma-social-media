@@ -88,12 +88,12 @@ export interface ServerToClientEvents {
 
   post_cover_image_progress: (progress: number, slug: string) => void;
 
-  user_subscription_update: (data: {
+  user_visible_update: (data: {
     id: string;
     name?: string;
     online?: boolean;
   }) => void;
-  post_subscription_update: (data: Partial<Post>) => void;
+  post_card_visible_update: (data: Partial<Post>) => void;
 }
 
 export interface ClientToServerEvents {
@@ -102,8 +102,10 @@ export interface ClientToServerEvents {
   open_post_comments: (slug: string) => void;
   leave_post_comments: (slug: string) => void;
 
-  subscribe_to_user: (uid: string) => void;
-  unsubscribe_to_user: (uid: string) => void;
+  user_visible: (uid: string) => void;
+  user_not_visible: (uid: string) => void;
+  post_card_visible: (id: string) => void;
+  post_card_not_visible: (id: string) => void;
 
   room_video_chat_sending_signal: (payload: {
     userToSignal: string;

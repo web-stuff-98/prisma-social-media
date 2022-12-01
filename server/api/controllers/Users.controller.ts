@@ -118,7 +118,7 @@ export default class UsersController {
       }
     );
     if (user)
-      io.to(`user=${user.id}`).emit("user_subscription_update", {
+      io.to(`user=${user.id}`).emit("user_visible_update", {
         id: user.id,
         online: true,
       });
@@ -131,7 +131,7 @@ export default class UsersController {
       if (socket) {
         socket.disconnect();
       }
-      io.to(`user=${req.user?.id}`).emit("user_subscription_update", {
+      io.to(`user=${req.user?.id}`).emit("user_visible_update", {
         id: req.user.id,
         online: false,
       });

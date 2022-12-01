@@ -67,6 +67,15 @@ export default class PostsController {
     }
   }
 
+  static async deletePost(req: Req, res: Res) {
+    try {
+      await PostsDAO.deletePostBySlug(req.params.slug, String(req.user?.id));
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
   static async createPost(req: Req, res: Res) {
     try {
       await createPostSchema.strict().validate(req.body);
@@ -253,19 +262,19 @@ export default class PostsController {
         Number(req.params.bytes),
         req.params.slug,
         socket!.id
-      )
-      await PostsDAO.coverImageComplete(req.params.slug, blur, key)
+      );
+      await PostsDAO.coverImageComplete(req.params.slug, blur, key);
       res.writeHead(201, { Connection: "close" });
       res.end();
     });
     bb.on("finish", () => {
       if (!gotFile) {
-        req.unpipe(bb)
+        req.unpipe(bb);
         res.status(400).json({ msg: "No file!" });
       }
     });
     bb.on("error", async (e: unknown) => {
-      await PostsDAO.coverImageError(req.params.slug)
+      await PostsDAO.coverImageError(req.params.slug);
       req.unpipe(bb);
       res.status(400).json({ msg: `${e}` });
     });

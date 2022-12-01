@@ -72,6 +72,22 @@ class PostsDAO {
             return posts;
         });
     }
+    static deletePostBySlug(slug, uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let post;
+            try {
+                post = yield prisma_1.default.post.findUniqueOrThrow({ where: { slug } });
+            }
+            catch (error) {
+                throw new Error("Could not find post");
+            }
+            if (post.authorId !== uid)
+                throw new Error("Unauthorized");
+            yield prisma_1.default.post.delete({
+                where: { slug },
+            });
+        });
+    }
     static getPostById(id, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             const post = yield prisma_1.default.post
@@ -353,7 +369,10 @@ class PostsDAO {
             });
             const scaled = yield (0, imageProcessing_1.default)(blob, { width: 768, height: 512 }, true);
             const thumb = yield (0, imageProcessing_1.default)(blob, { width: 200, height: 200 }, true);
-            const blur = yield (0, imageProcessing_1.default)(blob, { width: 14, height: 10 });
+            const blur = (yield (0, imageProcessing_1.default)(blob, {
+                width: 14,
+                height: 10,
+            }));
             const hasExtension = info.filename.includes(".");
             let p = 0;
             const s3 = new aws_1.default.S3();

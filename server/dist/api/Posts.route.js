@@ -57,6 +57,11 @@ router.route("/:slug").put((0, express_slow_down_1.default)({
     delayAfter: 10,
     delayMs: 5000,
 }), authMiddleware_1.default, Posts_controller_1.default.updatePost);
+router.route("/:slug").delete((0, express_slow_down_1.default)({
+    windowMs: 120000,
+    delayAfter: 10,
+    delayMs: 5000,
+}), authMiddleware_1.default, Posts_controller_1.default.deletePost);
 router.route("/:slug").get(authMiddleware_1.withUser, Posts_controller_1.default.getPostBySlug);
 router.route("/:id/toggleLike").post((0, express_slow_down_1.default)({
     windowMs: 10000,

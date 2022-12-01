@@ -74,6 +74,19 @@ export default class PostsDAO {
     return posts;
   }
 
+  static async deletePostBySlug(slug: string, uid:string) {
+    let post
+    try {
+      post = await prisma.post.findUniqueOrThrow({where: {slug}})      
+    } catch (error) {
+      throw new Error("Could not find post")
+    }
+    if(post.authorId !== uid) throw new Error("Unauthorized")
+    await prisma.post.delete({
+      where: { slug },
+    });
+  }
+
   static async getPostById(
     id: string,
     uid?: string | undefined
@@ -410,7 +423,10 @@ export default class PostsDAO {
       { width: 200, height: 200 },
       true
     );
-    const blur = await imageProcessing(blob, { width: 14, height: 10 }) as string;
+    const blur = (await imageProcessing(blob, {
+      width: 14,
+      height: 10,
+    })) as string;
     const hasExtension = info.filename.includes(".");
     let p = 0;
     const s3 = new AWS.S3();

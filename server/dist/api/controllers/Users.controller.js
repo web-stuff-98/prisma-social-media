@@ -150,7 +150,7 @@ class UsersController {
                 sameSite: "strict",
             });
             if (user)
-                __1.io.to(`user=${user.id}`).emit("user_subscription_update", {
+                __1.io.to(`user=${user.id}`).emit("user_visible_update", {
                     id: user.id,
                     online: true,
                 });
@@ -165,7 +165,7 @@ class UsersController {
                 if (socket) {
                     socket.disconnect();
                 }
-                __1.io.to(`user=${(_a = req.user) === null || _a === void 0 ? void 0 : _a.id}`).emit("user_subscription_update", {
+                __1.io.to(`user=${(_a = req.user) === null || _a === void 0 ? void 0 : _a.id}`).emit("user_visible_update", {
                     id: req.user.id,
                     online: false,
                 });
