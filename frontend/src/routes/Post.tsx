@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate, useParams } from "react-router-dom";
 import { Comment } from "../components/comments/Comment";
@@ -26,10 +26,13 @@ export default function Post() {
 
   const post = getPostData(String(slug));
 
+  const [commentError, setCommentError] = useState("")
   const postComment = (message: string) =>
-    createComment({ postId: String(post?.id), message }).then(
-      createLocalComment
-    );
+    createComment({ postId: String(post?.id), message }).then((data) => {
+      createLocalComment(data)
+      setCommentError("")
+    }
+    ).catch((e) => setCommentError(`${e}`))
 
   useEffect(() => {
     if (slug) {
@@ -130,7 +133,7 @@ export default function Post() {
         <CommentForm
           placeholder="Add a comment..."
           loading={false}
-          error={""}
+          error={commentError}
           onSubmit={postComment}
         />
         {rootComments != null && rootComments.length > 0 && (

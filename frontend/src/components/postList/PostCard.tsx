@@ -54,7 +54,7 @@ export default function PostCard({
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-        className="relative border border-zinc-700 shadow-md sm:w-full sm:h-28 md:w-64 md:min-w-postWidth md:max-w-postWidth md:h-postHeight bg-gray-200 shadow rounded overflow-hidden shadow"
+        className="relative border border-zinc-700 shadow-md sm:w-full sm:h-28 md:w-64 md:min-w-postWidth md:max-w-postWidth md:h-postImageHeight bg-gray-200 shadow rounded overflow-hidden shadow"
       >
         {visible && (
           <img

@@ -213,10 +213,6 @@ export default function Editor() {
               Delete post
             </button>
           )}
-
-          {progress !== 0 && progress !== 1 && (
-            <ProgressBar percent={progress * 100} />
-          )}
           {file && (
             <img
               className="shadow rounded mb-2 mx-auto"
@@ -227,6 +223,9 @@ export default function Editor() {
       ) : (
         <div className="my-10 drop-shadow">
           <ImSpinner8 className="animate-spin text-4xl mx-auto" />
+          {progress !== 0 && progress !== 1 && (
+            <ProgressBar percent={progress * 100} />
+          )}
           <p className="text-center text-lg font-bold">{resMsg.msg}</p>
         </div>
       )}

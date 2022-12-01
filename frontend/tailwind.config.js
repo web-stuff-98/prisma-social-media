@@ -30,6 +30,7 @@ module.exports = {
       },
       height: {
         postHeight: "14em",
+        postImageHeight: "12.875rem",
       },
       maxHeight: {
         asideMaxHeight: "calc(100vh - 8rem)",

@@ -43,8 +43,7 @@ const checkBlockedBySimpleBlock = async ({
   /* iterate through all the stored block information to check for active blocks
   matching the routeName */
   if (info.simpleRateLimitBlocks)
-    while (isBlocked === false && i < info.simpleRateLimitBlocks!.length - 1) {
-      i++;
+    while (isBlocked === false && i <= info.simpleRateLimitBlocks!.length - 1) {
       if (
         routeName === "" ||
         info.simpleRateLimitBlocks![i].routeName === routeName
@@ -54,6 +53,7 @@ const checkBlockedBySimpleBlock = async ({
           blockedAt.getTime() + info.simpleRateLimitBlocks![i].blockDuration;
         if (Date.now() < blockEnd) isBlocked = true;
       }
+      i++;
     }
   return isBlocked;
 };
@@ -69,9 +69,10 @@ const checkBlockedByBruteBlock = async ({
   let i = 0;
   /* iterate through all the stored block information to check for active blocks
   matching the routeName */
-  if (info.bruteRateLimitData)
-    while (isBlocked === false && i < info.bruteRateLimitData!.length - 1) {
-      i++;
+  if (info.bruteRateLimitData) {
+    console.log(info.bruteRateLimitData!.length)
+    while (isBlocked === false && i <= info.bruteRateLimitData!.length - 1) {
+      console.log("check");
       const {
         routeName: checkRouteName,
         blockDuration,
@@ -79,8 +80,10 @@ const checkBlockedByBruteBlock = async ({
         attempts,
         lastAttempt,
       } = info.bruteRateLimitData[i];
+      console.log(checkRouteName);
       if (checkRouteName === routeName) {
-        if (attempts % failsRequired === 0) {
+        const modulo = attempts % failsRequired;
+        if (modulo === 0) {
           const multiplier = attempts / failsRequired;
           const duration = blockDuration * Math.max(1, multiplier);
           const blockEnd = new Date(lastAttempt).getTime() + duration;
@@ -89,7 +92,9 @@ const checkBlockedByBruteBlock = async ({
           }
         }
       }
+      i++;
     }
+  }
   return isBlocked;
 };
 
@@ -228,11 +233,14 @@ export const bruteRateLimit = (
     const ip = getReqIp(req);
     const ipBlockInfo = await findIPBlockInfo(ip);
     if (ipBlockInfo) {
+      console.log("found");
       const blocked = await checkBlockedByBruteBlock({
         info: ipBlockInfo,
         routeName: params.routeName,
       });
       if (blocked) return res.status(429).json({ msg: params.msg }).end();
+    } else {
+      console.log("not found");
     }
     await prepBruteRateLimit(params, ip);
     next();

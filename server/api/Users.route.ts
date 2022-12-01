@@ -3,6 +3,7 @@ import authMiddleware, { withUser } from "../utils/authMiddleware";
 import UsersController from "./controllers/Users.controller";
 
 import slowDown from "express-slow-down";
+import { bruteRateLimit } from "./limiter/limiters";
 
 const router = express.Router();
 
@@ -26,7 +27,11 @@ router.route("/:id").get(
 );
 router.route("/register").post(UsersController.register);
 router.route("/check").post(withUser, UsersController.checkLogin);
-router.route("/login").post(UsersController.login);
+router.route("/login").post(bruteRateLimit({
+  routeName:"login",
+  blockDuration: 21600000,
+  failsRequired: 3,
+}), UsersController.login);
 router.route("/logout").post(withUser, UsersController.logout);
 
 export default router;

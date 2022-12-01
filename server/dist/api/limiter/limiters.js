@@ -38,8 +38,7 @@ const checkBlockedBySimpleBlock = ({ info, routeName = "", }) => __awaiter(void 
     /* iterate through all the stored block information to check for active blocks
     matching the routeName */
     if (info.simpleRateLimitBlocks)
-        while (isBlocked === false && i < info.simpleRateLimitBlocks.length - 1) {
-            i++;
+        while (isBlocked === false && i <= info.simpleRateLimitBlocks.length - 1) {
             if (routeName === "" ||
                 info.simpleRateLimitBlocks[i].routeName === routeName) {
                 const blockedAt = new Date(info.simpleRateLimitBlocks[i].blockedAt);
@@ -47,6 +46,7 @@ const checkBlockedBySimpleBlock = ({ info, routeName = "", }) => __awaiter(void 
                 if (Date.now() < blockEnd)
                     isBlocked = true;
             }
+            i++;
         }
     return isBlocked;
 });
@@ -55,12 +55,15 @@ const checkBlockedByBruteBlock = ({ info, routeName = "", }) => __awaiter(void 0
     let i = 0;
     /* iterate through all the stored block information to check for active blocks
     matching the routeName */
-    if (info.bruteRateLimitData)
-        while (isBlocked === false && i < info.bruteRateLimitData.length - 1) {
-            i++;
+    if (info.bruteRateLimitData) {
+        console.log(info.bruteRateLimitData.length);
+        while (isBlocked === false && i <= info.bruteRateLimitData.length - 1) {
+            console.log("check");
             const { routeName: checkRouteName, blockDuration, failsRequired, attempts, lastAttempt, } = info.bruteRateLimitData[i];
+            console.log(checkRouteName);
             if (checkRouteName === routeName) {
-                if (attempts % failsRequired === 0) {
+                const modulo = attempts % failsRequired;
+                if (modulo === 0) {
                     const multiplier = attempts / failsRequired;
                     const duration = blockDuration * Math.max(1, multiplier);
                     const blockEnd = new Date(lastAttempt).getTime() + duration;
@@ -69,7 +72,9 @@ const checkBlockedByBruteBlock = ({ info, routeName = "", }) => __awaiter(void 0
                     }
                 }
             }
+            i++;
         }
+    }
     return isBlocked;
 });
 const simpleRateLimitResponse = (res, msg, blockDuration) => {
@@ -171,12 +176,16 @@ const bruteRateLimit = (params = {
         const ip = (0, getReqIp_1.default)(req);
         const ipBlockInfo = yield (0, limiterStore_1.findIPBlockInfo)(ip);
         if (ipBlockInfo) {
+            console.log("found");
             const blocked = yield checkBlockedByBruteBlock({
                 info: ipBlockInfo,
                 routeName: params.routeName,
             });
             if (blocked)
                 return res.status(429).json({ msg: params.msg }).end();
+        }
+        else {
+            console.log("not found");
         }
         yield (0, limiterStore_1.prepBruteRateLimit)(params, ip);
         next();

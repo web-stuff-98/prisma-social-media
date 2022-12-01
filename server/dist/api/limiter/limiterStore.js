@@ -28,7 +28,7 @@ exports.findIPBlockInfo = findIPBlockInfo;
  * expiration date for the key should be. returns ms to expiry.
  */
 const getExpirationMsFromIPBlockInfo = (info) => {
-    let latestBlockEnd = Date.now();
+    let latestBlockEnd = Date.now() + 5000; //minimum expiry of 5 seconds
     if (info.bruteRateLimitData) {
         info.bruteRateLimitData.forEach((data) => {
             const blockEnd = new Date(data.lastAttempt).getTime() +

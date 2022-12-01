@@ -4,11 +4,14 @@ import { Request as Req, Response as Res } from "express";
 import * as Yup from "yup";
 import YupPassword from "yup-password";
 YupPassword(Yup);
+import bcrypt from "bcrypt";
 
 import jwt from "jsonwebtoken";
 import UsersDAO from "../dao/Users.dao";
 import { io } from "../..";
 import getUserSocket from "../../utils/getUserSocket";
+import { bruteFail, bruteSuccess } from "../limiter/limiters";
+import getReqIp from "../../utils/getReqIp";
 
 const loginValidateSchema = Yup.object().shape({
   username: Yup.string().required().max(100),
@@ -100,10 +103,25 @@ export default class UsersController {
     }
     let user;
     try {
-      user = await UsersDAO.getUserByName(username);
+      user = await prisma.user.findUniqueOrThrow({
+        where: { name: username },
+      });
     } catch (e) {
       res.status(404).json({ msg: "User does not exist" });
     }
+    let compare;
+    const ip = getReqIp(req);
+    try {
+      compare = await bcrypt.compare(password, user?.password!);
+    } catch (error) {
+      await bruteFail(ip, "login");
+      return res.status(403).json({ msg: "Unauthorized" });
+    }
+    if (!compare) {
+      await bruteFail(ip, "login");
+      return res.status(403).json({ msg: "Incorrect credentials" });
+    }
+    await bruteSuccess(ip, "login");
     req.user = user;
     res.cookie(
       "token",
@@ -136,7 +154,7 @@ export default class UsersController {
         online: false,
       });
     }
-    res.status(200).clearCookie("token", { path: "/"}).end();
+    res.status(200).clearCookie("token", { path: "/" }).end();
   }
 
   static async checkLogin(req: Req, res: Res) {
