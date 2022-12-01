@@ -3,6 +3,10 @@ import has from "lodash/has";
 import isBuffer from "lodash/isBuffer";
 import { Blob } from "buffer";
 
+/**
+ * The output image will never be upscaled. It is clamped to the original width and height. Dimensions are for downscaling the image.
+ */
+
 interface IDimensions {
   width: number;
   height: number;

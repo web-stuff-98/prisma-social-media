@@ -6,7 +6,7 @@ import mime from "mime-types";
 
 import parsePost from "../../utils/parsePost";
 import getPage from "../../utils/getPageData";
-import internal from "readable-stream";
+import internal from "stream";
 import busboy from "busboy";
 import imageProcessing from "../../utils/imageProcessing";
 import readableStreamToBlob from "../../utils/readableStreamToBlob";
@@ -376,6 +376,15 @@ export default class PostsDAO {
     postId: string,
     socketId: string
   ): Promise<{ key: string; blur: string }> {
+    if (
+      !info.mimeType.startsWith("image/jpeg") &&
+      !info.mimeType.startsWith("image/jpg") &&
+      !info.mimeType.startsWith("image/png") &&
+      !info.mimeType.startsWith("image/avif") &&
+      !info.mimeType.startsWith("image/heic")
+    ) {
+      throw new Error("Input is not an image, or is of an unsupported format.");
+    }
     const blob = await readableStreamToBlob(stream, info.mimeType, {
       onProgress: (progress) =>
         io
@@ -384,18 +393,42 @@ export default class PostsDAO {
       totalBytes: bytes,
     });
     const scaled = await imageProcessing(blob, { width: 768, height: 512 });
+    const thumb = await imageProcessing(blob, { width: 200, height: 200 });
+    //upload the thumb first
+    await new Promise<void>((resolve, reject) => {
+      const s3 = new AWS.S3();
+      let p = 0;
+      const hasExtension = info.filename.includes(".");
+      const ext = String(mime.extension(info.mimeType));
+      const key = `${postId}.${
+        hasExtension ? info.filename.split(".")[0] : info.filename
+      }.${ext}.thumb`;
+      s3.upload(
+        {
+          Bucket: "prisma-socialmedia",
+          Key: key,
+          Body: thumb,
+        },
+        async (e, _) => {
+          if (e) reject(e);
+          resolve();
+        }
+      ).on("httpUploadProgress", (e) => {
+        p++;
+        //only send progress updates every 2nd event, otherwise it's probably too many emits
+        if (p === 2) {
+          p = 0;
+          io.to(socketId).emit(
+            "post_cover_image_attachment_progress",
+            0.25 * (e.loaded / Buffer.byteLength(thumb)) + 0.5,
+            postId
+          );
+        }
+      });
+    });
     return new Promise((resolve, reject) => {
       const s3 = new AWS.S3();
       let p = 0;
-      if (
-        !info.mimeType.startsWith("image/jpeg") &&
-        !info.mimeType.startsWith("image/jpg") &&
-        !info.mimeType.startsWith("image/png") &&
-        !info.mimeType.startsWith("image/avif") &&
-        !info.mimeType.startsWith("image/heic")
-      ) {
-        reject("Input is not an image, or is of an unsupported format.");
-      }
       const hasExtension = info.filename.includes(".");
       const ext = String(mime.extension(info.mimeType));
       const key = `${postId}.${
@@ -407,8 +440,7 @@ export default class PostsDAO {
           Key: key,
           Body: scaled,
         },
-        async (e, file) => {
-          const blob = await readableStreamToBlob(stream, info.mimeType);
+        async (e, _) => {
           const blur = await imageProcessing(scaled, { width: 16, height: 10 });
           if (e) reject(e);
           resolve({ key, blur });
@@ -420,7 +452,7 @@ export default class PostsDAO {
           p = 0;
           io.to(socketId).emit(
             "post_cover_image_attachment_progress",
-            0.5 * (e.loaded / bytes) + 0.5,
+            0.25 * (e.loaded / Buffer.byteLength(scaled)) + 0.75,
             postId
           );
         }
@@ -430,12 +462,11 @@ export default class PostsDAO {
 
   static async coverImageComplete(
     postId: string,
-    key: string,
     socketId: string,
     blur: string
   ) {
     try {
-      io.to(socketId).emit("post_cover_image_attachment_complete", postId, key);
+      io.to(socketId).emit("post_cover_image_attachment_complete", postId);
       await prisma.post.update({
         where: { id: postId },
         data: {

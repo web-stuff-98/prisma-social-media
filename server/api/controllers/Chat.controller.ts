@@ -14,8 +14,6 @@ export default class ChatController {
     }
   }
 
-  //Conversations (private messaging)
-
   static async sendPrivateMessage(req: Req, res: Res) {
     try {
       await ChatDAO.sendPrivateMessage(

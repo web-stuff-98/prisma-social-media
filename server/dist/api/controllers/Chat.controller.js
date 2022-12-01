@@ -26,7 +26,6 @@ class ChatController {
             }
         });
     }
-    //Conversations (private messaging)
     static sendPrivateMessage(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {

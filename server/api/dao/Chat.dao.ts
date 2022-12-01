@@ -1,7 +1,7 @@
 import prisma from "../../utils/prisma";
 
 import busboy from "busboy";
-import internal from "readable-stream";
+import internal from "stream";
 
 import mime from "mime-types";
 

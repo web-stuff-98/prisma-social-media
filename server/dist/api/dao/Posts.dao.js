@@ -337,6 +337,13 @@ class PostsDAO {
     }
     static uploadCoverImage(stream, info, bytes, postId, socketId) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (!info.mimeType.startsWith("image/jpeg") &&
+                !info.mimeType.startsWith("image/jpg") &&
+                !info.mimeType.startsWith("image/png") &&
+                !info.mimeType.startsWith("image/avif") &&
+                !info.mimeType.startsWith("image/heic")) {
+                throw new Error("Input is not an image, or is of an unsupported format.");
+            }
             const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType, {
                 onProgress: (progress) => __1.io
                     .to(socketId)
@@ -344,16 +351,34 @@ class PostsDAO {
                 totalBytes: bytes,
             });
             const scaled = yield (0, imageProcessing_1.default)(blob, { width: 768, height: 512 });
+            const thumb = yield (0, imageProcessing_1.default)(blob, { width: 200, height: 200 });
+            //upload the thumb first
+            yield new Promise((resolve, reject) => {
+                const s3 = new aws_1.default.S3();
+                let p = 0;
+                const hasExtension = info.filename.includes(".");
+                const ext = String(mime_types_1.default.extension(info.mimeType));
+                const key = `${postId}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}.thumb`;
+                s3.upload({
+                    Bucket: "prisma-socialmedia",
+                    Key: key,
+                    Body: thumb,
+                }, (e, _) => __awaiter(this, void 0, void 0, function* () {
+                    if (e)
+                        reject(e);
+                    resolve();
+                })).on("httpUploadProgress", (e) => {
+                    p++;
+                    //only send progress updates every 2nd event, otherwise it's probably too many emits
+                    if (p === 2) {
+                        p = 0;
+                        __1.io.to(socketId).emit("post_cover_image_attachment_progress", 0.25 * (e.loaded / Buffer.byteLength(thumb)) + 0.5, postId);
+                    }
+                });
+            });
             return new Promise((resolve, reject) => {
                 const s3 = new aws_1.default.S3();
                 let p = 0;
-                if (!info.mimeType.startsWith("image/jpeg") &&
-                    !info.mimeType.startsWith("image/jpg") &&
-                    !info.mimeType.startsWith("image/png") &&
-                    !info.mimeType.startsWith("image/avif") &&
-                    !info.mimeType.startsWith("image/heic")) {
-                    reject("Input is not an image, or is of an unsupported format.");
-                }
                 const hasExtension = info.filename.includes(".");
                 const ext = String(mime_types_1.default.extension(info.mimeType));
                 const key = `${postId}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
@@ -361,8 +386,7 @@ class PostsDAO {
                     Bucket: "prisma-socialmedia",
                     Key: key,
                     Body: scaled,
-                }, (e, file) => __awaiter(this, void 0, void 0, function* () {
-                    const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType);
+                }, (e, _) => __awaiter(this, void 0, void 0, function* () {
                     const blur = yield (0, imageProcessing_1.default)(scaled, { width: 16, height: 10 });
                     if (e)
                         reject(e);
@@ -372,16 +396,16 @@ class PostsDAO {
                     //only send progress updates every 2nd event, otherwise it's probably too many emits
                     if (p === 2) {
                         p = 0;
-                        __1.io.to(socketId).emit("post_cover_image_attachment_progress", 0.5 * (e.loaded / bytes) + 0.5, postId);
+                        __1.io.to(socketId).emit("post_cover_image_attachment_progress", 0.25 * (e.loaded / Buffer.byteLength(scaled)) + 0.75, postId);
                     }
                 });
             });
         });
     }
-    static coverImageComplete(postId, key, socketId, blur) {
+    static coverImageComplete(postId, socketId, blur) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                __1.io.to(socketId).emit("post_cover_image_attachment_complete", postId, key);
+                __1.io.to(socketId).emit("post_cover_image_attachment_complete", postId);
                 yield prisma_1.default.post.update({
                     where: { id: postId },
                     data: {

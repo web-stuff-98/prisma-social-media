@@ -1,4 +1,4 @@
-import internal from "readable-stream";
+import internal from "stream";
 
 /**
  * Progress is in the range of 0 - 1

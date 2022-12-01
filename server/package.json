@@ -43,9 +43,9 @@
     "ioredis": "^5.2.4",
     "jsonwebtoken": "^8.5.1",
     "lorem-ipsum": "^2.0.8",
-    "readable-stream": "^4.2.0",
     "sharp": "^0.31.2",
     "socket.io": "^4.5.3",
+    "stream": "^0.0.2",
     "yup": "^0.32.11",
     "yup-password": "^0.2.2"
   }
