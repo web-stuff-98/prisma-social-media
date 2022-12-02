@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useFilter } from "../../context/FilterContext";
 import { IPost, usePosts } from "../../context/PostsContext";
 import useUsers from "../../context/UsersContext";
@@ -44,7 +44,7 @@ export default function PostCard({
   return (
     <article
       ref={containerRef}
-      className={`p-2 md:pl-2 bg-foreground dark:bg-darkmodeForeground shadow-lg rounded border dark:border-stone-800 text-center sm:h-28 md:h-postHeight gap-1 sm:flex-col md:flex ${
+      className={`p-2 md:pl-2 bg-foreground dark:bg-darkmodeForeground shadow-lg rounded border dark:border-stone-800 text-center md:h-postHeight gap-1 sm:flex-col md:flex ${
         reverse ? "md:flex-row-reverse" : "md:flex-row"
       } h-full w-full justify-evenly`}
     >
@@ -57,6 +57,7 @@ export default function PostCard({
         className="relative border border-zinc-700 shadow-md sm:w-full sm:h-28 md:w-64 md:min-w-postWidth md:max-w-postWidth md:h-postImageHeight bg-gray-200 shadow rounded overflow-hidden shadow"
       >
         {visible && (
+          <Link to={`/posts/${post.slug}`}>
           <img
             style={{
               background: "transparent",
@@ -65,8 +66,10 @@ export default function PostCard({
               objectFit: "cover",
               objectPosition: "center",
             }}
+            className="cursor-pointer"
             src={`https://d2gt89ey9qb5n6.cloudfront.net/thumb.${post.imageKey}`}
           />
+          </Link>
         )}
         {user && post.author.id === user.id && (
           <div
@@ -135,7 +138,7 @@ export default function PostCard({
         </h3>
         <p
           style={{ lineHeight: "0.95" }}
-          className={`sm:text-center px-0 sm:text-xs py-0.5 sm:mx-auto md:mx-0 text-sm ${
+          className={`sm:text-center px-0 sm:text-xs py-0.5 sm:mx-auto md:mx-0 text-xs ${
             reverse ? "md:text-right" : "md:text-left"
           }`}
         >
@@ -146,7 +149,7 @@ export default function PostCard({
           style={{ filter: "drop-shadow(0px 1.5px 1px rgba(0,0,0,0.5))" }}
           className={`flex py-0.5 flex-wrap sm:justify-center ${
             reverse ? "md:justify-end" : "md:justify-start"
-          } items-start w-full gap-0.5`}
+          } w-full gap-0.5`}
         >
           {post.tags.map((tag) => (
             <span
@@ -183,7 +186,7 @@ export default function PostCard({
         </span>
         <span
           onClick={() => navigate(`/posts/${post.slug}`)}
-          className="italic text-xs leading-3 font-bold cursor-pointer pt-2"
+          className="italic text-xs leading-3 tracking-tighter font-bold cursor-pointer pt-2"
         >
           Read more...
         </span>

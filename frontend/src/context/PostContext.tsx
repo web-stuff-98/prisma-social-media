@@ -20,6 +20,7 @@ export interface IPostComment {
   id: string;
   parentId: string | undefined;
   createdAt: string;
+  updatedAt: string;
   user: IUser;
 }
 
@@ -49,16 +50,15 @@ export function PostProvider({ children }: { children: ReactNode }) {
   const { slug } = useParams();
   const { socket } = useSocket();
   const { user } = useAuth();
-  const { getPostData } = usePosts()
+  const { getPostData } = usePosts();
   const { cacheUserData } = useUsers();
 
-  const post = getPostData(String(slug))
+  const post = getPostData(String(slug));
 
   const [replyingTo, setReplyingTo] = useState("");
 
   useEffect(() => {
-    if (socket)
-      socket.emit("open_post_comments", String(slug));
+    if (socket) socket.emit("open_post_comments", String(slug));
     return () => {
       if (socket) socket.emit("leave_post_comments", String(slug));
     };
@@ -73,13 +73,15 @@ export function PostProvider({ children }: { children: ReactNode }) {
       name: string
     ) => {
       if (uid === user?.id) return;
+      const dateString = new Date().toISOString();
       createLocalComment({
         message,
         likeCount: 0,
         likedByMe: false,
         id: commentId,
         parentId: parentId,
-        createdAt: new Date().toISOString(),
+        createdAt: dateString,
+        updatedAt: dateString,
         user: {
           id: uid,
           name,
@@ -143,7 +145,9 @@ export function PostProvider({ children }: { children: ReactNode }) {
   const updateLocalComment = (id: string, message: string) =>
     setComments((prevComments) =>
       prevComments.map((comment) =>
-        comment.id === id ? { ...comment, message } : comment
+        comment.id === id
+          ? { ...comment, message, updatedAt: new Date().toISOString() }
+          : comment
       )
     );
 

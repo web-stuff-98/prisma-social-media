@@ -68,6 +68,12 @@ class PostsDAO {
                 select: {
                     slug: true,
                 },
+                orderBy: {
+                    likes: {
+                        _count: "desc",
+                    },
+                },
+                take: 8,
             });
             return posts;
         });
@@ -103,6 +109,7 @@ class PostsDAO {
                             message: true,
                             parentId: true,
                             createdAt: true,
+                            updatedAt: true,
                             user: {
                                 select: {
                                     id: true,
@@ -142,6 +149,7 @@ class PostsDAO {
                             message: true,
                             parentId: true,
                             createdAt: true,
+                            updatedAt: true,
                             user: {
                                 select: {
                                     id: true,
@@ -367,7 +375,7 @@ class PostsDAO {
                 onProgress: (progress) => __1.io.to(socketId).emit("post_cover_image_progress", progress * 0.5, slug),
                 totalBytes: bytes,
             });
-            const scaled = yield (0, imageProcessing_1.default)(blob, { width: 768, height: 512 }, true);
+            const scaled = yield (0, imageProcessing_1.default)(blob, { width: 1024, height: 768 }, true);
             const thumb = yield (0, imageProcessing_1.default)(blob, { width: 200, height: 200 }, true);
             const blur = (yield (0, imageProcessing_1.default)(blob, {
                 width: 14,

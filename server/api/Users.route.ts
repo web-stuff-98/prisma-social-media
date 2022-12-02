@@ -31,6 +31,7 @@ router.route("/login").post(bruteRateLimit({
   routeName:"login",
   blockDuration: 21600000,
   failsRequired: 3,
+  msg:"You have made too many attempts. You will get 3 more attempts after BLOCKDURATION."
 }), UsersController.login);
 router.route("/logout").post(withUser, UsersController.logout);
 

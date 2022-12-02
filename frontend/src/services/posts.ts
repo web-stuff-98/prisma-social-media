@@ -26,12 +26,22 @@ const deletePost = (slug: string) =>
   });
 const uploadPostData = (data: IPost) =>
   makeRequest(`/api/posts`, { withCredentials: true, method: "POST", data });
-const uploadPostImage = async (slug: string, file: File, bytes: number) => {
+const uploadCoverImage = async (slug: string, file: File, bytes: number) => {
   var formData = new FormData();
   formData.append("file", file);
   await makeRequest(`/api/posts/${slug}/image/${bytes}`, {
     withCredentials: true,
     method: "POST",
+    headers: { "Content-Type": "multipart/form-data" },
+    data: formData,
+  });
+};
+const updateCoverImage = async (slug: string, file: File, bytes: number) => {
+  var formData = new FormData();
+  formData.append("file", file);
+  await makeRequest(`/api/posts/${slug}/image/${bytes}`, {
+    withCredentials: true,
+    method: "PUT",
     headers: { "Content-Type": "multipart/form-data" },
     data: formData,
   });
@@ -62,6 +72,7 @@ export {
   toggleShare,
   uploadPostData,
   updatePostData,
-  uploadPostImage,
+  uploadCoverImage,
   deletePost,
+  updateCoverImage,
 };

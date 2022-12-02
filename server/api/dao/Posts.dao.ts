@@ -9,7 +9,6 @@ import internal from "stream";
 import busboy from "busboy";
 import imageProcessing from "../../utils/imageProcessing";
 import readableStreamToBlob from "../../utils/readableStreamToBlob";
-import getUserSocket from "../../utils/getUserSocket";
 
 export default class PostsDAO {
   static async getPosts(uid?: string) {
@@ -70,6 +69,12 @@ export default class PostsDAO {
       select: {
         slug: true,
       },
+      orderBy: {
+        likes: {
+          _count: "desc",
+        },
+      },
+      take: 8,
     });
     return posts;
   }
@@ -104,6 +109,7 @@ export default class PostsDAO {
               message: true,
               parentId: true,
               createdAt: true,
+              updatedAt: true,
               user: {
                 select: {
                   id: true,
@@ -145,6 +151,7 @@ export default class PostsDAO {
               message: true,
               parentId: true,
               createdAt: true,
+              updatedAt:true,
               user: {
                 select: {
                   id: true,
@@ -415,7 +422,7 @@ export default class PostsDAO {
     });
     const scaled = await imageProcessing(
       blob,
-      { width: 768, height: 512 },
+      { width: 1024, height: 768 },
       true
     );
     const thumb = await imageProcessing(

@@ -82,6 +82,17 @@ router
     authMiddleware,
     PostsController.uploadCoverImage
   );
+  router
+  .route("/:slug/image/:bytes")
+  .put(
+    slowDown({
+      windowMs: 10000,
+      delayAfter: 3,
+      delayMs: 2000,
+    }),
+    authMiddleware,
+    PostsController.uploadCoverImage
+  );
 router.route("/:id/toggleShare").post(
   slowDown({
     windowMs: 10000,

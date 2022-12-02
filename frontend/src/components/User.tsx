@@ -45,6 +45,7 @@ export default function User({
   isServer,
   chatroomId,
   micro,
+  style = {}
 }: {
   date?: Date;
   user?: IUser;
@@ -69,6 +70,7 @@ export default function User({
   isServer?: boolean;
   chatroomId?: string;
   micro?: boolean;
+  style?: object;
 }) {
   const { openUserdropdown } = useUserdropdown();
   const { user: currentUser } = useAuth();
@@ -101,7 +103,8 @@ export default function User({
   const renderDateTime = (dateString: string) => {
     return (
       <div
-        className={`flex tracking-tighter flex-col text-xs leading-3 ${
+      style={{lineHeight:"0.866"}}
+        className={`flex tracking-tighter mb-1 flex-col text-xs ${
           reverse ? "items-end" : "items-start"
         }`}
       >
@@ -113,6 +116,7 @@ export default function User({
 
   return (
     <div
+    style={style}
       ref={containerRef}
       className={`${reverse ? "text-right" : "text-left"} flex ${
         reverse ? "flex-row-reverse" : ""
@@ -227,7 +231,7 @@ export default function User({
           <h1
             className={`font-bold ${
               date ? "text-sm" : "text-xs"
-            } leading-3 tracking-tight whitespace-nowrap`}
+            } leading-4 tracking-tight whitespace-nowrap`}
           >
             {by && "By "}
             {user?.name}

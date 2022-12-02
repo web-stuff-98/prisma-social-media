@@ -29,8 +29,8 @@ module.exports = {
         darkmodeForegroundContrast: "#18181b"
       },
       height: {
-        postHeight: "14em",
-        postImageHeight: "12.875rem",
+        postHeight: "15em",
+        postImageHeight: "13.875rem",
       },
       maxHeight: {
         asideMaxHeight: "calc(100vh - 8rem)",

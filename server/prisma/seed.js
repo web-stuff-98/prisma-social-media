@@ -3,6 +3,7 @@ const { LoremIpsum } = require("lorem-ipsum");
 const prisma = new PrismaClient();
 const lipsum = new LoremIpsum();
 const crypto = require("crypto");
+const axios = require("axios")
 
 // the password for the example users is "Test1234!"
 

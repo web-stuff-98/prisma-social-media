@@ -19,7 +19,7 @@ export default function Blog() {
           >
             <h2 className="text-xs leading-3 my-0 mb-0.5 py-0.5">
               {post.title}
-              <br/>
+              <br />
               <a
                 href={`/posts/${post.slug}`}
                 className="font-bold text-xs italic cursor-pointer"
@@ -46,17 +46,26 @@ export default function Blog() {
     );
   };
 
-  const { scrollY } = useScrollY()
+  const { scrollY } = useScrollY();
 
   return (
     <div className="w-full h-full flex gap-3 p-3">
       <div className="flex flex-col grow gap-3">
         {posts &&
           posts.length > 0 &&
-          posts.map((post, i) => <PostCard reverse={Boolean(i % 2)} key={post.id} post={post} />)}
-          <span style={{minHeight:"5rem"}}/>
+          posts.map((post, i) => (
+            <PostCard reverse={Boolean(i % 2)} key={post.id} post={post} />
+          ))}
+        <span style={{ minHeight: "5rem" }} />
       </div>
-      <div style={{maxHeight:"calc(100% - 11.5rem)", top: `${scrollY}px`, transition:"top 100ms linear"}} className="relative bg-foreground overflow-y-auto border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-2">
+      <div
+        style={{
+          maxHeight: "calc(100% - 11.5rem)",
+          top: `${scrollY}px`,
+          transition: "top 100ms linear",
+        }}
+        className="relative bg-foreground overflow-y-auto border dark:border-stone-800 shadow-lg dark:bg-darkmodeForeground pointer text-center rounded p-2"
+      >
         <h2 className="whitespace-nowrap font-extrabold tracking-tight text-md">
           Popular posts
         </h2>

@@ -16,15 +16,21 @@ import useUsers from "../../context/UsersContext";
 import { usePosts } from "../../context/PostsContext";
 import { useParams } from "react-router-dom";
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "short",
+  timeStyle: "short",
+});
+
 export function Comment({
   id,
   message,
   user,
   createdAt,
+  updatedAt,
   likeCount,
   likedByMe,
 }: IPostComment) {
-/*
+  /*
 This function is from the web dev simplified video. It is supposed to be in the useAsync hook but that was causing infinite rerenders in the original PostContext, so I changed it to the useAync hook from usehooks.com and it worked. But I'll keep this function here anyway because it works here and dont need to change anything aside from the name.
 */
   function useAsyncFn(func: Function, dependencies: any[] = []) {
@@ -109,6 +115,11 @@ This function is from the web dev simplified video. It is supposed to be in the 
   const handleHideRepliesBarEnter = () => setHideRepliesBarHover(true);
   const handleHideRepliesBarLeave = () => setHideRepliesBarHover(false);
 
+  const getDateString = (date: Date) => dateFormatter.format(date);
+  const renderEditedAtTimeString = (dateString: string) => (
+    <b style={{filter:"opacity(0.333)"}} className="pl-2">Edited {dateString}</b>
+  );
+
   return (
     <>
       <div className="w-full mb-2 flex">
@@ -138,6 +149,8 @@ This function is from the web dev simplified video. It is supposed to be in the 
           ) : (
             <p className="flex my-auto leading-4 tracking-tight text-xs p-0 grow items-center">
               {message}
+              {updatedAt !== createdAt &&
+                renderEditedAtTimeString(getDateString(new Date(updatedAt)))}
             </p>
           )}
           {currentUser && (

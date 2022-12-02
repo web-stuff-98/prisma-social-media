@@ -52,6 +52,8 @@ const checkBlockedBySimpleBlock = ({ info, routeName = "", }) => __awaiter(void 
 });
 const checkBlockedByBruteBlock = ({ info, routeName = "", }) => __awaiter(void 0, void 0, void 0, function* () {
     let isBlocked = false;
+    let attempts = 0;
+    let lastAttempt = 0;
     let i = 0;
     /* iterate through all the stored block information to check for active blocks
     matching the routeName */
@@ -59,14 +61,14 @@ const checkBlockedByBruteBlock = ({ info, routeName = "", }) => __awaiter(void 0
         console.log(info.bruteRateLimitData.length);
         while (isBlocked === false && i <= info.bruteRateLimitData.length - 1) {
             console.log("check");
-            const { routeName: checkRouteName, blockDuration, failsRequired, attempts, lastAttempt, } = info.bruteRateLimitData[i];
-            console.log(checkRouteName);
+            const { routeName: checkRouteName, blockDuration, failsRequired, } = info.bruteRateLimitData[i];
+            lastAttempt = new Date(info.bruteRateLimitData[i].lastAttempt).getTime();
+            attempts = info.bruteRateLimitData[i].attempts;
             if (checkRouteName === routeName) {
-                const modulo = attempts % failsRequired;
-                if (modulo === 0) {
+                if (attempts % failsRequired === 0) {
                     const multiplier = attempts / failsRequired;
                     const duration = blockDuration * Math.max(1, multiplier);
-                    const blockEnd = new Date(lastAttempt).getTime() + duration;
+                    const blockEnd = lastAttempt + duration;
                     if (Date.now() < blockEnd) {
                         isBlocked = true;
                     }
@@ -75,10 +77,15 @@ const checkBlockedByBruteBlock = ({ info, routeName = "", }) => __awaiter(void 0
             i++;
         }
     }
-    return isBlocked;
+    return { blocked: isBlocked, attempts, lastAttempt };
 });
 const simpleRateLimitResponse = (res, msg, blockDuration) => {
     const outMsg = msg.replace("BLOCKDURATION", (0, convertMsToReadableTime_1.default)(blockDuration));
+    return res.status(429).json({ msg: outMsg }).end();
+};
+const bruteRateLimitResponse = (res, msg, blockDuration, attempts, failsRequired, lastAttempt) => {
+    const duration = blockDuration * (attempts / failsRequired);
+    const outMsg = msg.replace("BLOCKDURATION", (0, convertMsToReadableTime_1.default)((lastAttempt + duration) - Date.now()));
     return res.status(429).json({ msg: outMsg }).end();
 };
 /**
@@ -138,6 +145,18 @@ const bruteFail = (ip, routeName) => __awaiter(void 0, void 0, void 0, function*
             ? (_a = found.bruteRateLimitData) === null || _a === void 0 ? void 0 : _a.findIndex((data) => data.routeName === routeName)
             : -1;
         let bruteRateLimitData = found.bruteRateLimitData || [];
+        if (bruteRateLimitData[i].attempts % bruteRateLimitData[i].failsRequired ===
+            0) {
+            /*
+            don't count extra attempts until the block has ended. the block data
+            will still be kept for 2x the block duration so the next block duration
+            can be calculated if the user fails their next set of attempts.
+            */
+            const blockEnd = bruteRateLimitData[i].blockDuration +
+                new Date(bruteRateLimitData[i].lastAttempt).getTime();
+            if (Date.now() < blockEnd)
+                return;
+        }
         bruteRateLimitData[i] = Object.assign(Object.assign({}, bruteRateLimitData[i]), { attempts: bruteRateLimitData[i].attempts + 1, lastAttempt: new Date().toISOString() });
         yield (0, limiterStore_1.updateIPBlockInfo)({
             bruteRateLimitData,
@@ -177,12 +196,13 @@ const bruteRateLimit = (params = {
         const ipBlockInfo = yield (0, limiterStore_1.findIPBlockInfo)(ip);
         if (ipBlockInfo) {
             console.log("found");
-            const blocked = yield checkBlockedByBruteBlock({
+            const { blocked, attempts, lastAttempt } = yield checkBlockedByBruteBlock({
                 info: ipBlockInfo,
                 routeName: params.routeName,
             });
-            if (blocked)
-                return res.status(429).json({ msg: params.msg }).end();
+            if (blocked) {
+                return bruteRateLimitResponse(res, params.msg || "", params.blockDuration, attempts, params.failsRequired, lastAttempt);
+            }
         }
         else {
             console.log("not found");

@@ -66,27 +66,27 @@ const checkBlockedByBruteBlock = async ({
   routeName: "" | string;
 }) => {
   let isBlocked = false;
+  let attempts = 0;
+  let lastAttempt = 0;
   let i = 0;
   /* iterate through all the stored block information to check for active blocks
   matching the routeName */
   if (info.bruteRateLimitData) {
-    console.log(info.bruteRateLimitData!.length)
+    console.log(info.bruteRateLimitData!.length);
     while (isBlocked === false && i <= info.bruteRateLimitData!.length - 1) {
       console.log("check");
       const {
         routeName: checkRouteName,
         blockDuration,
         failsRequired,
-        attempts,
-        lastAttempt,
       } = info.bruteRateLimitData[i];
-      console.log(checkRouteName);
+      lastAttempt = new Date(info.bruteRateLimitData[i].lastAttempt).getTime()
+      attempts = info.bruteRateLimitData[i].attempts;
       if (checkRouteName === routeName) {
-        const modulo = attempts % failsRequired;
-        if (modulo === 0) {
+        if (attempts % failsRequired === 0) {
           const multiplier = attempts / failsRequired;
           const duration = blockDuration * Math.max(1, multiplier);
-          const blockEnd = new Date(lastAttempt).getTime() + duration;
+          const blockEnd = lastAttempt + duration;
           if (Date.now() < blockEnd) {
             isBlocked = true;
           }
@@ -95,7 +95,7 @@ const checkBlockedByBruteBlock = async ({
       i++;
     }
   }
-  return isBlocked;
+  return { blocked: isBlocked, attempts, lastAttempt };
 };
 
 export type SimpleRateLimitParams = {
@@ -119,6 +119,19 @@ const simpleRateLimitResponse = (
   blockDuration: number
 ) => {
   const outMsg = msg.replace("BLOCKDURATION", convertMsToHM(blockDuration));
+  return res.status(429).json({ msg: outMsg }).end();
+};
+
+const bruteRateLimitResponse = (
+  res: Res,
+  msg: string,
+  blockDuration: number,
+  attempts: number,
+  failsRequired: number,
+  lastAttempt: number
+) => {
+  const duration = blockDuration * (attempts / failsRequired);
+  const outMsg = msg.replace("BLOCKDURATION", convertMsToHM((lastAttempt + duration) - Date.now()));
   return res.status(429).json({ msg: outMsg }).end();
 };
 
@@ -183,6 +196,20 @@ export const bruteFail = async (ip: string, routeName: string) => {
       : -1;
     let bruteRateLimitData: BruteRateLimitData[] =
       found.bruteRateLimitData || [];
+    if (
+      bruteRateLimitData[i].attempts % bruteRateLimitData[i].failsRequired ===
+      0
+    ) {
+      /*
+      don't count extra attempts until the block has ended. the block data
+      will still be kept for 2x the block duration so the next block duration
+      can be calculated if the user fails their next set of attempts.
+      */
+      const blockEnd =
+        bruteRateLimitData[i].blockDuration +
+        new Date(bruteRateLimitData[i].lastAttempt).getTime();
+      if (Date.now() < blockEnd) return;
+    }
     bruteRateLimitData[i] = {
       ...bruteRateLimitData[i],
       attempts: bruteRateLimitData[i].attempts + 1,
@@ -234,11 +261,22 @@ export const bruteRateLimit = (
     const ipBlockInfo = await findIPBlockInfo(ip);
     if (ipBlockInfo) {
       console.log("found");
-      const blocked = await checkBlockedByBruteBlock({
-        info: ipBlockInfo,
-        routeName: params.routeName,
-      });
-      if (blocked) return res.status(429).json({ msg: params.msg }).end();
+      const { blocked, attempts, lastAttempt } = await checkBlockedByBruteBlock(
+        {
+          info: ipBlockInfo,
+          routeName: params.routeName,
+        }
+      );
+      if (blocked) {
+        return bruteRateLimitResponse(
+          res,
+          params.msg || "",
+          params.blockDuration,
+          attempts,
+          params.failsRequired,
+          lastAttempt
+        );
+      }
     } else {
       console.log("not found");
     }

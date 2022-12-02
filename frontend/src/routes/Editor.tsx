@@ -6,13 +6,15 @@ import {
   uploadPostData,
   getPost,
   updatePostData,
-  uploadPostImage,
+  uploadCoverImage,
   deletePost,
+  updateCoverImage,
 } from "../services/posts";
 import { ImSpinner8 } from "react-icons/im";
 import { useSocket } from "../context/SocketContext";
 import ProgressBar from "../components/ProgressBar";
 import { useModal } from "../context/ModalContext";
+import axios from "axios";
 
 export default function Editor() {
   const { slug } = useParams();
@@ -32,7 +34,7 @@ export default function Editor() {
     },
     onSubmit: async (values: any) => {
       try {
-        if (!file) throw new Error("Provide a cover image");
+        if (!file && !slug) throw new Error("Provide a cover image");
         setResMsg({
           msg: slug ? "Updating post" : "Creating post",
           err: false,
@@ -45,7 +47,12 @@ export default function Editor() {
           req.then((data) => resolve(data)).catch((e) => reject)
         );
         if (!slug) setSlugTemp(data.slug);
-        await uploadPostImage(slug || data.slug, file, file.size);
+        if (file) {
+          const imageReq = slug
+            ? updateCoverImage(slug, file, file?.size)
+            : uploadCoverImage(data.slug, file, file.size);
+          await imageReq;
+        }
         setResMsg({
           msg: slug ? "Updated post" : "Created post",
           err: false,
@@ -77,10 +84,12 @@ export default function Editor() {
     };
   }, [socket]);
 
+  const [imageKey, setImageKey] = useState("");
   const loadIntoEditor = async () => {
     try {
       setResMsg({ msg: "Loading", err: false, pen: true });
       const post = await getPost(String(slug));
+      setImageKey(post.imageKey);
       formik.setFieldValue("title", post.title);
       formik.setFieldValue("description", post.description);
       formik.setFieldValue("body", post.body);
@@ -214,10 +223,20 @@ export default function Editor() {
             </button>
           )}
           {file && (
-            <img
-              className="shadow rounded mb-2 mx-auto"
-              src={URL.createObjectURL(file)}
-            />
+            <>
+              <img
+                className="shadow rounded mb-2 mx-auto"
+                src={URL.createObjectURL(file)}
+              />
+            </>
+          )}
+          {!file && imageKey && slug && (
+            <>
+              <img
+                className="shadow rounded mb-2 mx-auto"
+                src={`https://d2gt89ey9qb5n6.cloudfront.net/${imageKey}`}
+              />
+            </>
           )}
         </form>
       ) : (
