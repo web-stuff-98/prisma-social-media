@@ -30,6 +30,27 @@ router.route("/conversation/message").put((0, limiters_1.simpleRateLimit)({
     msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait BLOCKDURATION.",
     blockDuration: 20000,
 }), Chat_controller_1.default.updatePrivateMessage);
+router.route("/conversation/roomInvite").post((0, limiters_1.simpleRateLimit)({
+    routeName: "privateMessage",
+    maxReqs: 5,
+    windowMs: 10000,
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
+    blockDuration: 20000,
+}), Chat_controller_1.default.sendInvite);
+router.route("/conversation/roomInvite/accept").post((0, limiters_1.simpleRateLimit)({
+    routeName: "privateMessage",
+    maxReqs: 5,
+    windowMs: 10000,
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
+    blockDuration: 20000,
+}), Chat_controller_1.default.acceptInvite);
+router.route("/conversation/roomInvite/decline").post((0, limiters_1.simpleRateLimit)({
+    routeName: "privateMessage",
+    maxReqs: 5,
+    windowMs: 10000,
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
+    blockDuration: 20000,
+}), Chat_controller_1.default.declineInvite);
 router.route("/conversation/message/attachment/:msgId/:bytes").post((0, limiters_1.simpleRateLimit)({
     routeName: "sendPrivateAttachment",
     maxReqs: 10,

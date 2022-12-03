@@ -11,6 +11,7 @@ import Register from "./routes/Register";
 import Post from "./routes/Post";
 import Editor from "./routes/Editor";
 import Settings from "./routes/Settings";
+import Profile from "./routes/Profile";
 
 const container = document.getElementById("root");
 const root = createRoot(container!);
@@ -23,6 +24,7 @@ root.render(
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="profile/:id" element={<Profile />} />
         <Route
           path="posts/:slug"
           element={

@@ -24,7 +24,7 @@ export default class UsersController {
       const users = await UsersDAO.getUsers();
       res.status(200).json(users);
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
+      res.status(400).json({ msg: `${e}` });
     }
   }
 
@@ -33,8 +33,8 @@ export default class UsersController {
       const user = await UsersDAO.getUserById(req.params.id);
       if (user) res.status(200).json(user);
       else res.status(404).json({ msg: "Not found" });
-    } catch (error) {
-      res.status(500).json({ msg: "Internal error" });
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
     }
   }
 
@@ -42,8 +42,26 @@ export default class UsersController {
     try {
       await UsersDAO.updateUser(String(req.user?.id), req.body);
       res.status(200).end();
-    } catch (error) {
-      res.status(500).json({ msg: "Internal error" });
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async getProfile(req: Req, res: Res) {
+    try {
+      const profile = await UsersDAO.getProfile(req.params.uid, req.user?.id);
+      res.status(200).json(profile);
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async updateProfile(req: Req, res: Res) {
+    try {
+      await UsersDAO.updateProfile(String(req.user?.id), req.body);
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
     }
   }
 
@@ -84,7 +102,10 @@ export default class UsersController {
       req.user = user;
       res.status(201).json(user).end();
     } catch (e) {
-      res.status(500).json({ msg: "Internal error" }).end();
+      res
+        .status(400)
+        .json({ msg: `${e}` })
+        .end();
     }
   }
 

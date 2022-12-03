@@ -29,12 +29,40 @@ class UsersDAO {
             return users;
         });
     }
+    static getProfile(uid, currentUserId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const profile = yield prisma_1.default.profile.findUniqueOrThrow({
+                    where: { userId: uid },
+                });
+                return profile;
+            }
+            catch (e) {
+                throw new Error(currentUserId && currentUserId === uid
+                    ? "You have no profile"
+                    : "User has no profile");
+            }
+        });
+    }
+    static updateProfile(uid, data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield prisma_1.default.profile.update({
+                where: { userId: uid },
+                data,
+            });
+        });
+    }
     static getUserById(id) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             let user = yield prisma_1.default.user.findUnique({
                 where: { id },
-                select: { id: true, name: true, pfp: { select: { base64: true } } },
+                select: {
+                    id: true,
+                    name: true,
+                    createdAt: true,
+                    pfp: { select: { base64: true } },
+                },
             });
             const out = user
                 ? Object.assign({ id: user.id, name: user.name }, (((_a = user.pfp) === null || _a === void 0 ? void 0 : _a.base64) ? { pfp: user.pfp.base64 } : {})) : undefined;
@@ -54,6 +82,7 @@ class UsersDAO {
                 select: {
                     id: true,
                     name: true,
+                    createdAt: true,
                     pfp: { select: { base64: true } },
                 },
             });
@@ -75,7 +104,10 @@ class UsersDAO {
             let base64;
             if (data.pfp) {
                 try {
-                    base64 = (yield (0, imageProcessing_1.default)(data.pfp, { width: 48, height: 48 }));
+                    base64 = (yield (0, imageProcessing_1.default)(data.pfp, {
+                        width: 48,
+                        height: 48,
+                    }));
                 }
                 catch (e) {
                     throw new Error(`Error processing image : ${e}`);

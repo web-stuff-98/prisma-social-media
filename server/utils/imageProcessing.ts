@@ -1,5 +1,6 @@
 import sharp, { Sharp } from "sharp";
 import isBuffer from "lodash/isBuffer";
+import has from "lodash/has"
 import { Blob } from "buffer";
 //@ts-ignore
 
@@ -60,15 +61,12 @@ export default async function imageProcessing(
           force: true,
         })
         .toBuffer((err, img) => {
-          if (err) {
+          if (err)
             reject(err);
-          }
-          if (!img) {
-            reject("NO IMG OUTPUT RESULT");
-          }
-          if(asBuffer) resolve(img)
-          const out = `data:image/jpeg;base64,${img.toString("base64")}`;
-          resolve(out);
+          if (!img)
+            reject("There was an error during the processing of this image.");
+          if (asBuffer) resolve(img);
+          resolve(`data:image/jpeg;base64,${img.toString("base64")}`);
         });
     });
   });

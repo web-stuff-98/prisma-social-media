@@ -11,22 +11,22 @@ datasource db {
 }
 
 model Post {
-  id           String      @id @default(uuid())
-  title        String
-  description  String
-  slug         String      @unique @default(cuid())
-  body         String
-  comments     Comment[]
-  likes        PostLike[]
-  shares       PostShare[]
-  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  authorId     String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  tags         Tag[]
-  blur         String?
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  slug        String      @unique @default(cuid())
+  body        String
+  comments    Comment[]
+  likes       PostLike[]
+  shares      PostShare[]
+  author      User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  tags        Tag[]
+  blur        String?
 
-  imagePending Boolean     @default(true)
+  imagePending Boolean @default(true)
   imageKey     String?
 }
 
@@ -39,6 +39,7 @@ model User {
   id                     String           @id @default(uuid())
   name                   String           @unique
   password               String
+  createdAt              DateTime         @default(now())
   posts                  Post[]
   comments               Comment[]
   commentLikes           CommentLike[]
@@ -46,11 +47,12 @@ model User {
   postShares             PostShare[]
   sentPrivateMessages    PrivateMessage[] @relation("sentPrivateMessages")
   receivedPrivateMessage PrivateMessage[] @relation("receivedPrivateMessage")
-  pfp                    Pfp?
   sentRoomMessage        RoomMessage[]    @relation("sentRoomMessages")
   rooms                  Room[]
   joinedRooms            Room[]           @relation("roomMember")
   bannedRooms            Room[]           @relation("roomBanned")
+  profile                Profile?
+  pfp                    Pfp?
 }
 
 model Pfp {
@@ -59,7 +61,16 @@ model Pfp {
   userId String
 
   @@id([userId])
-  @@index([base64])
+}
+
+model Profile {
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  backgroundBase64 String?
+  bio              String?
+
+  @@id([userId])
 }
 
 model Comment {
@@ -108,9 +119,9 @@ model PrivateMessage {
   message String
   id      String @id @default(cuid())
 
-  sender      User   @relation(name: "sentPrivateMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  sender      User?   @relation(name: "sentPrivateMessages", fields: [senderId], references: [id], onDelete: Cascade)
   recipient   User   @relation(name: "receivedPrivateMessage", fields: [recipientId], references: [id], onDelete: Cascade)
-  senderId    String
+  senderId    String?
   recipientId String
 
   hasAttachment     Boolean  @default(false)
@@ -121,6 +132,8 @@ model PrivateMessage {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  readByRecipient   Boolean @default(false)
 
   @@index([senderId])
 }

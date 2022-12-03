@@ -18,7 +18,7 @@ module.exports = {
         threadGap: "20%",
       },
       fontFamily: {
-        rubik: '"DM Sans"',
+        rubik: '"Inter Tight"',
       },
       colors: {
         foreground: "white",
@@ -29,8 +29,8 @@ module.exports = {
         darkmodeForegroundContrast: "#18181b"
       },
       height: {
-        postHeight: "15em",
-        postImageHeight: "13.875rem",
+        postHeight: "14.466em",
+        postImageHeight: "13.366rem",
       },
       maxHeight: {
         asideMaxHeight: "calc(100vh - 8rem)",

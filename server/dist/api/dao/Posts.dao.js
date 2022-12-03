@@ -66,7 +66,19 @@ class PostsDAO {
             const posts = yield prisma_1.default.post.findMany({
                 where: { imagePending: false },
                 select: {
+                    id: true,
                     slug: true,
+                    title: true,
+                    createdAt: true,
+                    description: true,
+                    author: {
+                        select: {
+                            id: true,
+                        },
+                    },
+                    likes: true,
+                    shares: true,
+                    tags: true,
                 },
                 orderBy: {
                     likes: {
@@ -92,6 +104,7 @@ class PostsDAO {
             yield prisma_1.default.post.delete({
                 where: { slug },
             });
+            __1.io.to(`post_card=${slug}`).emit("post_visible_deleted", slug);
         });
     }
     static getPostById(id, uid) {
@@ -230,6 +243,7 @@ class PostsDAO {
                     },
                 },
             });
+            __1.io.to(`post_card=${slug}`).emit("post_visible_update", post);
             return post;
         });
     }
@@ -371,6 +385,29 @@ class PostsDAO {
                 !info.mimeType.startsWith("image/heic")) {
                 throw new Error("Input is not an image, or is of an unsupported format.");
             }
+            const post = yield prisma_1.default.post.findUnique({
+                where: { slug },
+                select: { imageKey: true },
+            });
+            const s3 = new aws_1.default.S3();
+            if (post) {
+                if (post.imageKey) {
+                    yield new Promise((resolve, reject) => {
+                        s3.deleteObject({
+                            Bucket: "prisma-socialmedia",
+                            Key: `${post.imageKey}`,
+                        }, (e, _) => {
+                            if (e)
+                                reject(e);
+                            resolve();
+                        });
+                    });
+                    yield prisma_1.default.post.update({
+                        where: { slug },
+                        data: { imagePending: true },
+                    });
+                }
+            }
             const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType, {
                 onProgress: (progress) => __1.io.to(socketId).emit("post_cover_image_progress", progress * 0.5, slug),
                 totalBytes: bytes,
@@ -383,7 +420,6 @@ class PostsDAO {
             }));
             const hasExtension = info.filename.includes(".");
             let p = 0;
-            const s3 = new aws_1.default.S3();
             //upload the thumb first
             yield new Promise((resolve, reject) => {
                 const key = `thumb.${slug}.${hasExtension ? info.filename.split(".")[0] : info.filename}.jpg`;
@@ -393,11 +429,11 @@ class PostsDAO {
                     Body: thumb,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",
-                }, (e, _) => __awaiter(this, void 0, void 0, function* () {
+                }, (e, _) => {
                     if (e)
                         reject(e);
                     resolve();
-                })).on("httpUploadProgress", (e) => {
+                }).on("httpUploadProgress", (e) => {
                     p++;
                     //only send progress updates every 2nd event, otherwise it's probably too many emits
                     if (p === 2) {

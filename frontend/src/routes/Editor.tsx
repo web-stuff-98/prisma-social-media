@@ -118,7 +118,7 @@ export default function Editor() {
       {!resMsg.pen ? (
         <form
           onSubmit={formik.handleSubmit}
-          className="w-full flex flex-col gap-2 mt-2"
+          className="w-full flex flex-col gap-2 p-2"
         >
           <label className="mx-auto font-bold text-md" htmlFor="title">
             Title
@@ -237,6 +237,9 @@ export default function Editor() {
                 src={`https://d2gt89ey9qb5n6.cloudfront.net/${imageKey}`}
               />
             </>
+          )}
+          {progress !== 0 && progress !== 1 && (
+            <ProgressBar percent={progress * 100} />
           )}
         </form>
       ) : (

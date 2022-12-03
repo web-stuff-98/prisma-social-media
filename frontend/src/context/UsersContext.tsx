@@ -74,10 +74,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [socket]);
 
-  const cacheUserData = async (
-    uid: string,
-    force?: boolean
-  ) => {
+  const cacheUserData = async (uid: string, force?: boolean) => {
     try {
       const found = users.find((u) => u.id === uid);
       if (found && !force) return;
@@ -86,17 +83,9 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     } catch (e) {
       console.warn("Could not cache data for user : " + uid);
     }
-    return undefined;
   };
   const getUserData = useCallback(
-    (uid: string) => {
-      try {
-        const u = users.find((u) => u.id === uid);
-        return u;
-      } catch (e) {
-        console.warn(`${e}`);
-      }
-    },
+    (uid: string) => users.find((u) => u.id === uid),
     [users]
   );
 
@@ -107,7 +96,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const userEnteredView = (uid: string) => {
     setVisibleUsers((p) => [...p, uid]);
     setDisappearedUsers((p) => [...p.filter((u) => u.uid !== uid)]);
-    subscribeToUser(uid)
+    subscribeToUser(uid);
   };
   const userLeftView = (uid: string) => {
     const visibleCount =
@@ -153,12 +142,20 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [disappearedUsers]);
 
-  const subscribeToUser = (uid: string) => {
-    if (!socket) throw new Error("no socket");
-    socket?.emit("user_visible", uid);
-  };
-  const unsubscribeFromUser = (uid: string) =>
-    socket?.emit("user_not_visible", uid);
+  const subscribeToUser = useCallback(
+    (uid: string) => {
+      if (!socket) throw new Error("no socket");
+      socket?.emit("user_visible", uid);
+    },
+    [socket]
+  );
+  const unsubscribeFromUser = useCallback(
+    (uid: string) => {
+      if (!socket) throw new Error("no socket");
+      socket?.emit("user_not_visible", uid);
+    },
+    [socket]
+  );
 
   return (
     <UsersContext.Provider

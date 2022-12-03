@@ -67,7 +67,19 @@ export default class PostsDAO {
     const posts = await prisma.post.findMany({
       where: { imagePending: false },
       select: {
+        id: true,
         slug: true,
+        title: true,
+        createdAt: true,
+        description: true,
+        author: {
+          select: {
+            id: true,
+          },
+        },
+        likes: true,
+        shares: true,
+        tags: true,
       },
       orderBy: {
         likes: {
@@ -90,6 +102,7 @@ export default class PostsDAO {
     await prisma.post.delete({
       where: { slug },
     });
+    io.to(`post_card=${slug}`).emit("post_visible_deleted", slug);
   }
 
   static async getPostById(
@@ -151,7 +164,7 @@ export default class PostsDAO {
               message: true,
               parentId: true,
               createdAt: true,
-              updatedAt:true,
+              updatedAt: true,
               user: {
                 select: {
                   id: true,
@@ -244,6 +257,7 @@ export default class PostsDAO {
         },
       },
     });
+    io.to(`post_card=${slug}`).emit("post_visible_update", post);
     return post;
   }
 
@@ -415,6 +429,31 @@ export default class PostsDAO {
     ) {
       throw new Error("Input is not an image, or is of an unsupported format.");
     }
+    const post = await prisma.post.findUnique({
+      where: { slug },
+      select: { imageKey: true },
+    });
+    const s3 = new AWS.S3();
+    if (post) {
+      if (post.imageKey) {
+        await new Promise<void>((resolve, reject) => {
+          s3.deleteObject(
+            {
+              Bucket: "prisma-socialmedia",
+              Key: `${post.imageKey}`,
+            },
+            (e, _) => {
+              if (e) reject(e);
+              resolve();
+            }
+          );
+        });
+        await prisma.post.update({
+          where: { slug },
+          data: { imagePending: true },
+        });
+      }
+    }
     const blob = await readableStreamToBlob(stream, info.mimeType, {
       onProgress: (progress) =>
         io.to(socketId).emit("post_cover_image_progress", progress * 0.5, slug),
@@ -436,7 +475,6 @@ export default class PostsDAO {
     })) as string;
     const hasExtension = info.filename.includes(".");
     let p = 0;
-    const s3 = new AWS.S3();
     //upload the thumb first
     await new Promise<void>((resolve, reject) => {
       const key = `thumb.${slug}.${
@@ -450,7 +488,7 @@ export default class PostsDAO {
           ContentType: "image/jpeg",
           ContentEncoding: "base64",
         },
-        async (e, _) => {
+        (e, _) => {
           if (e) reject(e);
           resolve();
         }

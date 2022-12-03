@@ -36,20 +36,20 @@ export default async (post: any, uid?: string) => {
       ? true
       : false,
     shares: post.shares.length,
-    comments: post.comments.map(
-      (cmt: Comment & { _count: { likes: number } }) => {
-        const { _count, ...commentFields } = cmt;
-        return {
-          ...commentFields,
-          likedByMe:
-            usersCommentLikes.length > 0
-              ? usersCommentLikes.find(
-                  (like: CommentLike) => like.commentId === cmt.id
-                )
-              : undefined,
-          likeCount: _count.likes,
-        };
-      }
-    ),
+    comments: post.comments
+      ? post.comments.map((cmt: Comment & { _count: { likes: number } }) => {
+          const { _count, ...commentFields } = cmt;
+          return {
+            ...commentFields,
+            likedByMe:
+              usersCommentLikes.length > 0
+                ? usersCommentLikes.find(
+                    (like: CommentLike) => like.commentId === cmt.id
+                  )
+                : undefined,
+            likeCount: _count.likes,
+          };
+        })
+      : [],
   };
 };

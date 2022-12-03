@@ -15,10 +15,40 @@ export default class UsersDAO {
     return users;
   }
 
+  static async getProfile(uid: string, currentUserId?: string) {
+    try {
+      const profile = await prisma.profile.findUniqueOrThrow({
+        where: { userId: uid },
+      });
+      return profile;
+    } catch (e) {
+      throw new Error(
+        currentUserId && currentUserId === uid
+          ? "You have no profile"
+          : "User has no profile"
+      );
+    }
+  }
+
+  static async updateProfile(
+    uid: string,
+    data: { backgroundBase64?: string; bio?: string }
+  ) {
+    await prisma.profile.update({
+      where: { userId: uid },
+      data,
+    });
+  }
+
   static async getUserById(id: string) {
     let user = await prisma.user.findUnique({
       where: { id },
-      select: { id: true, name: true, pfp: { select: { base64: true } } },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        pfp: { select: { base64: true } },
+      },
     });
     const out = user
       ? {
@@ -41,6 +71,7 @@ export default class UsersDAO {
       select: {
         id: true,
         name: true,
+        createdAt: true,
         pfp: { select: { base64: true } },
       },
     });
@@ -66,7 +97,10 @@ export default class UsersDAO {
     let base64;
     if (data.pfp) {
       try {
-        base64 = await imageProcessing(data.pfp, { width: 48, height: 48 }) as string;
+        base64 = (await imageProcessing(data.pfp, {
+          width: 48,
+          height: 48,
+        })) as string;
       } catch (e) {
         throw new Error(`Error processing image : ${e}`);
       }

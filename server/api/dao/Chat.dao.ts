@@ -7,7 +7,7 @@ import mime from "mime-types";
 
 import AWS from "../../utils/aws";
 import { io } from "../..";
-import { PrivateMessage, RoomMessage, Room } from "@prisma/client";
+import { PrivateMessage, RoomMessage, Room, User } from "@prisma/client";
 import getUserSocket from "../../utils/getUserSocket";
 
 export default class ChatDAO {
@@ -116,6 +116,210 @@ export default class ChatDAO {
     }
   }
 
+  static async inviteUser(invited: string, inviter: string, roomName: string) {
+    let room;
+    let invitedU;
+    let inviterU;
+    try {
+      room = await prisma.room.findFirstOrThrow({
+        where: {
+          name: { equals: roomName, mode: "insensitive" },
+          authorId: inviter,
+        },
+        include: { members: true, banned: true },
+      });
+    } catch (e) {
+      throw new Error("Could not find room to invite user to");
+    }
+    try {
+      invitedU = await prisma.user.findUniqueOrThrow({
+        where: { id: invited },
+      });
+    } catch (e) {
+      throw new Error("Could not find user to invite to room");
+    }
+    try {
+      inviterU = await prisma.user.findUniqueOrThrow({
+        where: { id: inviter },
+      });
+    } catch (e) {
+      throw new Error(
+        "Your account no longer exists, or could not be found for some reason."
+      );
+    }
+    if (room.members.find((u) => u.id === invited))
+      throw new Error(`${invitedU.name} is already a member of ${room.name}`);
+    if (room.banned.find((u) => u.id === invited))
+      throw new Error(
+        `${invitedU.name} is banned from the room.${
+          inviterU.id === room.authorId
+            ? " You must first unban the user before inviting them."
+            : " The owner of the room has banned this user."
+        }`
+      );
+    /*Send the message which will be used by the frontend as an invitation.*/
+    const msgData = await prisma.privateMessage.create({
+      data: {
+        senderId: inviter,
+        recipientId: invited,
+        message: `INVITATION ${room.name}`,
+      },
+    });
+    io.to(`inbox=${inviter}`).emit("private_message", msgData);
+    io.to(`inbox=${invited}`).emit("private_message", msgData);
+  }
+
+  static async declineInvite(
+    invited: string,
+    inviter: string,
+    roomName: string
+  ) {
+    try {
+      await prisma.user.findUniqueOrThrow({
+        where: { id: invited },
+        select: { id: true },
+      });
+    } catch (e) {
+      throw new Error("Could not find your account");
+    }
+    try {
+      await prisma.user.findUniqueOrThrow({
+        where: { id: inviter },
+        select: { id: true },
+      });
+    } catch (e) {
+      throw new Error("Could not find the user who sent this invitation.");
+    }
+    const room = await prisma.room.findFirst({
+      where: {
+        name: {
+          equals: roomName,
+          mode: "insensitive",
+        },
+        authorId: inviter,
+      },
+    });
+    const findInvitationMessages = () =>
+      prisma.privateMessage
+        .findMany({
+          where: {
+            senderId: inviter,
+            recipientId: invited,
+            message: {
+              equals: `INVITATION ${room?.name}`,
+              mode: "insensitive",
+            },
+          },
+          select: { id: true },
+        })
+        .then((msgs) => msgs.map((msg) => msg.id));
+    const msgIds = await findInvitationMessages();
+    const deleteInvitationMessages = async () => {
+      /*doesn't actually delete the invitation(s), it just changes
+      them to say the invitation was declined*/
+      await prisma.privateMessage.updateMany({
+        where: { id: { in: msgIds } },
+        data: {
+          senderId: null,
+          message: `Invitation to ${room?.name} declined ❌`,
+        },
+      });
+    };
+    if (!room) {
+      throw new Error(
+        "Could not find room to decline invitation for. It was either deleted or changed names. Ask the owner to send a new invite."
+      );
+    }
+    await deleteInvitationMessages();
+    msgIds.forEach((id) => {
+      const msgData: Partial<PrivateMessage> = {
+        senderId: inviter,
+        recipientId: invited,
+        message: `Invitation to ${room?.name} declined ❌`,
+        id: id,
+      };
+      io.to(`inbox=${inviter}`).emit("private_message_update", msgData);
+      io.to(`inbox=${invited}`).emit("private_message_update", msgData);
+    });
+  }
+
+  static async acceptInvite(
+    invited: string,
+    inviter: string,
+    roomName: string
+  ) {
+    let invitedU: User;
+    try {
+      invitedU = await prisma.user.findUniqueOrThrow({
+        where: { id: invited },
+      });
+    } catch (e) {
+      throw new Error("Could not find your account");
+    }
+    try {
+      await prisma.user.findUniqueOrThrow({
+        where: { id: inviter },
+      });
+    } catch (e) {
+      throw new Error("Could not find the user who sent this invitation.");
+    }
+    const room = await prisma.room.findFirst({
+      where: {
+        name: {
+          equals: roomName,
+          mode: "insensitive",
+        },
+        authorId: inviter,
+      },
+    });
+    const findInvitationMessages = () =>
+      prisma.privateMessage
+        .findMany({
+          where: {
+            senderId: inviter,
+            recipientId: invited,
+            message: {
+              equals: `INVITATION ${room?.name}`,
+              mode: "insensitive",
+            },
+          },
+          select: { id: true },
+        })
+        .then((msgs) => msgs.map((msg) => msg.id).filter((msgId) => msgId));
+    const msgIds = await findInvitationMessages();
+    const acceptInvitationMessages = async () => {
+      /*change all the invitation messages to say that
+      they were accepted*/
+      await prisma.privateMessage.updateMany({
+        where: { id: { in: msgIds } },
+        data: {
+          senderId: null,
+          message: `Invitation to ${room?.name} accepted ✅`,
+        },
+      });
+    };
+    if (!room) {
+      throw new Error(
+        "Could not find room to accept invitation for. It was either deleted or changed names. Ask the owner to send a new invite."
+      );
+    }
+    await acceptInvitationMessages();
+    msgIds.forEach((id) => {
+      const msgData: Partial<PrivateMessage> = {
+        senderId: inviter,
+        recipientId: invited,
+        message: `Invitation to ${room?.name} accepted ✅`,
+        id: id,
+      };
+      io.to(`inbox=${inviter}`).emit("private_message_update", msgData);
+      io.to(`inbox=${invited}`).emit("private_message_update", msgData);
+    });
+    await prisma.room.update({
+      where: { id: room.id },
+      data: { members: { connect: { id: invited } } },
+    });
+  }
+
   static async updatePrivateMessage(id: string, message: string, uid: string) {
     let msg;
     try {
@@ -217,12 +421,14 @@ export default class ChatDAO {
       });
       let uids: string[] = [];
       for (const msg of sentMessages) {
-        if (!uids.includes(msg.recipientId) && msg.recipientId !== uid)
-          uids.push(msg.recipientId);
+        if (msg.recipientId)
+          if (!uids.includes(msg.recipientId) && msg.recipientId !== uid)
+            uids.push(msg.recipientId);
       }
       for (const msg of receivedMessages) {
-        if (!uids.includes(msg.senderId) && msg.senderId !== uid)
-          uids.push(msg.senderId);
+        if (msg.senderId)
+          if (!uids.includes(msg.senderId!) && msg.senderId !== uid)
+            uids.push(msg.senderId!);
       }
       const users = await prisma.user.findMany({
         where: { id: { in: uids } },
@@ -453,7 +659,10 @@ export default class ChatDAO {
     const roomAlreadyExists = await prisma.room.findFirst({
       where: {
         authorId,
-        name,
+        name: {
+          equals: name,
+          mode: "insensitive",
+        },
       },
     });
     if (roomAlreadyExists)
@@ -490,7 +699,7 @@ export default class ChatDAO {
       .catch((e) => {
         throw new Error("Room does not exist");
       });
-    if (!room.public)
+    if (!room.public && !room.members.find((member) => member.id === uid))
       throw new Error("You need an invitation to join this room");
     if (room.banned.find((banned) => banned.id === uid))
       throw new Error("You are banned from this room");

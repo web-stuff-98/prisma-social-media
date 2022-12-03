@@ -83,10 +83,6 @@ export interface ServerToClientEvents {
   room_deleted: (id: string) => void;
   room_updated: (data: Partial<RoomWithUsers>) => void;
 
-  post_created: (data: Post) => void;
-  post_deleted: (id: string) => void;
-  post_updated: (data: Partial<Post>) => void;
-
   post_cover_image_progress: (progress: number, slug: string) => void;
 
   user_visible_update: (data: {
@@ -94,6 +90,9 @@ export interface ServerToClientEvents {
     name?: string;
     online?: boolean;
   }) => void;
+  user_visible_deleted: (slug: string) => void;
+  post_visible_update: (data: Partial<ParsedPost>) => void;
+  post_visible_deleted: (slug: string) => void;
 }
 
 export interface ClientToServerEvents {
@@ -104,6 +103,8 @@ export interface ClientToServerEvents {
 
   user_visible: (uid: string) => void;
   user_not_visible: (uid: string) => void;
+  post_card_visible: (slug: string) => void;
+  post_card_not_visible: (slug: string) => void;
 
   room_video_chat_sending_signal: (payload: {
     userToSignal: string;

@@ -12,14 +12,14 @@ import {
   updatePrivateMessage,
   updateRoomMessage,
   deleteRoomMessage,
+  declineInvite,
+  acceptInvite,
 } from "../../../services/chat";
 
-/**
- * attachmentData = {
- *      type: "Video" || "Image" || "File"
- *      url: the url for the attachment
- * }
- */
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "short",
+  timeStyle: "short",
+});
 
 export default function Message({
   otherUser = false,
@@ -36,6 +36,7 @@ export default function Message({
   updatedAt,
   roomId,
   isServerMessage,
+  isInvite,
 }: {
   otherUser?: boolean;
   attachmentType?: string;
@@ -51,6 +52,7 @@ export default function Message({
   updatedAt: Date;
   roomId?: string;
   isServerMessage?: boolean;
+  isInvite?: boolean;
 }) {
   const { getUserData } = useUsers();
 
@@ -77,6 +79,13 @@ export default function Message({
         : updatePrivateMessage(id, messageEditInput);
     setIsEditing(false);
   };
+
+  const getDateString = (date: Date) => dateFormatter.format(date);
+  const renderEditedAtTimeString = (dateString: string) => (
+    <b style={{ filter: "opacity(0.333)" }} className="pl-2">
+      Edited {dateString}
+    </b>
+  );
 
   return (
     <div
@@ -121,7 +130,34 @@ export default function Message({
             </button>
           </div>
         ) : (
-          <p className={`leading-3 text-xs my-auto h-full`}>{message}</p>
+          <p className={`leading-3 text-xs my-auto h-full`}>
+            {isInvite
+              ? `Invitation to ${message.split("INVITATION ")[1]}`
+              : <>{message}              {updatedAt !== createdAt &&
+                renderEditedAtTimeString(getDateString(new Date(updatedAt)))}</>}
+            {isInvite && (
+              <div className="gap-0.5 flex w-full justify-end drop-shadow-md my-0.5">
+                <button
+                  onClick={() =>
+                    acceptInvite(senderId!, message.split("INVITATION ")[1])
+                  }
+                  aria-label="Accept invitation"
+                  className="py-0.5 px-0.5 drop-shadow rounded-sm"
+                >
+                  Accept ✅
+                </button>
+                <button
+                  onClick={() =>
+                    declineInvite(senderId!, message.split("INVITATION ")[1])
+                  }
+                  aria-label="Decline invitation"
+                  className="py-0.5 px-0.5 drop-shadow rounded-sm"
+                >
+                  Decline ❌
+                </button>
+              </div>
+            )}
+          </p>
         )}
         {hasAttachment && attachmentType === "Image" && (
           <img
@@ -175,7 +211,7 @@ export default function Message({
       {/* edit & delete icons */}
       {!otherUser && (
         <div className="flex flex-col items-center justify-center gap-2 p-0.5 my-auto">
-          {!isEditing && (
+          {!isEditing && !isInvite && (
             <button
               onClick={() => {
                 setIsEditing(true);

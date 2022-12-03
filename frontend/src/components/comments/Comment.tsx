@@ -15,6 +15,7 @@ import User from "../User";
 import useUsers from "../../context/UsersContext";
 import { usePosts } from "../../context/PostsContext";
 import { useParams } from "react-router-dom";
+import { useModal } from "../../context/ModalContext";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -30,6 +31,8 @@ export function Comment({
   likeCount,
   likedByMe,
 }: IPostComment) {
+  const { openModal } = useModal();
+
   /*
 This function is from the web dev simplified video. It is supposed to be in the useAsync hook but that was causing infinite rerenders in the original PostContext, so I changed it to the useAync hook from usehooks.com and it worked. But I'll keep this function here anyway because it works here and dont need to change anything aside from the name.
 */
@@ -99,10 +102,18 @@ This function is from the web dev simplified video. It is supposed to be in the 
         updateLocalComment(id, comment.message);
       });
 
-  const onCommentDelete = () =>
-    deleteCommentFn
-      .execute({ postId: post?.id, id })
-      .then((comment: IPostComment) => deleteLocalComment(comment.id));
+  const onCommentDelete = () => {
+    openModal("Confirm", {
+      err: false,
+      pen: false,
+      msg: "Are you sure you want to delete this comment?",
+      confirmationCallback: () => {
+        deleteCommentFn
+          .execute({ postId: post?.id, id })
+          .then((comment: IPostComment) => deleteLocalComment(comment.id));
+      },
+    });
+  };
 
   const onToggleCommentLike = () =>
     toggleCommentLikeFn
@@ -117,7 +128,9 @@ This function is from the web dev simplified video. It is supposed to be in the 
 
   const getDateString = (date: Date) => dateFormatter.format(date);
   const renderEditedAtTimeString = (dateString: string) => (
-    <b style={{filter:"opacity(0.333)"}} className="pl-2">Edited {dateString}</b>
+    <b style={{ filter: "opacity(0.333)" }} className="pl-2">
+      Edited {dateString}
+    </b>
   );
 
   return (
@@ -161,7 +174,9 @@ This function is from the web dev simplified video. It is supposed to be in the 
                 Icon={likedByMe ? AiFillLike : AiOutlineLike}
                 aria-label={likedByMe ? "Unlike" : "Like"}
               >
+                <div className="drop-shadow-md text-green-500">
                 {likeCount}
+                </div>
               </IconBtn>
               <IconBtn
                 onClick={() => {

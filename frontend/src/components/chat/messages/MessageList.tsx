@@ -41,6 +41,7 @@ export default function MessageList({
                 key={msg.id}
                 isServerMessage={!msg.senderId}
                 otherUser={msg.senderId !== user?.id}
+                isInvite={!roomId && msg.message.startsWith("INVITATION ")}
               />
             ))}
           <span ref={messagesBottomRef} className="w-full" />

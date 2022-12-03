@@ -109,10 +109,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const getRoom = useCallback(
-    (id: string) => {
-      const found = rooms.find((r) => r.id === id);
-      return found || undefined;
-    },
+    (id: string) => rooms.find((r) => r.id === id),
     [rooms]
   );
 

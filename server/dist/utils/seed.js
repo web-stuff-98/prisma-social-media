@@ -35,9 +35,9 @@ let generatedRooms = [];
 function seed() {
     return __awaiter(this, void 0, void 0, function* () {
         yield prisma_1.default.user.deleteMany();
-        yield generateUsers(5);
-        yield generatePosts(60);
-        yield generateRooms(20);
+        yield generateUsers(60);
+        yield generatePosts(300);
+        yield generateRooms(60);
         yield generatePostImages();
         yield generateCommentsOnPosts();
         yield generateLikesAndSharesOnPosts();

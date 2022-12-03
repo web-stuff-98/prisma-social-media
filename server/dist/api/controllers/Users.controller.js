@@ -58,7 +58,7 @@ class UsersController {
                 res.status(200).json(users);
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" });
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -71,8 +71,8 @@ class UsersController {
                 else
                     res.status(404).json({ msg: "Not found" });
             }
-            catch (error) {
-                res.status(500).json({ msg: "Internal error" });
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -83,8 +83,32 @@ class UsersController {
                 yield Users_dao_1.default.updateUser(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body);
                 res.status(200).end();
             }
-            catch (error) {
-                res.status(500).json({ msg: "Internal error" });
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static getProfile(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const profile = yield Users_dao_1.default.getProfile(req.params.uid, (_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+                res.status(200).json(profile);
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
+    static updateProfile(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Users_dao_1.default.updateProfile(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body);
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
             }
         });
     }
@@ -121,7 +145,10 @@ class UsersController {
                 res.status(201).json(user).end();
             }
             catch (e) {
-                res.status(500).json({ msg: "Internal error" }).end();
+                res
+                    .status(400)
+                    .json({ msg: `${e}` })
+                    .end();
             }
         });
     }

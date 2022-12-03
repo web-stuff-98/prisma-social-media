@@ -6,7 +6,15 @@ const updateUser = (data: Partial<IUser>) =>
   makeRequest(`/api/users`, {
     withCredentials: true,
     method: "POST",
-    data
+    data,
+  });
+const getProfile = (uid: string) =>
+  makeRequest(`/api/users/profile/${uid}`, { withCredentials: true });
+const updateProfile = (data: { bio?: string; backgroundBase64: string }) =>
+  makeRequest(`/api/users/profile`, {
+    method: "PUT",
+    withCredentials: true,
+    data,
   });
 
-export { getUser, updateUser };
+export { getUser, updateUser, getProfile, updateProfile };

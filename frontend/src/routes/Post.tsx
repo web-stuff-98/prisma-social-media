@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate, useParams } from "react-router-dom";
 import { Comment } from "../components/comments/Comment";
@@ -15,17 +15,48 @@ import { useAuth } from "../context/AuthContext";
 import { useModal } from "../context/ModalContext";
 import { deletePost } from "../services/posts";
 import { useScrollY } from "../components/layout/Layout";
+import { useSocket } from "../context/SocketContext";
 
 export default function Post() {
+  const { socket } = useSocket()
   const { rootComments, createLocalComment } = usePost();
-  const { getPostData, likePost, sharePost, openPost, closePost } = usePosts();
+  const {
+    getPostData,
+    likePost,
+    sharePost,
+    openPost,
+    closePost,
+    postEnteredView,
+    postLeftView,
+  } = usePosts();
   const { getUserData } = useUsers();
   const { openModal } = useModal();
   const { slug } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const post = getPostData(String(slug));
+
+  useEffect(() => {
+    if (!slug) return;
+    postEnteredView(slug);
+    return () => postLeftView(slug);
+  }, [slug]);
+
+  useEffect(() => {
+    if(!socket) return
+    socket.on("post_visible_deleted", (delSlug) => {
+      if(delSlug === slug) {
+        openModal("Message", {
+          msg:"The post you were reading was deleted.",
+          err:false,
+          pen:false
+        })
+        navigate("/blog/1")
+      }
+    })
+  }, [socket])
 
   const [commentError, setCommentError] = useState("");
   const postComment = (message: string) =>
@@ -41,90 +72,104 @@ export default function Post() {
       openPost(slug);
     }
     return () => {
-      closePost(String(slug));
+      closePost(slug!);
     };
   }, [slug]);
 
-  const { scrollY } = useScrollY()
+  const { scrollY } = useScrollY();
 
   return (
-    <div className="w-full">
-      <div
-        style={{
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundImage: `url(https://d2gt89ey9qb5n6.cloudfront.net/${post?.imageKey})`,
-          backgroundPositionY:`calc(50% + ${scrollY * 0.5}px)`
-        }}
-        className="w-full h-72 flex overflow-hidden text-white rounded flex-col justify-end mt-2"
-      >
-        <div style={{backdropFilter:"blur(2px)", background:"rgba(0,0,0,0.1)", border:"1px outset rgba(255,255,255,0.1)"}} className="flex p-2 dark:border-stone-800 drop-shadow-lg items-end pb-2">
-          <h1 style={{textShadow:"0px 3px 4.5px black"}} className="md:text-4xl sm:text-2xl font-bold grow mr-4">{post?.title}</h1>
-          <div className="my-2 drop-shadow-xl flex flex-col justify-end items-end w-fit">
-            <User
-            style={{textShadow:"0px 3px 4.5px black"}}
-              uid={String(post?.author.id)}
-              likeShareIcons
-              liked={post?.likedByMe}
-              likes={post?.likes}
-              shared={post?.sharedByMe}
-              shares={post?.shares}
-              onLikeClick={() => likePost(String(post?.id))}
-              onShareClick={() => sharePost(String(post?.id))}
-              date={post?.createdAt ? new Date(post.createdAt) : undefined}
-              by
-              user={getUserData(String(post?.author.id))}
-              reverse
-            />
-            {user && post?.author.id === user?.id && (
-              <div className="flex gap-1 my-2">
-                <IconBtn
-                  aria-label="Edit post"
-                  onClick={() => navigate(`/editor/${post.slug}`)}
-                  Icon={RiEditBoxFill}
+    <div ref={containerRef} className="w-full">
+      {post ? (
+        <>
+          <div
+            style={{
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundImage: `url(https://d2gt89ey9qb5n6.cloudfront.net/${post?.imageKey})`,
+              backgroundPositionY: `calc(50% + ${scrollY * 0.5}px)`,
+            }}
+            className="w-full h-72 flex overflow-hidden text-white flex-col justify-end"
+          >
+            <div
+              style={{
+                backdropFilter: "blur(2px)",
+                background: "rgba(0,0,0,0.1)",
+                borderTop: "1px outset rgba(255,255,255,0.1)",
+              }}
+              className="flex p-2 dark:border-stone-800 drop-shadow-lg items-end pb-2"
+            >
+              <h1
+                style={{ textShadow: "0px 3px 4.5px black" }}
+                className="md:text-4xl sm:text-2xl font-bold grow mr-4"
+              >
+                {post?.title}
+              </h1>
+              <div className="my-2 drop-shadow-xl flex flex-col justify-end items-end w-fit">
+                <User
+                  style={{ textShadow: "0px 3px 4.5px black" }}
+                  uid={String(post?.author!.id)}
+                  likeShareIcons
+                  liked={post?.likedByMe}
+                  likes={post?.likes}
+                  shared={post?.sharedByMe}
+                  shares={post?.shares}
+                  onLikeClick={() => likePost(String(post?.id))}
+                  onShareClick={() => sharePost(String(post?.id))}
+                  date={post?.createdAt ? new Date(post.createdAt) : undefined}
+                  by
+                  user={getUserData(String(post?.author!.id))}
+                  reverse
                 />
-                <IconBtn
-                  onClick={() => {
-                    openModal("Confirm", {
-                      pen: false,
-                      err: false,
-                      msg: `Are you sure you want to delete ${post.title}?`,
-                      confirmationCallback: () => {
-                        navigate("/blog/1");
-                        openModal("Message", {
+                {user && post?.author!.id === user?.id && (
+                  <div className="flex gap-1 my-2">
+                    <IconBtn
+                      aria-label="Edit post"
+                      onClick={() => navigate(`/editor/${post.slug}`)}
+                      Icon={RiEditBoxFill}
+                    />
+                    <IconBtn
+                      onClick={() => {
+                        openModal("Confirm", {
+                          pen: false,
                           err: false,
-                          pen: true,
-                          msg: "Deleting post...",
-                        });
-                        deletePost(post.slug)
-                          .then(() => {
+                          msg: `Are you sure you want to delete ${post.title}?`,
+                          confirmationCallback: () => {
+                            navigate("/blog/1");
                             openModal("Message", {
                               err: false,
-                              pen: false,
-                              msg: "Deleted post",
+                              pen: true,
+                              msg: "Deleting post...",
                             });
-                          })
-                          .catch((e) => {
-                            openModal("Message", {
-                              err: true,
-                              pen: false,
-                              msg: `${e}`,
-                            });
-                          });
-                      },
-                    });
-                  }}
-                  Icon={RiDeleteBin4Fill}
-                  aria-label="Delete"
-                  color="text-rose-600"
-                />
+                            deletePost(post.slug!)
+                              .then(() => {
+                                openModal("Message", {
+                                  err: false,
+                                  pen: false,
+                                  msg: "Deleted post",
+                                });
+                              })
+                              .catch((e) => {
+                                openModal("Message", {
+                                  err: true,
+                                  pen: false,
+                                  msg: `${e}`,
+                                });
+                              });
+                          },
+                        });
+                      }}
+                      Icon={RiDeleteBin4Fill}
+                      aria-label="Delete"
+                      color="text-rose-600"
+                    />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      </div>
-      <div
-        className="p-2 prose prose-sm
+          <div
+            className="p-2 prose prose-sm
                   dark:prose-headings:text-white
                   dark:prose-headings:font-bold
                   dark:prose-lead:text-white
@@ -141,26 +186,30 @@ export default function Post() {
                   prose-a:text-indigo-500
                   prose-a:font-bold
       max-w-none"
-      >
-        <ReactMarkdown>{String(post?.body)}</ReactMarkdown>
-      </div>
-      <section className="w-full p-2 mt-6">
-        <CommentForm
-          placeholder="Add a comment..."
-          loading={false}
-          error={commentError}
-          onSubmit={postComment}
-        />
-        {rootComments != null && rootComments.length > 0 && (
-          <div className="mt-4 pb-1 w-full">
-            {rootComments.map((comment) => (
-              <div key={comment.id} className="w-full h-full">
-                <Comment {...comment} />
-              </div>
-            ))}
+          >
+            <ReactMarkdown>{String(post?.body)}</ReactMarkdown>
           </div>
-        )}
-      </section>
+          <section className="w-full p-2 mt-6">
+            <CommentForm
+              placeholder="Add a comment..."
+              loading={false}
+              error={commentError}
+              onSubmit={postComment}
+            />
+            {rootComments != null && rootComments.length > 0 && (
+              <div className="mt-4 pb-1 w-full">
+                {rootComments.map((comment) => (
+                  <div key={comment.id} className="w-full h-full">
+                    <Comment {...comment} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <></>
+      )}
     </div>
   );
 }

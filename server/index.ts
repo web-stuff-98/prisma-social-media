@@ -1,8 +1,8 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import seed from "./utils/seed"
-seed()
+import seed from "./utils/seed";
+//seed()
 
 import cors from "cors";
 import express, { Express } from "express";
@@ -79,6 +79,10 @@ io.on("connection", async (socket) => {
 
   socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
   socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
+  socket.on("post_card_visible", (slug) => socket.join(`post_card=${slug}`));
+  socket.on("post_card_not_visible", (slug) =>
+    socket.leave(`post_card=${slug}`)
+  );
 
   socket.on("open_post_comments", (slug) => socket.join(slug));
   socket.on("leave_post_comments", (slug) => socket.leave(slug));

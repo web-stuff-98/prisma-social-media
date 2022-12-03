@@ -54,16 +54,13 @@ function imageProcessing(input, dimensions, asBuffer) {
                     force: true,
                 })
                     .toBuffer((err, img) => {
-                    if (err) {
+                    if (err)
                         reject(err);
-                    }
-                    if (!img) {
-                        reject("NO IMG OUTPUT RESULT");
-                    }
+                    if (!img)
+                        reject("There was an error during the processing of this image.");
                     if (asBuffer)
                         resolve(img);
-                    const out = `data:image/jpeg;base64,${img.toString("base64")}`;
-                    resolve(out);
+                    resolve(`data:image/jpeg;base64,${img.toString("base64")}`);
                 });
             });
         });

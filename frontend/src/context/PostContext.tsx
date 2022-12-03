@@ -85,6 +85,7 @@ export function PostProvider({ children }: { children: ReactNode }) {
         user: {
           id: uid,
           name,
+          
         },
       });
       cacheUserData(uid);

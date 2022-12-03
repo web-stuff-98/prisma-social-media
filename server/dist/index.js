@@ -15,8 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const seed_1 = __importDefault(require("./utils/seed"));
-(0, seed_1.default)();
+//seed()
 const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
@@ -72,6 +71,8 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     }));
     socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
     socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
+    socket.on("post_card_visible", (slug) => socket.join(`post_card=${slug}`));
+    socket.on("post_card_not_visible", (slug) => socket.leave(`post_card=${slug}`));
     socket.on("open_post_comments", (slug) => socket.join(slug));
     socket.on("leave_post_comments", (slug) => socket.leave(slug));
     socket.on("room_video_chat_sending_signal", (payload) => {

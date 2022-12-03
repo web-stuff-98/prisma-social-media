@@ -44,12 +44,14 @@ router.route("/:id").get((0, express_slow_down_1.default)({
     delayMs: 5000,
 }), Users_controller_1.default.getUserById);
 router.route("/register").post(Users_controller_1.default.register);
+router.route("/profile/:uid").get(authMiddleware_1.withUser, Users_controller_1.default.getProfile);
+router.route("/profile").put(authMiddleware_1.default, Users_controller_1.default.updateProfile);
 router.route("/check").post(authMiddleware_1.withUser, Users_controller_1.default.checkLogin);
 router.route("/login").post((0, limiters_1.bruteRateLimit)({
     routeName: "login",
     blockDuration: 21600000,
     failsRequired: 3,
-    msg: "You have made too many attempts. You will get 3 more attempts after BLOCKDURATION."
+    msg: "You have made too many attempts. You will get 3 more attempts after BLOCKDURATION.",
 }), Users_controller_1.default.login);
 router.route("/logout").post(authMiddleware_1.withUser, Users_controller_1.default.logout);
 exports.default = router;

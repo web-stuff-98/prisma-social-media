@@ -37,6 +37,11 @@ export interface IPost {
   imageKey: string;
 }
 
+type DisappearedPost = {
+  slug: string;
+  disappearedAt: Date;
+};
+
 /*
     Posts context.
     Works in the same way as the UsersContext to receive live updates from
@@ -45,65 +50,126 @@ export interface IPost {
 */
 
 const PostsContext = createContext<{
-  posts: IPost[];
-  error: unknown;
-  status: "idle" | "pending" | "success" | "error";
+  error: string;
+  status: "idle" | "pending" | "error" | "success";
+
+  // slug arrays
+  pagePosts: string[];
+  popularPosts: string[];
+  postsOpen: string[];
+
+  cachePostData: (slug: string, force?: boolean) => void;
+  getPostData: (slug: string) => Partial<IPost> | undefined;
+
+  visiblePosts: string[];
+  disappearedPosts: DisappearedPost[];
+
   likePost: (id: string) => void;
   sharePost: (id: string) => void;
-  getPostData: (slug: string) => IPost | undefined;
+
   openPost: (slug: string) => void;
   closePost: (slug: string) => void;
-  postsOpen: string[];
-  popularPosts: string[];
+
+  postEnteredView: (slug: string) => void;
+  postLeftView: (slug: string) => void;
 }>({
-  posts: [],
-  error: null,
+  error: "",
   status: "idle",
+
+  pagePosts: [],
+  popularPosts: [],
+  postsOpen: [],
+
+  cachePostData: () => {},
+  getPostData: () => undefined,
+
   likePost: () => {},
   sharePost: () => {},
-  getPostData: () => undefined,
+
+  visiblePosts: [],
+  disappearedPosts: [],
+
   openPost: () => {},
   closePost: () => {},
-  postsOpen: [],
-  popularPosts: [],
+
+  postEnteredView: () => {},
+  postLeftView: () => {},
 });
 
 export const PostsProvider = ({ children }: { children: ReactNode }) => {
+  const [searchParams] = useSearchParams();
   const { socket } = useSocket();
   const { cacheUserData } = useUsers();
   const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm } =
     useFilter();
   const query = useParams();
 
-  const [searchParams] = useSearchParams();
-  const [postsOpen, setPostsOpen] = useState<string[]>([]);
+  //Slugs only
   const [popularPosts, setPopularPosts] = useState<string[]>([]);
+  const [pagePosts, setPagePosts] = useState<string[]>([]);
+  const [postsOpen, setPostsOpen] = useState<string[]>([]);
 
-  const [posts, setPosts] = useState<IPost[]>([]);
+  //Data
+  const [postsData, setPostsData] = useState<Partial<IPost>[]>([]);
+
+  //Caches full post data (including comments and body)
+  const cachePostData = async (slug: string, force?: boolean) => {
+    try {
+      const found = postsData.find((p) => p.slug === slug);
+      if (found && !force) return;
+      const p = await getPost(slug);
+      cacheUserData(p.author.id);
+      addToPostsData([p]);
+    } catch (e) {
+      console.warn("Could not cache data for post " + slug);
+      setErr(`${e}`);
+    }
+  };
+
   const [status, setStatus] = useState<
     "idle" | "pending" | "error" | "success"
   >("idle");
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!query.page) return;
+  const addToPostsData = (data: Partial<IPost[]>) => {
+    data.forEach((p) => cacheUserData(p?.author.id!));
+    setPostsData((old: any) => [
+      ...old.filter((p: Partial<IPost>) => !data.find((pd) => p.id === pd!.id)),
+      ...data,
+    ]);
+  };
+
+  const getAndSetPage = () => {
     setStatus("pending");
     getPage(
       Number(query.page),
       searchParams.get("tags") || "",
       searchParams.get("term") || ""
     )
-      .then((data: any) => {
-        setPosts(data.posts);
-        setStatus("success");
-        setMaxPage(data.maxPage);
-        setPageCount(data.pageCount);
-        setFullCount(data.fullCount);
-      })
+      .then(
+        (data: {
+          posts: IPost[];
+          maxPage: number;
+          pageCount: number;
+          fullCount: number;
+        }) => {
+          addToPostsData(data.posts);
+          setPagePosts((_) => [...data.posts.map((p) => p.slug)]);
+          setStatus("success");
+          setMaxPage(data.maxPage);
+          setPageCount(data.pageCount);
+          setFullCount(data.fullCount);
+        }
+      )
       .catch((e) => {
         setError(`${e}`);
         setStatus("error");
       });
+  };
+
+  useEffect(() => {
+    if (!query.page) return;
+    getAndSetPage();
   }, [searchTags, searchTerm, query.page]);
 
   const [err, setErr] = useState("");
@@ -111,38 +177,32 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     getPopularPosts()
       .then((posts) => {
+        addToPostsData(posts);
         setPopularPosts(posts.map((p: IPost) => p.slug));
       })
       .catch((e) => setErr(`Error getting popular posts : ${e}`));
   }, []);
 
   const openPost = (slug: string) => {
-    const post: IPost = posts.find((p) => p.slug === slug)!;
-    socket?.emit("open_post_comments", post.slug);
+    socket?.emit("open_post_comments", slug);
     setPostsOpen((p) => [...p.filter((checkSlug) => checkSlug !== slug), slug]);
-    getPost(slug)
-      .then((post) => {
-        cacheUserData(post.author.id);
-        setPosts((p) => [...p.filter((p) => p.slug !== slug), post]);
-      })
-      .catch((e) => setErr(`${e}`));
+    cachePostData(slug, true);
   };
   const closePost = (slug: string) => {
-    const post: IPost = posts.find((p) => p.slug === slug)!;
-    socket?.emit("leave_post_comments", post.slug);
+    socket?.emit("leave_post_comments", slug);
     setPostsOpen((p) => [...p.filter((checkSlug) => checkSlug !== slug)]);
   };
 
   const likePost = async (id: string) => {
     try {
       const { addLike } = await toggleLike(id);
-      setPosts((p) => {
+      setPostsData((p) => {
         let newPosts = p;
         const i = newPosts.findIndex((p) => p.id === id);
         newPosts[i] = {
           ...newPosts[i],
           likedByMe: !newPosts[i].likedByMe,
-          likes: newPosts[i].likes + (addLike ? 1 : -1),
+          likes: newPosts[i].likes! + (addLike ? 1 : -1),
         };
         return [...newPosts];
       });
@@ -153,13 +213,13 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const sharePost = async (id: string) => {
     try {
       const { addShare } = await toggleShare(id);
-      setPosts((p) => {
+      setPostsData((p) => {
         let newPosts = p;
         const i = newPosts.findIndex((p) => p.id === id);
         newPosts[i] = {
           ...newPosts[i],
           sharedByMe: !newPosts[i].sharedByMe,
-          shares: newPosts[i].shares + (addShare ? 1 : -1),
+          shares: newPosts[i].shares! + (addShare ? 1 : -1),
         };
         return [...newPosts];
       });
@@ -169,23 +229,113 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getPostData = useCallback(
-    (slug: string) => posts.find((p: IPost) => p.slug === slug),
-    [posts]
+    (slug: string) => postsData.find((p: Partial<IPost>) => p.slug === slug),
+    [postsData]
   );
+
+  const [visiblePosts, setVisiblePosts] = useState<string[]>([]);
+  const [disappearedPosts, setDisappearedPosts] = useState<DisappearedPost[]>(
+    []
+  );
+
+  const subscribeToPost = useCallback(
+    (slug: string) => {
+      if (!socket) throw new Error("No socket!");
+      socket?.emit("post_card_visible", slug);
+    },
+    [socket]
+  );
+  const unsubscribeFromPost = useCallback(
+    (slug: string) => {
+      if (!socket) throw new Error("No socket!");
+      socket?.emit("post_card_not_visible", slug);
+    },
+    [socket]
+  );
+
+  const postEnteredView = (slug: string) => {
+    setVisiblePosts((p) => [...p, slug]);
+    setDisappearedPosts((p) => [...p.filter((p) => p.slug !== slug)]);
+    subscribeToPost(slug);
+  };
+  const postLeftView = (slug: string) => {
+    const visibleCount =
+      visiblePosts.filter((visibleSlug) => visibleSlug === slug).length - 1;
+    if (visibleCount === 0) {
+      setVisiblePosts((p) => [
+        ...p.filter((visibleSlug) => visibleSlug !== slug),
+      ]);
+      setDisappearedPosts((p) => [
+        ...p.filter((p) => p.slug !== slug),
+        {
+          slug,
+          disappearedAt: new Date(),
+        },
+      ]);
+    } else {
+      setVisiblePosts((p) => {
+        //instead of removing all matching slugs, remove only one, because we need to retain the duplicates
+        let newVisiblePosts = p;
+        newVisiblePosts.splice(
+          p.findIndex((vslug) => vslug === slug),
+          1
+        );
+        return [...newVisiblePosts];
+      });
+    }
+  };
+  useEffect(() => {
+    const i = setInterval(() => {
+      const postsDisappeared30SecondsAgo = disappearedPosts
+        .filter(
+          (dp) => new Date().getTime() - dp.disappearedAt.getTime() > 30000
+        )
+        .map((dp) => dp.slug);
+      setPostsData((p) => [
+        ...p.filter((pd) => !postsDisappeared30SecondsAgo.includes(pd.slug!)),
+      ]);
+      setDisappearedPosts((p) => [
+        ...p.filter((dp) => !postsDisappeared30SecondsAgo.includes(dp.slug)),
+      ]);
+      postsDisappeared30SecondsAgo.forEach((slug) => unsubscribeFromPost(slug));
+    }, 5000);
+    return () => {
+      clearInterval(i);
+    };
+  }, [disappearedPosts]);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("post_visible_update", (data) => {
+      setPostsData((p: any) => {
+        let newPosts = p;
+        const foundIndex = p.findIndex((p: any) => p!.slug === data.slug);
+        if (foundIndex === -1 || !newPosts[foundIndex]) return;
+        newPosts[foundIndex] = { ...newPosts[foundIndex], ...data } as IPost;
+        return newPosts;
+      });
+    });
+    socket.on("post_visible_deleted", () => getAndSetPage());
+  }, [socket]);
 
   return (
     <PostsContext.Provider
       value={{
         error,
         status,
-        posts,
+        pagePosts,
+        popularPosts,
+        postsOpen,
+        visiblePosts,
+        disappearedPosts,
+        cachePostData,
         likePost,
         sharePost,
         getPostData,
         openPost,
         closePost,
-        postsOpen,
-        popularPosts,
+        postEnteredView,
+        postLeftView,
       }}
     >
       {children}

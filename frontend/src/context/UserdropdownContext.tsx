@@ -12,12 +12,15 @@ import { BsFillChatRightFill } from "react-icons/bs";
 import { GiBootKick } from "react-icons/gi";
 import { CgProfile } from "react-icons/cg";
 import { ImBlocked } from "react-icons/im";
+import { FcInvite } from "react-icons/fc";
 import {
   banUserFromRoom,
   kickUserFromRoom,
   sendPrivateMessage,
+  sendInvite,
 } from "../services/chat";
 import useScrollbarSize from "react-scrollbar-size";
+import { useNavigate } from "react-router-dom";
 
 const UserdropdownContext = createContext<{
   clickPos: { left: string; top: string };
@@ -27,16 +30,18 @@ const UserdropdownContext = createContext<{
   openUserdropdown: () => {},
 });
 
-type MenuSection = "Menu" | "DirectMessage";
+type MenuSection = "Menu" | "DirectMessage" | "Invite";
 
 export function UserdropdownProvider({ children }: { children: ReactNode }) {
   const { width: scrollbarWidth } = useScrollbarSize();
+  const navigate = useNavigate();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [uid, setUid] = useState("");
   const [clickPos, setClickPos] = useState({ left: "0", top: "0" });
   const [cursorInside, setCursorInside] = useState(false);
   const [messageInput, setMessageInput] = useState("");
+  const [roomInviteInput, setRoomInviteInput] = useState("");
   const [err, setErr] = useState("");
   const [section, setSection] = useState<MenuSection>("Menu");
 
@@ -50,6 +55,13 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
   const directMessageSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     sendPrivateMessage(messageInput, uid, false)
+      .then(() => closeUserDropdown())
+      .catch((e) => setErr(`${e}`));
+  };
+
+  const inviteSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    sendInvite(roomInviteInput, uid)
       .then(() => closeUserDropdown())
       .catch((e) => setErr(`${e}`));
   };
@@ -140,9 +152,20 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                     Chat
                   </button>
                   <button
+                    aria-label="Invite"
+                    className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
+                    onClick={() => setSection("Invite")}
+                  >
+                    <FcInvite className="text-lg my-1 ml-0.5" />
+                    Invite
+                  </button>
+                  <button
                     className="text-md rounded-sm px-0.5 pr-1 gap-2 font-bold flex items-center justify-between"
                     aria-label="Block"
-                    onClick={() => console.log("oof")}
+                    onClick={() => {
+                      navigate(`/profile/${uid}`);
+                      closeUserDropdown();
+                    }}
                   >
                     <CgProfile className="text-lg my-1 ml-0.5" />
                     Profile
@@ -200,6 +223,27 @@ export function UserdropdownProvider({ children }: { children: ReactNode }) {
                     className="bg-transparent px-0 pl-1 text-xl"
                   >
                     <MdSend className="text-black dark:text-white" />
+                  </button>
+                </form>
+              )}
+              {section === "Invite" && (
+                <form className="flex items-center" onSubmit={inviteSubmit}>
+                  <input
+                    autoFocus
+                    value={roomInviteInput}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setRoomInviteInput(e.target.value)
+                    }
+                    placeholder="Room name..."
+                    required
+                    type="text"
+                    className="text-black dark:text-white"
+                  />
+                  <button
+                    aria-label="Send direct message"
+                    className="bg-transparent px-0 pl-1 text-xl"
+                  >
+                    <FcInvite className="text-black dark:text-white" />
                   </button>
                 </form>
               )}

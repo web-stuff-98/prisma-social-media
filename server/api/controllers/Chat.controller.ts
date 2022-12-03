@@ -53,6 +53,37 @@ export default class ChatController {
     }
   }
 
+  static async sendInvite(req: Req, res: Res) {
+    try {
+      await ChatDAO.inviteUser(
+        req.body.recipientId,
+        String(req.user?.id),
+        req.body.roomName
+      );
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
+  }
+
+  static async acceptInvite(req:Req, res:Res) {
+    try {
+      await ChatDAO.acceptInvite(String(req.user?.id), req.body.senderId, req.body.roomName),
+      res.status(200).end()
+    } catch (e) {
+      res.status(400).json({msg:`${e}`})
+    }
+  }
+
+  static async declineInvite(req:Req, res:Res) {
+    try {
+      await ChatDAO.declineInvite(String(req.user?.id), req.body.senderId, req.body.roomName),
+      res.status(200).end()
+    } catch (e) {
+      res.status(400).json({msg:`${e}`})
+    }
+  }
+
   static async getConversations(req: Req, res: Res) {
     try {
       const users = await ChatDAO.getConversations(String(req.user?.id));
@@ -114,7 +145,7 @@ export default class ChatController {
       } catch (e) {
         req.unpipe(bb);
         await ChatDAO.conversationAttachmentError(
-          message.senderId,
+          message.senderId!,
           message.recipientId,
           message.id
         )
@@ -127,7 +158,7 @@ export default class ChatController {
           );
       }
       await ChatDAO.conversationAttachmentComplete(
-        message.senderId,
+        message.senderId!,
         message.recipientId,
         req.params.msgId,
         successData.type,
@@ -145,7 +176,7 @@ export default class ChatController {
     bb.on("finish", async () => {
       if (!gotFile) {
         await ChatDAO.conversationAttachmentError(
-          message.senderId,
+          message.senderId!,
           message.recipientId,
           message.id
         );
@@ -154,7 +185,7 @@ export default class ChatController {
     });
     bb.on("error", async (e: unknown) => {
       await ChatDAO.conversationAttachmentError(
-        message.senderId,
+        message.senderId!,
         message.recipientId,
         message.id
       )

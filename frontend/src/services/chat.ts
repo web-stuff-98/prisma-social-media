@@ -10,6 +10,33 @@ const deleteConversation = (uid: string) =>
     withCredentials: true,
     method: "DELETE",
   });
+const sendInvite = (roomName: string, recipientId: string) =>
+  makeRequest(`/api/chat/conversation/roomInvite`, {
+    method: "POST",
+    withCredentials: true,
+    data: {
+      roomName,
+      recipientId,
+    },
+  });
+const acceptInvite = (senderId: string, roomName: string) =>
+  makeRequest(`/api/chat/conversation/roomInvite/accept`, {
+    method: "POST",
+    withCredentials: true,
+    data: {
+      senderId,
+      roomName,
+    },
+  });
+const declineInvite = (senderId: string, roomName: string) =>
+  makeRequest(`/api/chat/conversation/roomInvite/decline`, {
+    method: "POST",
+    withCredentials: true,
+    data: {
+      senderId,
+      roomName,
+    },
+  });
 
 const createRoom = (name: string) =>
   makeRequest("/api/chat/room", {
@@ -194,4 +221,7 @@ export {
   roomOpenVideoChat,
   getRoomUsers,
   updateRoom,
+  sendInvite,
+  declineInvite,
+  acceptInvite,
 };

@@ -34,6 +34,36 @@ router.route("/conversation/message").put(
   }),
   ChatController.updatePrivateMessage
 );
+router.route("/conversation/roomInvite").post(
+  simpleRateLimit({
+    routeName: "privateMessage",
+    maxReqs: 5,
+    windowMs: 10000,
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
+    blockDuration: 20000,
+  }),
+  ChatController.sendInvite
+);
+router.route("/conversation/roomInvite/accept").post(
+  simpleRateLimit({
+    routeName: "privateMessage",
+    maxReqs: 5,
+    windowMs: 10000,
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
+    blockDuration: 20000,
+  }),
+  ChatController.acceptInvite
+);
+router.route("/conversation/roomInvite/decline").post(
+  simpleRateLimit({
+    routeName: "privateMessage",
+    maxReqs: 5,
+    windowMs: 10000,
+    msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
+    blockDuration: 20000,
+  }),
+  ChatController.declineInvite
+);
 router.route("/conversation/message/attachment/:msgId/:bytes").post(
   simpleRateLimit({
     routeName: "sendPrivateAttachment",

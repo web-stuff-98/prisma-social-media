@@ -21,6 +21,7 @@ export interface IUser {
   name: string;
   online?: boolean;
   pfp?: string;
+  createdAt?: string;
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

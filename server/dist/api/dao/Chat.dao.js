@@ -124,6 +124,200 @@ class ChatDAO {
             }
         });
     }
+    static inviteUser(invited, inviter, roomName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let room;
+            let invitedU;
+            let inviterU;
+            try {
+                room = yield prisma_1.default.room.findFirstOrThrow({
+                    where: {
+                        name: { equals: roomName, mode: "insensitive" },
+                        authorId: inviter,
+                    },
+                    include: { members: true, banned: true },
+                });
+            }
+            catch (e) {
+                throw new Error("Could not find room to invite user to");
+            }
+            try {
+                invitedU = yield prisma_1.default.user.findUniqueOrThrow({
+                    where: { id: invited },
+                });
+            }
+            catch (e) {
+                throw new Error("Could not find user to invite to room");
+            }
+            try {
+                inviterU = yield prisma_1.default.user.findUniqueOrThrow({
+                    where: { id: inviter },
+                });
+            }
+            catch (e) {
+                throw new Error("Your account no longer exists, or could not be found for some reason.");
+            }
+            if (room.members.find((u) => u.id === invited))
+                throw new Error(`${invitedU.name} is already a member of ${room.name}`);
+            if (room.banned.find((u) => u.id === invited))
+                throw new Error(`${invitedU.name} is banned from the room.${inviterU.id === room.authorId
+                    ? " You must first unban the user before inviting them."
+                    : " The owner of the room has banned this user."}`);
+            /*Send the message which will be used by the frontend as an invitation.*/
+            const msgData = yield prisma_1.default.privateMessage.create({
+                data: {
+                    senderId: inviter,
+                    recipientId: invited,
+                    message: `INVITATION ${room.name}`,
+                },
+            });
+            __1.io.to(`inbox=${inviter}`).emit("private_message", msgData);
+            __1.io.to(`inbox=${invited}`).emit("private_message", msgData);
+        });
+    }
+    static declineInvite(invited, inviter, roomName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield prisma_1.default.user.findUniqueOrThrow({
+                    where: { id: invited },
+                    select: { id: true },
+                });
+            }
+            catch (e) {
+                throw new Error("Could not find your account");
+            }
+            try {
+                yield prisma_1.default.user.findUniqueOrThrow({
+                    where: { id: inviter },
+                    select: { id: true },
+                });
+            }
+            catch (e) {
+                throw new Error("Could not find the user who sent this invitation.");
+            }
+            const room = yield prisma_1.default.room.findFirst({
+                where: {
+                    name: {
+                        equals: roomName,
+                        mode: "insensitive",
+                    },
+                    authorId: inviter,
+                },
+            });
+            const findInvitationMessages = () => prisma_1.default.privateMessage
+                .findMany({
+                where: {
+                    senderId: inviter,
+                    recipientId: invited,
+                    message: {
+                        equals: `INVITATION ${room === null || room === void 0 ? void 0 : room.name}`,
+                        mode: "insensitive",
+                    },
+                },
+                select: { id: true },
+            })
+                .then((msgs) => msgs.map((msg) => msg.id));
+            const msgIds = yield findInvitationMessages();
+            const deleteInvitationMessages = () => __awaiter(this, void 0, void 0, function* () {
+                /*doesn't actually delete the invitation(s), it just changes
+                them to say the invitation was declined*/
+                yield prisma_1.default.privateMessage.updateMany({
+                    where: { id: { in: msgIds } },
+                    data: {
+                        senderId: null,
+                        message: `Invitation to ${room === null || room === void 0 ? void 0 : room.name} declined ❌`,
+                    },
+                });
+            });
+            if (!room) {
+                throw new Error("Could not find room to decline invitation for. It was either deleted or changed names. Ask the owner to send a new invite.");
+            }
+            yield deleteInvitationMessages();
+            msgIds.forEach((id) => {
+                const msgData = {
+                    senderId: inviter,
+                    recipientId: invited,
+                    message: `Invitation to ${room === null || room === void 0 ? void 0 : room.name} declined ❌`,
+                    id: id,
+                };
+                __1.io.to(`inbox=${inviter}`).emit("private_message_update", msgData);
+                __1.io.to(`inbox=${invited}`).emit("private_message_update", msgData);
+            });
+        });
+    }
+    static acceptInvite(invited, inviter, roomName) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let invitedU;
+            try {
+                invitedU = yield prisma_1.default.user.findUniqueOrThrow({
+                    where: { id: invited },
+                });
+            }
+            catch (e) {
+                throw new Error("Could not find your account");
+            }
+            try {
+                yield prisma_1.default.user.findUniqueOrThrow({
+                    where: { id: inviter },
+                });
+            }
+            catch (e) {
+                throw new Error("Could not find the user who sent this invitation.");
+            }
+            const room = yield prisma_1.default.room.findFirst({
+                where: {
+                    name: {
+                        equals: roomName,
+                        mode: "insensitive",
+                    },
+                    authorId: inviter,
+                },
+            });
+            const findInvitationMessages = () => prisma_1.default.privateMessage
+                .findMany({
+                where: {
+                    senderId: inviter,
+                    recipientId: invited,
+                    message: {
+                        equals: `INVITATION ${room === null || room === void 0 ? void 0 : room.name}`,
+                        mode: "insensitive",
+                    },
+                },
+                select: { id: true },
+            })
+                .then((msgs) => msgs.map((msg) => msg.id).filter((msgId) => msgId));
+            const msgIds = yield findInvitationMessages();
+            const acceptInvitationMessages = () => __awaiter(this, void 0, void 0, function* () {
+                /*change all the invitation messages to say that
+                they were accepted*/
+                yield prisma_1.default.privateMessage.updateMany({
+                    where: { id: { in: msgIds } },
+                    data: {
+                        senderId: null,
+                        message: `Invitation to ${room === null || room === void 0 ? void 0 : room.name} accepted ✅`,
+                    },
+                });
+            });
+            if (!room) {
+                throw new Error("Could not find room to accept invitation for. It was either deleted or changed names. Ask the owner to send a new invite.");
+            }
+            yield acceptInvitationMessages();
+            msgIds.forEach((id) => {
+                const msgData = {
+                    senderId: inviter,
+                    recipientId: invited,
+                    message: `Invitation to ${room === null || room === void 0 ? void 0 : room.name} accepted ✅`,
+                    id: id,
+                };
+                __1.io.to(`inbox=${inviter}`).emit("private_message_update", msgData);
+                __1.io.to(`inbox=${invited}`).emit("private_message_update", msgData);
+            });
+            yield prisma_1.default.room.update({
+                where: { id: room.id },
+                data: { members: { connect: { id: invited } } },
+            });
+        });
+    }
     static updatePrivateMessage(id, message, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             let msg;
@@ -230,12 +424,14 @@ class ChatDAO {
                 });
                 let uids = [];
                 for (const msg of sentMessages) {
-                    if (!uids.includes(msg.recipientId) && msg.recipientId !== uid)
-                        uids.push(msg.recipientId);
+                    if (msg.recipientId)
+                        if (!uids.includes(msg.recipientId) && msg.recipientId !== uid)
+                            uids.push(msg.recipientId);
                 }
                 for (const msg of receivedMessages) {
-                    if (!uids.includes(msg.senderId) && msg.senderId !== uid)
-                        uids.push(msg.senderId);
+                    if (msg.senderId)
+                        if (!uids.includes(msg.senderId) && msg.senderId !== uid)
+                            uids.push(msg.senderId);
                 }
                 const users = yield prisma_1.default.user.findMany({
                     where: { id: { in: uids } },
@@ -436,7 +632,10 @@ class ChatDAO {
             const roomAlreadyExists = yield prisma_1.default.room.findFirst({
                 where: {
                     authorId,
-                    name,
+                    name: {
+                        equals: name,
+                        mode: "insensitive",
+                    },
                 },
             });
             if (roomAlreadyExists)
@@ -475,7 +674,7 @@ class ChatDAO {
                 .catch((e) => {
                 throw new Error("Room does not exist");
             });
-            if (!room.public)
+            if (!room.public && !room.members.find((member) => member.id === uid))
                 throw new Error("You need an invitation to join this room");
             if (room.banned.find((banned) => banned.id === uid))
                 throw new Error("You are banned from this room");

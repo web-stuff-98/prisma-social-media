@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
-
 import { useAuth } from "../../context/AuthContext";
-
 import { CgDarkMode } from "react-icons/cg";
 import { useInterface } from "../../context/InterfaceContext";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 export default function Nav() {
   const containerRef = useRef<HTMLElement>(null);
@@ -26,13 +24,22 @@ export default function Nav() {
             Blog
           </Link>
           {user && (
-            <Link
-              to="/settings"
-              aria-label="Settings"
-              className="text-md font-bold"
-            >
-              Settings
-            </Link>
+            <>
+              <Link
+                to="/settings"
+                aria-label="Settings"
+                className="text-md font-bold"
+              >
+                Settings
+              </Link>
+              <Link
+                to={`/profile/${user.id}`}
+                aria-label="Profile"
+                className="text-md font-bold"
+              >
+                Profile
+              </Link>
+            </>
           )}
           {!user && (
             <>

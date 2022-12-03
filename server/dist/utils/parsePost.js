@@ -35,10 +35,12 @@ exports.default = (post, uid) => __awaiter(void 0, void 0, void 0, function* () 
             ? true
             : false, likes: post.likes.length, sharedByMe: post.shares.find((share) => share.userId === uid)
             ? true
-            : false, shares: post.shares.length, comments: post.comments.map((cmt) => {
-            const { _count } = cmt, commentFields = __rest(cmt, ["_count"]);
-            return Object.assign(Object.assign({}, commentFields), { likedByMe: usersCommentLikes.length > 0
-                    ? usersCommentLikes.find((like) => like.commentId === cmt.id)
-                    : undefined, likeCount: _count.likes });
-        }) });
+            : false, shares: post.shares.length, comments: post.comments
+            ? post.comments.map((cmt) => {
+                const { _count } = cmt, commentFields = __rest(cmt, ["_count"]);
+                return Object.assign(Object.assign({}, commentFields), { likedByMe: usersCommentLikes.length > 0
+                        ? usersCommentLikes.find((like) => like.commentId === cmt.id)
+                        : undefined, likeCount: _count.likes });
+            })
+            : [] });
 });

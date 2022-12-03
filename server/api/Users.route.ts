@@ -26,13 +26,18 @@ router.route("/:id").get(
   UsersController.getUserById
 );
 router.route("/register").post(UsersController.register);
+router.route("/profile/:uid").get(withUser, UsersController.getProfile);
+router.route("/profile").put(authMiddleware, UsersController.updateProfile);
 router.route("/check").post(withUser, UsersController.checkLogin);
-router.route("/login").post(bruteRateLimit({
-  routeName:"login",
-  blockDuration: 21600000,
-  failsRequired: 3,
-  msg:"You have made too many attempts. You will get 3 more attempts after BLOCKDURATION."
-}), UsersController.login);
+router.route("/login").post(
+  bruteRateLimit({
+    routeName: "login",
+    blockDuration: 21600000,
+    failsRequired: 3,
+    msg: "You have made too many attempts. You will get 3 more attempts after BLOCKDURATION.",
+  }),
+  UsersController.login
+);
 router.route("/logout").post(withUser, UsersController.logout);
 
 export default router;

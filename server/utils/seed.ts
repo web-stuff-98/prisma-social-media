@@ -20,9 +20,9 @@ let generatedRooms: any[] = [];
 export default async function seed() {
   await prisma.user.deleteMany();
 
-  await generateUsers(5);
-  await generatePosts(60);
-  await generateRooms(20);
+  await generateUsers(60);
+  await generatePosts(300);
+  await generateRooms(60);
   await generatePostImages();
   await generateCommentsOnPosts();
   await generateLikesAndSharesOnPosts();
