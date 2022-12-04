@@ -10,7 +10,9 @@ export default function Home() {
         video chat, embedded comments, customizable chatrooms, markdown
         blogging, private messaging and uploading video attachments. You can
         also send files and images and see the upload progress. Everything
-        updates in realtime depending on component visibility.
+        updates in realtime depending on component visibility. You can also
+        update your profile picture, edit your profile bio and background image
+        and update room cover images.
       </p>
       <p>
         You can create an account with just a username and password, or log into

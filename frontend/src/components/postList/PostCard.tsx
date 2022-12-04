@@ -47,7 +47,7 @@ export default function PostCard({
   return (
     <article
       ref={containerRef}
-      className={`p-2 md:pl-2 bg-foreground dark:bg-darkmodeForeground shadow-md rounded border dark:border-stone-800 text-center md:h-postHeight gap-1 sm:flex-col md:flex ${
+      className={`p-2 md:pl-2 bg-foreground dark:bg-darkmodeForeground shadow rounded border-stone-200 border dark:border-stone-800 text-center md:h-postHeight gap-1 sm:flex-col md:flex ${
         reverse ? "md:flex-row-reverse" : "md:flex-row"
       } h-full w-full justify-evenly`}
     >
@@ -134,8 +134,8 @@ export default function PostCard({
             } mx-auto grow p-1`}
           >
             <h3
-              style={{ lineHeight: "0.875" }}
-              className={`font-Archivo tracking-tight sm:text-sm md:text-lg sm:mx-auto md:mx-0 sm:py-0 pt-0 sm:text-center ${
+              style={{ lineHeight: "0.9" }}
+              className={`font-Archivo tracking-tight sm:text-sm md:text-lg sm:mx-auto md:mx-0 sm:py-0 pt-0 mb-0.5 sm:text-center ${
                 reverse ? "md:text-right" : "md:text-left"
               } font-black`}
             >
@@ -143,7 +143,7 @@ export default function PostCard({
             </h3>
             <p
               style={{ lineHeight: "0.95" }}
-              className={`sm:text-center px-0 sm:text-xs py-0.5 sm:mx-auto md:mx-0 text-xs ${
+              className={`sm:text-center px-0 sm:text-xs py-0.5 mb-0.5 sm:mx-auto md:mx-0 text-xs ${
                 reverse ? "md:text-right" : "md:text-left"
               }`}
             >
@@ -189,12 +189,13 @@ export default function PostCard({
                 user={getUserData(String(post.author.id))}
               />
             </span>
+            <div>
             <span
-              onClick={() => navigate(`/posts/${post.slug}`)}
-              className="italic text-xs leading-3 tracking-tighter font-bold cursor-pointer pt-2"
+              className="italic font-bold text-xs leading-3 tracking-tighter cursor-pointer pt-2"
             >
-              Read more...
+              123 comments
             </span>
+            </div>
           </div>
         </>
       ) : (

@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import imageProcessing from "../../utils/imageProcessing";
 import { io } from "../..";
 import getUserSocket from "../../utils/getUserSocket";
+import { Profile } from "@prisma/client";
 
 export default class UsersDAO {
   static async getUsers() {
@@ -34,10 +35,32 @@ export default class UsersDAO {
     uid: string,
     data: { backgroundBase64?: string; bio?: string }
   ) {
-    await prisma.profile.update({
+    let backgroundScaled = "";
+    let updateData = data;
+    if (data.backgroundBase64) {
+      backgroundScaled = (await imageProcessing(data.backgroundBase64!, {
+        width: 136,
+        height: 33,
+      })) as string;
+      updateData.backgroundBase64 = backgroundScaled;
+    }
+    if (updateData.backgroundBase64 === "") delete updateData.backgroundBase64;
+    const profile = await prisma.profile.findUnique({
       where: { userId: uid },
-      data,
     });
+    if (profile)
+      await prisma.profile.update({
+        where: { userId: uid },
+        data: updateData,
+      });
+    else
+      await prisma.profile.create({
+        data: {
+          userId: uid,
+          ...updateData,
+        },
+      });
+    io.to(`profile=${uid}`).emit("profile_update", data);
   }
 
   static async getUserById(id: string) {

@@ -20,9 +20,9 @@ let generatedRooms: any[] = [];
 export default async function seed() {
   await prisma.user.deleteMany();
 
-  await generateUsers(60);
-  await generatePosts(300);
-  await generateRooms(60);
+  await generateUsers(80);
+  await generatePosts(1000);
+  await generateRooms(150);
   await generatePostImages();
   await generateCommentsOnPosts();
   await generateLikesAndSharesOnPosts();
@@ -68,12 +68,12 @@ const generatePost = async () => {
     url: "https://jaspervdj.be/lorem-markdownum/markdown.txt",
     responseType: "arraybuffer",
   });
-  const body = await new Promise<string>((resolve,reject) => {
+  const body = await new Promise<string>((resolve, reject) => {
     zlib.gunzip(res.data, (err, out) => {
-      if(err) reject(err)
-      resolve(out.toString())
-    })
-  })
+      if (err) reject(err);
+      resolve(out.toString());
+    });
+  });
   const title = lipsum.generateParagraphs(1).slice(0, 80);
   const description = lipsum
     .generateParagraphs(Math.ceil(Math.random() * 3))

@@ -13,7 +13,7 @@ export default function Nav() {
   return (
     <nav
       ref={containerRef}
-      className="w-full bg-neutral-900 dark:bg-zinc-900 border-b border-zinc-800 dark:border-stone-800 dark:bg-zinc-900 min-h-nav"
+      className="w-full bg-neutral-900 dark:bg-zinc-900 border-b border-t border-zinc-800 dark:border-stone-800 dark:bg-zinc-900 min-h-nav"
     >
       <div className="mx-auto h-full container flex items-center justify-between px-1.5">
         <div className="flex text-white gap-5">

@@ -45,7 +45,8 @@ export default function User({
   isServer,
   chatroomId,
   micro,
-  style = {}
+  style = {},
+  fixDarkBackgroundContrast,
 }: {
   date?: Date;
   user?: IUser;
@@ -71,6 +72,7 @@ export default function User({
   chatroomId?: string;
   micro?: boolean;
   style?: object;
+  fixDarkBackgroundContrast?: boolean;
 }) {
   const { openUserdropdown } = useUserdropdown();
   const { user: currentUser } = useAuth();
@@ -132,11 +134,12 @@ export default function User({
             onClick={onLikeClick}
             Icon={liked ? AiFillLike : AiOutlineLike}
             aria-label={liked ? "Unlike" : "Like"}
+            color={fixDarkBackgroundContrast ? (liked ? "text-stone-200 dark:text-stone-200" : "text-stone-400 dark:text-stone-400") : (liked ? "text-stone-500 dark:text-stone-400" : "text-stone-400 dark:text-stone-400")}
           >
             {likes > 0 && (
               <div
-                style={{ zIndex: "96", top: "-25%", left: "-27.5%" }}
-                className="absolute text-md text-green-500 font-bold drop-shadow leading-3 tracking-tighter"
+                style={{ zIndex: "96", top: "-25%", left: reverse ? "27.5%" : "-27.5%" }}
+                className={`absolute text-md ${fixDarkBackgroundContrast ? "text-green-400" : "text-stone-900 dark:text-green-500"} font-extrabold drop-shadow leading-3 tracking-tighter`}
               >
                 {likes}
               </div>
@@ -146,11 +149,12 @@ export default function User({
             onClick={onShareClick}
             Icon={shared ? BsShareFill : BsShare}
             aria-label={shared ? "Unshare" : "Share"}
+            color={fixDarkBackgroundContrast ? (shared ? "text-stone-200 dark:text-stone-200" : "text-stone-400 dark:text-stone-400") : (shared ? "text-stone-500 dark:text-stone-400" : "text-stone-400 dark:text-stone-400")}
           >
             {shares > 0 && (
               <div
-                style={{ zIndex: "96", top: "-25%", left: "-27.5%" }}
-                className="absolute text-md text-green-500 font-bold drop-shadow leading-3 tracking-tighter"
+                style={{ zIndex: "96", top: "-25%", left: reverse ? "27.5%" : "-27.5%" }}
+                className={`absolute text-md ${fixDarkBackgroundContrast ? "text-green-400" : "text-stone-900 dark:text-green-500"} font-extrabold drop-shadow leading-3 tracking-tighter`}
               >
                 {shares}
               </div>

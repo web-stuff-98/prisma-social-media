@@ -26,6 +26,7 @@ class PostsDAO {
             const posts = yield prisma_1.default.post.findMany({
                 where: { imagePending: false },
                 select: {
+                    _count: { select: { comments: true, likes: true, shares: true } },
                     id: true,
                     slug: true,
                     title: true,
@@ -36,11 +37,11 @@ class PostsDAO {
                             id: true,
                         },
                     },
-                    likes: true,
-                    shares: true,
                     tags: true,
                     imageKey: true,
                     blur: true,
+                    likes: true,
+                    shares: true,
                 },
             });
             return posts.map((post) => {
@@ -66,6 +67,7 @@ class PostsDAO {
             const posts = yield prisma_1.default.post.findMany({
                 where: { imagePending: false },
                 select: {
+                    _count: { select: { comments: true, likes: true, shares: true } },
                     id: true,
                     slug: true,
                     title: true,
@@ -76,8 +78,6 @@ class PostsDAO {
                             id: true,
                         },
                     },
-                    likes: true,
-                    shares: true,
                     tags: true,
                 },
                 orderBy: {
@@ -113,6 +113,7 @@ class PostsDAO {
                 .findUnique({
                 where: { id },
                 include: {
+                    _count: { select: { comments: true, likes: true, shares: true } },
                     comments: {
                         orderBy: {
                             createdAt: "desc",
@@ -128,6 +129,7 @@ class PostsDAO {
                                     id: true,
                                 },
                             },
+                            likes: true,
                             _count: {
                                 select: { likes: true },
                             },
@@ -153,6 +155,7 @@ class PostsDAO {
                 .findUnique({
                 where: { slug },
                 include: {
+                    _count: { select: { comments: true, likes: true, shares: true } },
                     comments: {
                         orderBy: {
                             createdAt: "desc",
@@ -169,8 +172,8 @@ class PostsDAO {
                                 },
                             },
                             _count: {
-                                select: { likes: true },
-                            },
+                                select: { likes: true }
+                            }
                         },
                     },
                     author: {

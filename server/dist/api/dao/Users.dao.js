@@ -46,10 +46,30 @@ class UsersDAO {
     }
     static updateProfile(uid, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield prisma_1.default.profile.update({
+            let backgroundScaled = "";
+            let updateData = data;
+            if (data.backgroundBase64) {
+                backgroundScaled = (yield (0, imageProcessing_1.default)(data.backgroundBase64, {
+                    width: 136,
+                    height: 33,
+                }));
+                updateData.backgroundBase64 = backgroundScaled;
+            }
+            if (updateData.backgroundBase64 === "")
+                delete updateData.backgroundBase64;
+            const profile = yield prisma_1.default.profile.findUnique({
                 where: { userId: uid },
-                data,
             });
+            if (profile)
+                yield prisma_1.default.profile.update({
+                    where: { userId: uid },
+                    data: updateData,
+                });
+            else
+                yield prisma_1.default.profile.create({
+                    data: Object.assign({ userId: uid }, updateData),
+                });
+            __1.io.to(`profile=${uid}`).emit("profile_update", data);
         });
     }
     static getUserById(id) {

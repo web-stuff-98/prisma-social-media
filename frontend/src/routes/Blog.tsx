@@ -33,10 +33,9 @@ export default function Blog() {
           style={{
             maxHeight: "calc(100% - 11.5rem)",
             top: `${scrollY}px`,
-            transition: "top 100ms linear",
             maxWidth: "10pc",
           }}
-          className="relative bg-foreground overflow-y-auto border dark:border-stone-800 shadow-md dark:bg-darkmodeForeground pointer text-center rounded p-2"
+          className="relative bg-foreground overflow-y-auto border border-stone-200 dark:border-stone-800 shadow dark:bg-darkmodeForeground pointer text-center rounded p-2"
         >
           <h2 className="whitespace-nowrap font-extrabold tracking-tight text-md">
             Popular posts

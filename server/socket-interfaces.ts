@@ -1,4 +1,10 @@
-import { Post, PrivateMessage, User, RoomMessage, Room } from "@prisma/client";
+import {
+  Profile,
+  PrivateMessage,
+  User,
+  RoomMessage,
+  Room,
+} from "@prisma/client";
 
 import type Peer from "simple-peer";
 import { ParsedPost } from "./utils/parsePost";
@@ -85,6 +91,8 @@ export interface ServerToClientEvents {
 
   post_cover_image_progress: (progress: number, slug: string) => void;
 
+  profile_update: (data: { bio?: string; backgroundBase64?: string }) => void;
+
   user_visible_update: (data: {
     id: string;
     name?: string;
@@ -103,6 +111,8 @@ export interface ClientToServerEvents {
 
   user_visible: (uid: string) => void;
   user_not_visible: (uid: string) => void;
+  open_profile: (uid: string) => void;
+  close_profile: (uid: string) => void;
   post_card_visible: (slug: string) => void;
   post_card_not_visible: (slug: string) => void;
 

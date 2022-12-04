@@ -94,7 +94,7 @@ export default function Post() {
             <div
               style={{
                 backdropFilter: "blur(2px)",
-                background: "rgba(0,0,0,0.1)",
+                background: "rgba(0,0,0,0.166)",
                 borderTop: "1px outset rgba(255,255,255,0.1)",
               }}
               className="flex p-2 dark:border-stone-800 drop-shadow-lg items-end pb-2"
@@ -120,6 +120,7 @@ export default function Post() {
                   by
                   user={getUserData(String(post?.author!.id))}
                   reverse
+                  fixDarkBackgroundContrast
                 />
                 {user && post?.author!.id === user?.id && (
                   <div className="flex gap-1 my-2">

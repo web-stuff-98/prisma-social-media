@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import seed from "./utils/seed";
-//seed()
+//seed();
 
 import cors from "cors";
 import express, { Express } from "express";
@@ -84,6 +84,8 @@ io.on("connection", async (socket) => {
     socket.leave(`post_card=${slug}`)
   );
 
+  socket.on("open_profile", (uid: string) => socket.join(`profile=${uid}`));
+  socket.on("close_profile", (uid: string) => socket.leave(`profile=${uid}`));
   socket.on("open_post_comments", (slug) => socket.join(slug));
   socket.on("leave_post_comments", (slug) => socket.leave(slug));
 

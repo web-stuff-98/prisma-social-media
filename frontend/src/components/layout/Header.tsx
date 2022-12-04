@@ -1,7 +1,7 @@
 export default function Header(){
     return(
-        <header className="min-h-header tracking-wide font-bold border-zinc-800 dark:border-zinc-800 bg-neutral-900 dark:bg-zinc-900 text-white text-xs flex flex-col items-center justify-center">
-            <div className="uppercase text-xl font-extrabold leading-6 tracking-tighter">
+        <header style={{textShadow:"1px 2px 4px black"}} className="min-h-header font-bold border-zinc-800 dark:border-zinc-800 bg-gradient-to-t from-indigo-900 to-blue-900 dark:bg-zinc-900 text-white text-xs flex flex-col items-center justify-center">
+            <div className="uppercase text-xl font-extrabold leading-3 mt-2 tracking-tighter">
             Prisma-social-media
             </div>
             Group video chat, blog & filesharing 

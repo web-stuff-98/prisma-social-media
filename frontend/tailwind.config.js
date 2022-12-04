@@ -18,7 +18,7 @@ module.exports = {
         threadGap: "20%",
       },
       fontFamily: {
-        rubik: '"Inter Tight"',
+        rubik: '"Meera Inimai"',
       },
       colors: {
         foreground: "white",

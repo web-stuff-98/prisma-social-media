@@ -78,7 +78,7 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
             imageKey: true,
             blur: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { likes: { _count: "desc" } },
         skip: clientQueryInput.pageOffset,
         take: 10,
     });

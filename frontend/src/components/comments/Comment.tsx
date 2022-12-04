@@ -174,7 +174,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
                 Icon={likedByMe ? AiFillLike : AiOutlineLike}
                 aria-label={likedByMe ? "Unlike" : "Like"}
               >
-                <div className="drop-shadow-md text-green-500">
+                <div style={{left:"50%", top:"-50%"}} className="drop-shadow-md absolute text-green-500">
                 {likeCount}
                 </div>
               </IconBtn>
@@ -226,9 +226,9 @@ This function is from the web dev simplified video. It is supposed to be in the 
               onClick={() => setAreChildrenHidden(true)}
             >
               <span
-                style={{ width: "2px", borderRadius: "2px" }}
+                style={{ width: "2px", borderRadius: "2px", transition:"100ms linear background" }}
                 className={`${
-                  hideRepliesBarHover ? "bg-amber-600" : "bg-stone-200"
+                  hideRepliesBarHover ? "bg-amber-600" : "bg-stone-800"
                 } h-full`}
               />
             </button>

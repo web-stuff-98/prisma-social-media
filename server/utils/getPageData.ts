@@ -94,7 +94,7 @@ export default async (
       imageKey:true,
       blur:true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { likes: { _count: "desc"} },
     skip: clientQueryInput.pageOffset,
     take: 10,
   });

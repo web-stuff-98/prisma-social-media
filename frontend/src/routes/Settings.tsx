@@ -82,7 +82,7 @@ export default function Settings() {
           user={getUserData(String(user?.id))}
         />
       )}
-      <p className="text-center text-xs leading-4 mt-1">
+      <p className="text-center text-xs leading-3 mt-1 p-2">
         Click on your profile picture to select a new one, it will be updated as
         soon as you have confirmed the selection. There is a file size limit of
         around 4mb.

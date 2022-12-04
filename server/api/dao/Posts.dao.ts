@@ -15,6 +15,7 @@ export default class PostsDAO {
     const posts = await prisma.post.findMany({
       where: { imagePending: false },
       select: {
+        _count: { select: { comments: true, likes: true, shares: true } },
         id: true,
         slug: true,
         title: true,
@@ -25,11 +26,11 @@ export default class PostsDAO {
             id: true,
           },
         },
-        likes: true,
-        shares: true,
         tags: true,
         imageKey: true,
         blur: true,
+        likes: true,
+        shares: true,
       },
     });
     return posts.map((post) => {
@@ -67,6 +68,7 @@ export default class PostsDAO {
     const posts = await prisma.post.findMany({
       where: { imagePending: false },
       select: {
+        _count: { select: { comments: true, likes: true, shares: true } },
         id: true,
         slug: true,
         title: true,
@@ -77,8 +79,6 @@ export default class PostsDAO {
             id: true,
           },
         },
-        likes: true,
-        shares: true,
         tags: true,
       },
       orderBy: {
@@ -113,6 +113,7 @@ export default class PostsDAO {
       .findUnique({
         where: { id },
         include: {
+          _count: { select: { comments: true, likes: true, shares: true } },
           comments: {
             orderBy: {
               createdAt: "desc",
@@ -128,6 +129,7 @@ export default class PostsDAO {
                   id: true,
                 },
               },
+              likes:true,
               _count: {
                 select: { likes: true },
               },
@@ -155,6 +157,7 @@ export default class PostsDAO {
       .findUnique({
         where: { slug },
         include: {
+          _count: { select: { comments: true, likes: true, shares: true } },
           comments: {
             orderBy: {
               createdAt: "desc",
@@ -171,8 +174,8 @@ export default class PostsDAO {
                 },
               },
               _count: {
-                select: { likes: true },
-              },
+                select: { likes: true }
+              }
             },
           },
           author: {
