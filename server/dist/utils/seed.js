@@ -35,9 +35,10 @@ let generatedRooms = [];
 function seed() {
     return __awaiter(this, void 0, void 0, function* () {
         yield prisma_1.default.user.deleteMany();
-        yield generateUsers(80);
-        yield generatePosts(1000);
-        yield generateRooms(150);
+        yield s3.deleteBucket();
+        yield generateUsers(10);
+        yield generatePosts(20);
+        yield generateRooms(20);
         yield generatePostImages();
         yield generateCommentsOnPosts();
         yield generateLikesAndSharesOnPosts();
@@ -119,8 +120,9 @@ const generatePost = () => __awaiter(void 0, void 0, void 0, function* () {
             tags: {
                 connectOrCreate: lipsum
                     .generateParagraphs(1)
+                    .replaceAll(".", "")
                     .split(" ")
-                    .filter((tag) => tag !== "")
+                    .filter((tag) => tag && tag.length > 1)
                     .slice(0, 8)
                     .map((tag) => {
                     const name = tag.trim().toLowerCase();

@@ -3,8 +3,8 @@ import prisma from "./prisma";
 import { Post } from "@prisma/client";
 
 type Query = {
-  rawTags: string;
-  rawTerm: string;
+  tags: string;
+  term: string;
 };
 type Params = {
   page: number;
@@ -26,29 +26,24 @@ export default async (
   let rawTags = "";
   let rawTerm = "";
   if (query) {
-    rawTags = query.rawTags;
-    rawTerm = query.rawTerm;
+    if(query.tags)
+    rawTags = query.tags;
+    if(query.term)
+    rawTerm = query.term;
+    console.log(rawTags)
+    console.log(rawTerm)
     clientQueryInput = {
       pageOffset: Number(Math.max(Number(params?.page) - 1, 0) * 20),
-      ...(rawTags
-        ? {
-            tags: rawTags
-              ? String(rawTags)
-                  .toLowerCase()
-                  .split(" ")
-                  .filter((tag: string) => tag.trim() !== "")
-                  .map((tag: string) => tag.replace(/[^\w-]+/g, ""))
-              : [],
-          }
-        : rawTerm
-        ? {
-            term: String(rawTerm)
-              .toLowerCase()
-              .trim()
-              .replaceAll("+", " ")
-              .replace(/[^\w-]+/g, ""),
-          }
-        : {}),
+      tags: rawTags
+        ? String(rawTags)
+            .toLowerCase()
+            .split(" ")
+            .filter((tag: string) => tag.trim() !== "")
+            .map((tag: string) => tag.replace(/[^\w-]+/g, ""))
+        : [],
+      term: rawTerm ? String(rawTerm)
+        .toLowerCase()
+        .trim() : ""
     };
   }
 
@@ -56,22 +51,27 @@ export default async (
   Need to use type any because there is a typescript error caused by mode: "insensitive"
   for some reason 
   */
-  const where: any = rawTags
-    ? {
-        imagePending: false,
-        tags: { some: { name: { in: clientQueryInput.tags } } },
-      }
-    : {
-        imagePending: false,
-        ...(clientQueryInput.term
-          ? {
-              title: {
-                contains: clientQueryInput.term,
-                mode: "insensitive",
-              },
-            }
-          : {}),
-      };
+  const where: any =
+  clientQueryInput.tags.length || clientQueryInput.term
+      ? {
+          imagePending: false,
+          ...(clientQueryInput.tags.length > 0
+            ? {
+                tags: { some: { name: { in: clientQueryInput.tags } } },
+              }
+            : {}),
+          ...(clientQueryInput.term
+            ? {
+                title: {
+                  contains: clientQueryInput.term,
+                  mode: "insensitive",
+                },
+              }
+            : {}),
+        }
+      : {
+          imagePending: false,
+        };
 
   const posts = await prisma.post.findMany({
     where: {
@@ -91,10 +91,11 @@ export default async (
       likes: true,
       shares: true,
       tags: true,
-      imageKey:true,
-      blur:true,
+      imageKey: true,
+      blur: true,
+      _count: { select: { comments: true } },
     },
-    orderBy: { likes: { _count: "desc"} },
+    orderBy: { likes: { _count: "desc" } },
     skip: clientQueryInput.pageOffset,
     take: 10,
   });
@@ -114,7 +115,7 @@ export default async (
       sharedByMe = post.shares.find((share) => share.userId === uid)
         ? true
         : false;
-      return {
+      let out: any = {
         ...post,
         likes: post.likes.length,
         shares: post.shares.length,
@@ -122,6 +123,9 @@ export default async (
         likedByMe,
         sharedByMe,
       };
+      out.commentCount = out._count.comments;
+      delete out._count;
+      return out;
     }),
     pageCount: posts.length,
     fullCount: feedQ_count.length,

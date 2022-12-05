@@ -100,6 +100,17 @@ export interface ServerToClientEvents {
   }) => void;
   user_visible_deleted: (slug: string) => void;
   post_visible_update: (data: Partial<ParsedPost>) => void;
+  post_visible_like_update: (
+    addLike: boolean,
+    uid: string,
+    postId: string
+  ) => void;
+  post_visible_share_update: (
+    addShare: boolean,
+    uid: string,
+    postId: string
+  ) => void;
+  post_visible_comment_update: (addComment: boolean, slug: string) => void;
   post_visible_deleted: (slug: string) => void;
 }
 

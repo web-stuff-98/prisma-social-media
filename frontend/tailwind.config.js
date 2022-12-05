@@ -4,8 +4,8 @@ module.exports = {
   theme: {
     screens: {
       sm: "512px",
-      md: "620px",
-      xl: "768px",
+      md: "768px",
+      xl: "820px",
     },
     extend: {
       minHeight: {
@@ -18,7 +18,7 @@ module.exports = {
         threadGap: "20%",
       },
       fontFamily: {
-        rubik: '"Meera Inimai"',
+        rubik: '"Kulim Park"',
       },
       colors: {
         foreground: "white",
@@ -29,7 +29,7 @@ module.exports = {
         darkmodeForegroundContrast: "#18181b"
       },
       height: {
-        postHeight: "14.466em",
+        postHeight: "14.5em",
         postImageHeight: "13.366rem",
       },
       maxHeight: {

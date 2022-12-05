@@ -52,13 +52,13 @@ class PostsDAO {
                     ? true
                     : false;
                 return Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
-                    sharedByMe });
+                    sharedByMe, commentCount: post._count.comments || 0 });
             });
         });
     }
     static getPage(page, query, uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield (0, getPageData_1.default)({ rawTags: query.tags || "", rawTerm: query.term || "" }, { page }, uid);
+            const data = yield (0, getPageData_1.default)({ tags: query.tags || "", term: query.term || "" }, { page }, uid);
             return data;
         });
     }
@@ -172,8 +172,8 @@ class PostsDAO {
                                 },
                             },
                             _count: {
-                                select: { likes: true }
-                            }
+                                select: { likes: true },
+                            },
                         },
                     },
                     author: {
@@ -275,6 +275,7 @@ class PostsDAO {
             })
                 .then((comment) => (Object.assign(Object.assign({}, comment), { likeCount: 0, likedByMe: false })));
             __1.io.to(comment.post.slug).emit("comment_added", message, comment.id, parentId, uid, name, comment.post.slug);
+            __1.io.to(`post_card=${comment.post.slug}`).emit("post_visible_comment_update", true, comment.post.slug);
             return comment;
         });
     }
@@ -303,6 +304,7 @@ class PostsDAO {
             if (!userId || userId !== uid)
                 return false;
             __1.io.to(slug).emit("comment_deleted", commentId, uid, slug);
+            __1.io.to(`post_card=${slug}`).emit("post_visible_comment_update", false, slug);
             return yield prisma_1.default.comment.delete({
                 where: { id: commentId },
                 select: { id: true },
@@ -345,9 +347,10 @@ class PostsDAO {
             const like = yield prisma_1.default.postLike.findUnique({
                 where: { userId_postId: data },
             });
+            let addLike = false;
             if (like == null) {
                 yield prisma_1.default.postLike.create({ data });
-                return { addLike: true };
+                addLike = true;
             }
             else {
                 yield prisma_1.default.postLike.delete({
@@ -355,8 +358,14 @@ class PostsDAO {
                         userId_postId: data,
                     },
                 });
-                return { addLike: false };
+                addLike = false;
             }
+            const post = yield prisma_1.default.post.findFirst({
+                where: { id: postId },
+                select: { slug: true },
+            });
+            __1.io.to(`post_card=${post === null || post === void 0 ? void 0 : post.slug}`).emit("post_visible_like_update", addLike, uid, postId);
+            return { addLike };
         });
     }
     static togglePostShare(postId, uid) {
@@ -365,9 +374,10 @@ class PostsDAO {
             const share = yield prisma_1.default.postShare.findUnique({
                 where: { userId_postId: data },
             });
+            let addShare = false;
             if (share == null) {
                 yield prisma_1.default.postShare.create({ data });
-                return { addShare: true };
+                addShare = true;
             }
             else {
                 yield prisma_1.default.postShare.delete({
@@ -375,8 +385,14 @@ class PostsDAO {
                         userId_postId: data,
                     },
                 });
-                return { addShare: false };
+                addShare = false;
             }
+            const post = yield prisma_1.default.post.findFirst({
+                where: { id: postId },
+                select: { slug: true },
+            });
+            __1.io.to(`post_card=${post === null || post === void 0 ? void 0 : post.slug}`).emit("post_visible_share_update", addShare, uid, postId);
+            return { addShare };
         });
     }
     static uploadCoverImage(stream, info, bytes, slug, socketId) {

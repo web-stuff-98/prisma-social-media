@@ -1,33 +1,30 @@
-import {
-  createContext,
-  useContext,
-  useReducer,
-  useEffect,
-} from "react";
+import { createContext, useContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
-import resolveConfig from "tailwindcss/resolveConfig";
-import throttle from "lodash/throttle";
 
-//https://gist.github.com/SimeonGriggs/7071958b8a629faf9137734aec713a0c#file-usetailwindbreakpoint-js
-// ^ copied this hook and merged into file, it needed adjustments to work with typescript and tailwindconfig being outside src directory
-
-//this shouldn't be "defaultConfig", it should be tailwind.config.js, but i cannot import that because it's outside of the src directory
-//need to fix this somehow, or just hardcode it.
-import tailwindConfig from "tailwindcss/defaultConfig";
-
-type Breakpoint = "sm" | "md" | "lg" | "xl";
+type Breakpoint = "sm" | "md" | "xl";
 interface State {
   breakPoint: Breakpoint;
   darkMode: boolean;
+  mobileMenuOpen: boolean;
 }
+
+/*
+Make sure theres are the same as the breakpoints in the tailwind config
+*/
+const breakPoints = {
+  sm: 512,
+  md: 728,
+  xl: 820,
+};
 
 const InterfaceContext = createContext<{
   state: State;
   dispatch: (action: Partial<State>) => void;
 }>({
   state: {
-    breakPoint: "md",
+    breakPoint: "xl",
     darkMode: true,
+    mobileMenuOpen: false,
   },
   dispatch: () => {},
 });
@@ -38,22 +35,36 @@ const interfaceReducer = (state: State, action: Partial<State>) => ({
 });
 
 const initialState: State = {
-  breakPoint: "md",
+  breakPoint: "xl",
   darkMode: false,
+  mobileMenuOpen: false,
 };
 
 const InterfaceProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(interfaceReducer, initialState);
 
-  const width = typeof window !== "undefined" ? window.innerWidth : 0;
-
   useEffect(() => {
-    const calcInnerWidth = throttle(() => {
-      dispatch({ breakPoint: getDeviceConfig(width) });
-    }, 500);
-
-    window.addEventListener("resize", calcInnerWidth);
-    return () => window.removeEventListener("resize", calcInnerWidth);
+    const getBreakpoint = () => {
+      const w = window.innerWidth;
+      let breakPoint: Breakpoint = "sm";
+      if (w >= breakPoints.md) breakPoint = "md";
+      if (w >= breakPoints.xl) breakPoint = "xl";
+      dispatch({ breakPoint });
+    };
+    const i = setInterval(() => getBreakpoint(), 500);
+    const handleDetectDarkmode = (event: MediaQueryListEvent) =>
+      dispatch({ darkMode: event?.matches ? true : false });
+    window
+      .matchMedia("(prefers-color-scheme: dark)")
+      .addEventListener("change", handleDetectDarkmode);
+    window.addEventListener("resize", getBreakpoint);
+    return () => {
+      clearInterval(i);
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .removeEventListener("change", handleDetectDarkmode);
+      window.removeEventListener("resize", getBreakpoint);
+    };
   }, []);
 
   return (
@@ -66,36 +77,3 @@ const InterfaceProvider = ({ children }: { children: ReactNode }) => {
 const useInterface = () => useContext(InterfaceContext);
 
 export { useInterface, InterfaceProvider };
-
-const findKeyByValue = (object: any, value: string) =>
-  Object.keys(object).find((key: string) => object[key] === value);
-
-function getDeviceConfig(width: number): Breakpoint {
-  const fullConfig = resolveConfig(tailwindConfig);
-  //@ts-ignore fing ignore this... confusing typescript errors. doesn't matter either.
-  const { screens } = fullConfig.theme;
-
-  const bpSizes = Object.keys(screens).map((screenSize) =>
-    parseInt(screens[screenSize as keyof typeof screens])
-  );
-
-  const bpShapes = bpSizes.map((size, index) => ({
-    min: !index ? 0 : bpSizes[index - 1],
-    max: size,
-    key: findKeyByValue(screens, `${size}px`),
-  }));
-
-  let breakpoint = null;
-
-  bpShapes.forEach((shape) => {
-    if (!shape.min && width < shape.max) {
-      breakpoint = shape.key;
-    } else if (width >= shape.min && width < shape.max) {
-      breakpoint = shape.key;
-    } else if (!shape.max && width >= shape.max) {
-      breakpoint = shape.key;
-    }
-  });
-
-  return breakpoint || "md";
-}

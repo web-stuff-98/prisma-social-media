@@ -675,7 +675,7 @@ class ChatDAO {
                 throw new Error("Room does not exist");
             });
             if (!room.public && !room.members.find((member) => member.id === uid))
-                throw new Error("You need an invitation to join this room");
+                throw new Error("You need an invitation to join this room. If the owner has sent you an invitation then you can accept it by finding the message in the conversations section.");
             if (room.banned.find((banned) => banned.id === uid))
                 throw new Error("You are banned from this room");
             yield prisma_1.default.room.update({

@@ -9,6 +9,8 @@ import { useAuth } from "../../context/AuthContext";
 import { useState, useLayoutEffect, useRef } from "react";
 import { useModal } from "../../context/ModalContext";
 import { deletePost } from "../../services/posts";
+import { useInterface } from "../../context/InterfaceContext";
+import Tag from "./Tag";
 
 export default function PostCard({
   post,
@@ -21,6 +23,7 @@ export default function PostCard({
   const { getUserData } = useUsers();
   const { likePost, sharePost, postEnteredView, postLeftView } = usePosts();
   const { openModal } = useModal();
+  const { state:iState } = useInterface()
   const { user } = useAuth();
   const { searchTags, autoAddRemoveSearchTag } = useFilter();
 
@@ -58,6 +61,7 @@ export default function PostCard({
               backgroundImage: `url(${post.blur})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
+              ...(iState.breakPoint === "sm" ? {height:"256px"} : {})
             }}
             className="relative border border-zinc-700 shadow-md sm:w-full sm:h-28 md:w-64 md:min-w-postWidth md:max-w-postWidth md:h-postImageHeight bg-gray-200 shadow rounded overflow-hidden shadow"
           >
@@ -152,28 +156,15 @@ export default function PostCard({
             <div
               aria-label="Tags"
               style={{ filter: "drop-shadow(0px 1.5px 1px rgba(0,0,0,0.5))" }}
-              className={`flex py-0.5 flex-wrap sm:justify-center ${
+              className={`flex py-0.5 flex-wrap ${iState.breakPoint === "sm" ? "justify-center" : ""} ${
                 reverse ? "md:justify-end" : "md:justify-start"
               } w-full gap-0.5`}
             >
               {post.tags.map((tag) => (
-                <span
-                  onClick={() => autoAddRemoveSearchTag(tag.trim())}
-                  key={tag}
-                  style={
-                    searchTags.includes(tag)
-                      ? {
-                          filter: "opacity(0.5) saturate(0)",
-                        }
-                      : {}
-                  }
-                  className="text-xs rounded cursor-pointer bg-gray-900 hover:bg-gray-800 text-white leading-4 hover:bg-gray-600 py-0.5 px-1 sm:py-0 dark:bg-amber-700 dark:hover:bg-amber-600 dark:border-zinc-200 dark:border border border-zinc-300"
-                >
-                  {tag}
-                </span>
+                <Tag tag={tag}/>
               ))}
             </div>
-            <span className="sm:mx-auto mt-1.5 md:mx-0">
+            <span className="sm:mx-auto mt-1 md:mx-0">
               <User
                 likeShareIcons
                 liked={post.likedByMe}
@@ -190,11 +181,12 @@ export default function PostCard({
               />
             </span>
             <div>
-            <span
-              className="italic font-bold text-xs leading-3 tracking-tighter cursor-pointer pt-2"
+            {typeof post.commentCount !== undefined && <span
+            aria-label="View post comments"
+              className={`italic font-bold text-xs leading-3 px-0 bg-transparent tracking-tighter pt-2`}
             >
-              123 comments
-            </span>
+              {post.commentCount! > 0 ? `${post.commentCount} comment${post.commentCount! > 1 ? "s" : ""}` : "No comments"}
+            </span>}
             </div>
           </div>
         </>

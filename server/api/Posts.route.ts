@@ -28,7 +28,7 @@ router.route("/popular").get(
 router.route("/page/:page").get(
   slowDown({
     windowMs: 2000,
-    delayAfter: 10,
+    delayAfter: 4,
     delayMs: 1000,
   }),
   withUser,

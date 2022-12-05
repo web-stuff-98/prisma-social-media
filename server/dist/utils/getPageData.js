@@ -20,45 +20,45 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
     let rawTags = "";
     let rawTerm = "";
     if (query) {
-        rawTags = query.rawTags;
-        rawTerm = query.rawTerm;
-        clientQueryInput = Object.assign({ pageOffset: Number(Math.max(Number(params === null || params === void 0 ? void 0 : params.page) - 1, 0) * 20) }, (rawTags
-            ? {
-                tags: rawTags
-                    ? String(rawTags)
-                        .toLowerCase()
-                        .split(" ")
-                        .filter((tag) => tag.trim() !== "")
-                        .map((tag) => tag.replace(/[^\w-]+/g, ""))
-                    : [],
-            }
-            : rawTerm
-                ? {
-                    term: String(rawTerm)
-                        .toLowerCase()
-                        .trim()
-                        .replaceAll("+", " ")
-                        .replace(/[^\w-]+/g, ""),
-                }
-                : {}));
+        if (query.tags)
+            rawTags = query.tags;
+        if (query.term)
+            rawTerm = query.term;
+        console.log(rawTags);
+        console.log(rawTerm);
+        clientQueryInput = {
+            pageOffset: Number(Math.max(Number(params === null || params === void 0 ? void 0 : params.page) - 1, 0) * 20),
+            tags: rawTags
+                ? String(rawTags)
+                    .toLowerCase()
+                    .split(" ")
+                    .filter((tag) => tag.trim() !== "")
+                    .map((tag) => tag.replace(/[^\w-]+/g, ""))
+                : [],
+            term: rawTerm ? String(rawTerm)
+                .toLowerCase()
+                .trim() : ""
+        };
     }
     /*
     Need to use type any because there is a typescript error caused by mode: "insensitive"
     for some reason
     */
-    const where = rawTags
-        ? {
-            imagePending: false,
-            tags: { some: { name: { in: clientQueryInput.tags } } },
-        }
-        : Object.assign({ imagePending: false }, (clientQueryInput.term
+    const where = clientQueryInput.tags.length || clientQueryInput.term
+        ? Object.assign(Object.assign({ imagePending: false }, (clientQueryInput.tags.length > 0
+            ? {
+                tags: { some: { name: { in: clientQueryInput.tags } } },
+            }
+            : {})), (clientQueryInput.term
             ? {
                 title: {
                     contains: clientQueryInput.term,
                     mode: "insensitive",
                 },
             }
-            : {}));
+            : {})) : {
+        imagePending: false,
+    };
     const posts = yield prisma_1.default.post.findMany({
         where: Object.assign({}, where),
         select: {
@@ -77,6 +77,7 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
             tags: true,
             imageKey: true,
             blur: true,
+            _count: { select: { comments: true } },
         },
         orderBy: { likes: { _count: "desc" } },
         skip: clientQueryInput.pageOffset,
@@ -94,8 +95,11 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
             sharedByMe = post.shares.find((share) => share.userId === uid)
                 ? true
                 : false;
-            return Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
+            let out = Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
                 sharedByMe });
+            out.commentCount = out._count.comments;
+            delete out._count;
+            return out;
         }),
         pageCount: posts.length,
         fullCount: feedQ_count.length,

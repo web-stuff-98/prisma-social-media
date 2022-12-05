@@ -120,7 +120,7 @@ model PrivateMessage {
   id      String @id @default(cuid())
 
   sender      User?   @relation(name: "sentPrivateMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  recipient   User   @relation(name: "receivedPrivateMessage", fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient   User    @relation(name: "receivedPrivateMessage", fields: [recipientId], references: [id], onDelete: Cascade)
   senderId    String?
   recipientId String
 
@@ -133,7 +133,7 @@ model PrivateMessage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  readByRecipient   Boolean @default(false)
+  readByRecipient Boolean @default(false)
 
   @@index([senderId])
 }
@@ -151,7 +151,17 @@ model Room {
   createdAt DateTime      @default(now())
   messages  RoomMessage[]
 
-  public Boolean @default(true)
+  public Boolean    @default(true)
+  image  RoomImage?
+}
+
+model RoomImage {
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId String
+
+  base64 String
+
+  @@id([roomId])
 }
 
 model RoomMessage {

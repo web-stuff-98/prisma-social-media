@@ -4,6 +4,7 @@ import {
   useCallback,
   useState,
   useEffect,
+  useMemo
 } from "react";
 import type { ReactNode } from "react";
 import {
@@ -18,6 +19,8 @@ import useUsers from "./UsersContext";
 import { IPostComment } from "./PostContext";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useFilter } from "./FilterContext";
+import { useAuth } from "./AuthContext";
+import { debounce } from "lodash";
 
 export interface IPost {
   id: string;
@@ -35,6 +38,7 @@ export interface IPost {
   shares: number;
   blur: string;
   imageKey: string;
+  commentCount?: number;
 }
 
 type DisappearedPost = {
@@ -97,11 +101,11 @@ const PostsContext = createContext<{
 });
 
 export const PostsProvider = ({ children }: { children: ReactNode }) => {
-  const [searchParams] = useSearchParams();
   const { socket } = useSocket();
   const { cacheUserData } = useUsers();
-  const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm } =
+  const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm, pageNumber } =
     useFilter();
+  const { user } = useAuth();
   const query = useParams();
 
   //Slugs only
@@ -139,12 +143,12 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     ]);
   };
 
-  const getAndSetPage = () => {
+  const getAndSetPage = () =>{
     setStatus("pending");
     getPage(
       Number(query.page),
-      searchParams.get("tags") || "",
-      searchParams.get("term") || ""
+      searchTags.join("+") || "",
+      searchTerm.replace(" ", "+") || ""
     )
       .then(
         (data: {
@@ -165,11 +169,14 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         setError(`${e}`);
         setStatus("error");
       });
-  };
+
+  }
+
+  const handleGetAndSetPage = useMemo(() => debounce(getAndSetPage, 300), []);
 
   useEffect(() => {
     if (!query.page) return;
-    getAndSetPage();
+    handleGetAndSetPage();
   }, [searchTags, searchTerm, query.page]);
 
   const [err, setErr] = useState("");
@@ -177,8 +184,10 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     getPopularPosts()
       .then((posts) => {
+        const slugs: string[] = posts.map((p: IPost) => p.slug);
         addToPostsData(posts);
-        setPopularPosts(posts.map((p: IPost) => p.slug));
+        slugs.forEach((slug) => postEnteredView(slug));
+        setPopularPosts(slugs);
       })
       .catch((e) => setErr(`Error getting popular posts : ${e}`));
   }, []);
@@ -304,18 +313,84 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [disappearedPosts]);
 
+  const handleVisiblePostUpdate = (data: any) => {
+    setPostsData((p: any) => {
+      let newPosts = p;
+      const foundIndex = p.findIndex((p: any) => p!.slug === data.slug);
+      if (foundIndex === -1 || !newPosts[foundIndex]) return;
+      newPosts[foundIndex] = { ...newPosts[foundIndex], ...data } as IPost;
+      return newPosts;
+    });
+  };
+
+  const handleVisiblePostCommentUpdate = (
+    addComment: boolean,
+    slug: string
+  ) => {
+    setPostsData((p: any) => {
+      let newPosts = p;
+      const foundIndex = p.findIndex((p: any) => p!.slug === slug);
+      if (foundIndex === -1 || !newPosts[foundIndex]) return;
+      newPosts[foundIndex] = {
+        ...newPosts[foundIndex],
+        commentCount: newPosts[foundIndex].commentCount + (addComment ? 1 : -1),
+      } as IPost;
+      return newPosts;
+    });
+  };
+
+  const handleVisiblePostLikeUpdate = (
+    addLike: boolean,
+    uid: string,
+    postId: string
+  ) => {
+    if (user && uid === user.id) return;
+    //@ts-ignore
+    setPostsData((p: any) => {
+      let newPosts = p;
+      const foundIndex = p.findIndex((p: any) => p!.id === postId);
+      if (foundIndex === -1 || !newPosts[foundIndex]) return;
+      newPosts[foundIndex] = {
+        ...newPosts[foundIndex],
+        likes: newPosts[foundIndex].likes + (addLike ? 1 : -1),
+      } as IPost;
+      return [...newPosts];
+    });
+  };
+
+  const handleVisiblePostShareUpdate = (
+    addShare: boolean,
+    uid: string,
+    postId: string
+  ) => {
+    if (user && uid === user.id) return;
+    //@ts-ignore
+    setPostsData((p: any) => {
+      let newPosts = p;
+      const foundIndex = p.findIndex((p: any) => p!.id === postId);
+      if (foundIndex === -1 || !newPosts[foundIndex]) return;
+      newPosts[foundIndex] = {
+        ...newPosts[foundIndex],
+        shares: newPosts[foundIndex].shares + (addShare ? 1 : -1),
+      } as IPost;
+      return [...newPosts];
+    });
+  };
+
   useEffect(() => {
     if (!socket) return;
-    socket.on("post_visible_update", (data) => {
-      setPostsData((p: any) => {
-        let newPosts = p;
-        const foundIndex = p.findIndex((p: any) => p!.slug === data.slug);
-        if (foundIndex === -1 || !newPosts[foundIndex]) return;
-        newPosts[foundIndex] = { ...newPosts[foundIndex], ...data } as IPost;
-        return newPosts;
-      });
-    });
-    socket.on("post_visible_deleted", () => getAndSetPage());
+    socket.on("post_visible_update", handleVisiblePostUpdate);
+    socket.on("post_visible_like_update", handleVisiblePostLikeUpdate);
+    socket.on("post_visible_share_update", handleVisiblePostShareUpdate);
+    socket.on("post_visible_comment_update", handleVisiblePostCommentUpdate);
+    socket.on("post_visible_deleted", getAndSetPage);
+    return () => {
+      socket.off("post_visible_update", handleVisiblePostUpdate);
+      socket.off("post_visible_like_update", handleVisiblePostLikeUpdate);
+      socket.off("post_visible_share_update", handleVisiblePostShareUpdate);
+      socket.off("post_visible_comment_update", handleVisiblePostCommentUpdate);
+      socket.off("post_visible_deleted", getAndSetPage);
+    };
   }, [socket]);
 
   return (

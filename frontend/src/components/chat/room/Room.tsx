@@ -51,7 +51,7 @@ const ICE_Config = {
 export default function Room({ roomId }: { roomId: string }) {
   const { rooms, setTopText } = useChat();
   const { socket } = useSocket();
-  const { getUserData } = useUsers();
+  const { getUserData, cacheUserData, users } = useUsers();
 
   const getAuthorName = (userData?: IUser) => {
     return userData ? userData.name : "";
@@ -61,11 +61,13 @@ export default function Room({ roomId }: { roomId: string }) {
 
   useEffect(() => {
     const found = rooms.find((r) => r.id === roomId);
-    if (found)
+    if (found) {
+      cacheUserData(found.authorId);
       setTopText(
         `${found?.name} - by ${getAuthorName(getUserData(found.authorId))}`
       );
-  }, [rooms]);
+    }
+  }, [rooms, users]);
 
   const [messageInput, setMessageInput] = useState("");
   const handleMessageInput = (e: ChangeEvent<HTMLInputElement>) =>
@@ -344,7 +346,12 @@ export default function Room({ roomId }: { roomId: string }) {
     <div>
       <>
         {(isStreaming || peers.length > 0) && (
-          <Videos selfMuted={selfMuted} toggleMuteSelf={toggleMuteSelf} usersStream={userStream.current} peersData={peers} />
+          <Videos
+            selfMuted={selfMuted}
+            toggleMuteSelf={toggleMuteSelf}
+            usersStream={userStream.current}
+            peersData={peers}
+          />
         )}
         <MessageList
           roomId={roomId}

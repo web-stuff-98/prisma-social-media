@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import imageProcessing from "../../utils/imageProcessing";
 import { io } from "../..";
 import getUserSocket from "../../utils/getUserSocket";
-import { Profile } from "@prisma/client";
 
 export default class UsersDAO {
   static async getUsers() {
@@ -110,10 +109,14 @@ export default class UsersDAO {
 
   static async updateUser(uid: string, data: { name?: string; pfp?: string }) {
     if (data.name) {
+      const foundName = await prisma.user.findFirst({
+        where: { name: { equals: data.name.trim(), mode: "insensitive" } },
+      });
+      if (foundName) throw new Error("There is a user with that name already");
       await prisma.user.update({
         where: { id: uid },
         data: {
-          name: data.name,
+          name: data.name.trim(),
         },
       });
     }
@@ -158,6 +161,10 @@ export default class UsersDAO {
   }
 
   static async createUser(username: string, password: string) {
+    const foundName = await prisma.user.findFirst({
+      where: { name: { equals: username.trim(), mode: "insensitive" } },
+    });
+    if (foundName) throw new Error("There is a user with that name already");
     const passHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {

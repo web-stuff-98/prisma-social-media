@@ -11,7 +11,7 @@ export default function MessengerError({
       style={{ background: "rgba(0,0,0,0.75)" }}
       className="w-full p-1 flex text-rose-600 text-xs border-t dark:border-stone-800 items-center justify-between"
     >
-      <div className="flex drop-shadow items-center justify-center gap-2 leading-4 tracking-tight">
+      <div className="flex drop-shadow items-center justify-center gap-2 leading-3 mb-0.5 tracking-tight">
         <MdError style={{ minWidth: "1.5rem", minHeight: "1.5rem" }} />
         {err}
       </div>

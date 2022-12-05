@@ -18,7 +18,7 @@ import { useScrollY } from "../components/layout/Layout";
 import { useSocket } from "../context/SocketContext";
 
 export default function Post() {
-  const { socket } = useSocket()
+  const { socket } = useSocket();
   const { rootComments, createLocalComment } = usePost();
   const {
     getPostData,
@@ -45,18 +45,18 @@ export default function Post() {
   }, [slug]);
 
   useEffect(() => {
-    if(!socket) return
+    if (!socket) return;
     socket.on("post_visible_deleted", (delSlug) => {
-      if(delSlug === slug) {
+      if (delSlug === slug) {
         openModal("Message", {
-          msg:"The post you were reading was deleted.",
-          err:false,
-          pen:false
-        })
-        navigate("/blog/1")
+          msg: "The post you were reading was deleted.",
+          err: false,
+          pen: false,
+        });
+        navigate("/blog/1");
       }
-    })
-  }, [socket])
+    });
+  }, [socket]);
 
   const [commentError, setCommentError] = useState("");
   const postComment = (message: string) =>
@@ -191,6 +191,15 @@ export default function Post() {
             <ReactMarkdown>{String(post?.body)}</ReactMarkdown>
           </div>
           <section className="w-full p-2 mt-6">
+            {
+              <div className="mx-auto py-0.5 text-xs text-center">
+                {post.comments?.length === 0
+                  ? "No comments"
+                  : `${post.comments?.length} comment${
+                      post.comments?.length! > 1 && "s"
+                    }`}
+              </div>
+            }
             <CommentForm
               placeholder="Add a comment..."
               loading={false}

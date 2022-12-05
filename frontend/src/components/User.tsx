@@ -106,7 +106,7 @@ export default function User({
     return (
       <div
       style={{lineHeight:"0.866"}}
-        className={`flex tracking-tighter mb-1 flex-col text-xs ${
+        className={`flex tracking-tight mb-1 flex-col text-xs ${
           reverse ? "items-end" : "items-start"
         }`}
       >
@@ -188,11 +188,11 @@ export default function User({
           if (currentUser && uid)
             if (user?.id !== currentUser?.id) openUserdropdown(uid, chatroomId);
         }}
-        className={`${micro ? "w-5 h-5" : (date && !isServer ? "w-10 h-10" : "w-8 h-8")} relative ${
+        className={`${micro ? "w-5 h-5" : (date && !isServer ? "w-10 h-10" : "w-8 h-8")} border ${fixDarkBackgroundContrast ? "border-white" : "border-black"} dark:border-white relative ${
           ((currentUser && user?.id !== currentUser?.id && uid) || pfpCursor) &&
           "cursor-pointer"
         } ${micro ? "rounded" : "rounded-full"} ${
-          !isServer && "border border-zinc-500 dark:border-zinc-600 shadow-md"
+          !isServer && "shadow-md"
         }`}
       >
         {user?.online && (

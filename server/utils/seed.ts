@@ -5,7 +5,6 @@ import axios from "axios";
 import imageProcessing from "./imageProcessing";
 import AWS from "./aws";
 import zlib from "zlib";
-import fetch from "node-fetch";
 
 const s3 = new AWS.S3();
 
@@ -19,10 +18,11 @@ let generatedRooms: any[] = [];
 
 export default async function seed() {
   await prisma.user.deleteMany();
+  await s3.deleteBucket();
 
-  await generateUsers(80);
-  await generatePosts(1000);
-  await generateRooms(150);
+  await generateUsers(10);
+  await generatePosts(20);
+  await generateRooms(20);
   await generatePostImages();
   await generateCommentsOnPosts();
   await generateLikesAndSharesOnPosts();
@@ -95,8 +95,9 @@ const generatePost = async () => {
       tags: {
         connectOrCreate: lipsum
           .generateParagraphs(1)
+          .replaceAll(".", "")
           .split(" ")
-          .filter((tag: string) => tag !== "")
+          .filter((tag: string) => tag && tag.length > 1)
           .slice(0, 8)
           .map((tag: string) => {
             const name = tag.trim().toLowerCase();

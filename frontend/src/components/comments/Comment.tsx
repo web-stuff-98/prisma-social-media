@@ -228,7 +228,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
               <span
                 style={{ width: "2px", borderRadius: "2px", transition:"100ms linear background" }}
                 className={`${
-                  hideRepliesBarHover ? "bg-amber-600" : "bg-stone-800"
+                  hideRepliesBarHover ? "bg-amber-600" : "bg-stone-300"
                 } h-full`}
               />
             </button>

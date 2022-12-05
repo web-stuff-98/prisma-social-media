@@ -47,6 +47,7 @@ export default class PostsDAO {
         tags: post.tags.map((tag) => tag.name),
         likedByMe,
         sharedByMe,
+        commentCount: post._count.comments || 0,
       };
     });
   }
@@ -57,7 +58,7 @@ export default class PostsDAO {
     uid?: string
   ) {
     const data = await getPage(
-      { rawTags: query.tags || "", rawTerm: query.term || "" },
+      { tags: query.tags || "", term: query.term || "" },
       { page },
       uid
     );
@@ -129,7 +130,7 @@ export default class PostsDAO {
                   id: true,
                 },
               },
-              likes:true,
+              likes: true,
               _count: {
                 select: { likes: true },
               },
@@ -174,8 +175,8 @@ export default class PostsDAO {
                 },
               },
               _count: {
-                select: { likes: true }
-              }
+                select: { likes: true },
+              },
             },
           },
           author: {
@@ -306,6 +307,11 @@ export default class PostsDAO {
       name,
       comment.post.slug
     );
+    io.to(`post_card=${comment.post.slug}`).emit(
+      "post_visible_comment_update",
+      true,
+      comment.post.slug
+    );
     return comment;
   }
 
@@ -336,6 +342,7 @@ export default class PostsDAO {
     });
     if (!userId || userId !== uid) return false;
     io.to(slug).emit("comment_deleted", commentId, uid, slug);
+    io.to(`post_card=${slug}`).emit("post_visible_comment_update", false, slug);
     return await prisma.comment.delete({
       where: { id: commentId },
       select: { id: true },
@@ -385,17 +392,29 @@ export default class PostsDAO {
     const like = await prisma.postLike.findUnique({
       where: { userId_postId: data },
     });
+    let addLike = false;
     if (like == null) {
       await prisma.postLike.create({ data });
-      return { addLike: true };
+      addLike = true;
     } else {
       await prisma.postLike.delete({
         where: {
           userId_postId: data,
         },
       });
-      return { addLike: false };
+      addLike = false;
     }
+    const post = await prisma.post.findFirst({
+      where: { id: postId },
+      select: { slug: true },
+    });
+    io.to(`post_card=${post?.slug}`).emit(
+      "post_visible_like_update",
+      addLike,
+      uid,
+      postId
+    );
+    return { addLike };
   }
 
   static async togglePostShare(postId: string, uid: string) {
@@ -403,17 +422,29 @@ export default class PostsDAO {
     const share = await prisma.postShare.findUnique({
       where: { userId_postId: data },
     });
+    let addShare = false;
     if (share == null) {
       await prisma.postShare.create({ data });
-      return { addShare: true };
+      addShare = true;
     } else {
       await prisma.postShare.delete({
         where: {
           userId_postId: data,
         },
       });
-      return { addShare: false };
+      addShare = false;
     }
+    const post = await prisma.post.findFirst({
+      where: { id: postId },
+      select: { slug: true },
+    });
+    io.to(`post_card=${post?.slug}`).emit(
+      "post_visible_share_update",
+      addShare,
+      uid,
+      postId
+    );
+    return { addShare };
   }
 
   static async uploadCoverImage(

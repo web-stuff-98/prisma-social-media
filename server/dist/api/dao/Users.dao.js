@@ -114,10 +114,15 @@ class UsersDAO {
     static updateUser(uid, data) {
         return __awaiter(this, void 0, void 0, function* () {
             if (data.name) {
+                const foundName = yield prisma_1.default.user.findFirst({
+                    where: { name: { equals: data.name.trim(), mode: "insensitive" } },
+                });
+                if (foundName)
+                    throw new Error("There is a user with that name already");
                 yield prisma_1.default.user.update({
                     where: { id: uid },
                     data: {
-                        name: data.name,
+                        name: data.name.trim(),
                     },
                 });
             }
@@ -162,6 +167,11 @@ class UsersDAO {
     }
     static createUser(username, password) {
         return __awaiter(this, void 0, void 0, function* () {
+            const foundName = yield prisma_1.default.user.findFirst({
+                where: { name: { equals: username.trim(), mode: "insensitive" } },
+            });
+            if (foundName)
+                throw new Error("There is a user with that name already");
             const passHash = yield bcrypt_1.default.hash(password, 10);
             const user = yield prisma_1.default.user.create({
                 data: {
