@@ -58,6 +58,7 @@ router.route("/conversation/message/attachment/:msgId/:bytes").post((0, limiters
     msg: "You have been uploading too many attachments. Maximum 10 attachments every 2 minutes. You must wait BLOCKDURATION.",
     blockDuration: 120000,
 }), Chat_controller_1.default.uploadPrivateMessageAttachment);
+router.route("/conversation/videoCall/:uid").post(Chat_controller_1.default.conversationOpenVideoChat);
 //Chatroom messages
 router.route("/room/message").post((0, limiters_1.simpleRateLimit)({
     routeName: "roomMessage",

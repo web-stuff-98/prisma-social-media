@@ -26,7 +26,7 @@ export interface IUser {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { openModal } = useModal();
-  const { socket } = useSocket();
+  const { authSocket } = useSocket();
 
   const [user, setUser] = useState();
 
@@ -37,9 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       setUser(user);
-      if (socket) {
-        socket.emit("auth");
-      }
     } catch (error) {
       console.warn(error);
     }
@@ -53,16 +50,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (username: string, password: string) => {
     try {
-      const user = await makeRequest("/api/users/login", {
+      const checkedUser = await makeRequest("/api/users/login", {
         method: "POST",
         url: "/api/users/login",
         data: { username, password },
         withCredentials: true,
       });
-      setUser(user);
-      if (socket) {
-        socket.emit("auth");
-      }
+      if (authSocket) authSocket();
+      console.log(checkedUser.id)
+      setUser(checkedUser);
     } catch (e) {
       openModal("Message", {
         err: true,
@@ -79,6 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         data: { username, password },
         withCredentials: true,
       });
+      if (authSocket) authSocket();
       setUser(user);
     } catch (e) {
       openModal("Message", {
@@ -93,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await makeRequest("/api/users/logout", {
         method: "POST",
+        withCredentials:true
       });
       setUser(undefined);
     } catch (e) {

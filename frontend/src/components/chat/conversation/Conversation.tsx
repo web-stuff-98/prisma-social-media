@@ -7,6 +7,7 @@ import type { FormEvent, ChangeEvent } from "react";
 
 import {
   getConversation,
+  conversationOpenVideoChat,
   sendPrivateMessage,
   uploadPrivateMessageAttachment,
 } from "../../../services/chat";
@@ -16,6 +17,24 @@ import { IMessage, useChat } from "../../../context/ChatContext";
 
 import MessageList from "../messages/MessageList";
 import MessengerError from "../MessengerError";
+
+import Peer from "simple-peer";
+import * as process from "process";
+import Videos from "../video/Videos";
+(window as any).process = process;
+
+const ICE_Config = {
+  iceServers: [
+    {
+      urls: "stun:openrelay.metered.ca:80",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+  ],
+};
 
 export default function ConversationSection({
   conversationWith = "",
@@ -38,7 +57,7 @@ export default function ConversationSection({
   );
 
   const { socket } = useSocket();
-  const { setChatSection } = useChat();
+  const { setChatSection, initVideo, userStream } = useChat();
 
   const [err, setErr] = useState("");
 
@@ -75,7 +94,6 @@ export default function ConversationSection({
 
   useEffect(() => {
     if (!socket) return;
-
     socket.on(
       "private_message_request_attachment_upload",
       handleUploadAttachment
@@ -84,6 +102,19 @@ export default function ConversationSection({
     socket.on("private_message_attachment_complete", handleAttachmentComplete);
     socket.on("private_message_attachment_failed", handleAttachmentFailed);
     socket.on("private_message_attachment_progress", handleAttachmentProgress);
+    socket.on("private_conversation_video_chat_user", handleReceiveVideoCall);
+    socket.on(
+      "private_conversation_video_chat_user_joined",
+      handleVidChatUserJoined
+    );
+    socket.on(
+      "private_conversation_video_chat_receiving_returned_signal",
+      handleVidChatReceivingReturningSignal
+    );
+    socket.on(
+      "private_conversation_video_chat_user_left",
+      handleVidChatUserLeft
+    );
     return () => {
       socket.off(
         "private_message_attachment_complete",
@@ -99,6 +130,23 @@ export default function ConversationSection({
         handleUploadAttachment
       );
       socket.off("private_conversation_deleted", handleConversationDeleted);
+      socket.off(
+        "private_conversation_video_chat_user",
+        handleReceiveVideoCall
+      );
+      socket.off(
+        "private_conversation_video_chat_user_joined",
+        handleVidChatUserJoined
+      );
+      socket.off(
+        "private_conversation_video_chat_receiving_returned_signal",
+        handleVidChatReceivingReturningSignal
+      );
+      socket.off(
+        "private_conversation_video_chat_user_left",
+        handleVidChatUserLeft
+      );
+      socket.emit("private_conversation_video_chat_close");
     };
   }, [socket]);
 
@@ -167,8 +215,100 @@ export default function ConversationSection({
     [messages]
   );
 
+  ///////////////////////////// Video chat stuff /////////////////////////////
+  const peerRef = useRef<{ peerSID: string; peer: Peer.Instance }>();
+  const [peer, setPeer] = useState<{ peerSID: string; peer: Peer.Instance }>();
+  const [isStreaming, setIsStreaming] = useState(false);
+  const handleVidChatClicked = () => {
+    initVideo()
+      .then(() => {
+        setIsStreaming(true);
+        conversationOpenVideoChat(conversationWith).catch((e: unknown) =>
+          setErr(`${e}`)
+        );
+      })
+      .catch((e) => setErr(`${e}`));
+  };
+  const handleReceiveVideoCall = useCallback((sid: string) => {
+    const peer = createPeer();
+    peerRef.current = {
+      peerSID: sid,
+      peer,
+    };
+    setPeer({ peer, peerSID: sid });
+  }, []);
+  const handleVidChatUserJoined = useCallback(
+    (signal: Peer.SignalData, callerSid: string) => {
+      const peer = addPeer(signal, userStream?.current, callerSid);
+      setPeer({ peer, peerSID: callerSid });
+      peerRef.current = {
+        peerSID: callerSid,
+        peer,
+      };
+    },
+    []
+  );
+  const handleVidChatReceivingReturningSignal = (
+    signal: Peer.SignalData,
+    sid: string
+  ) => {
+    setTimeout(() => peerRef.current?.peer.signal(signal));
+  };
+  const handleVidChatUserLeft = () => {
+    peerRef.current?.peer.destroy();
+    setPeer(undefined);
+    peerRef.current = undefined;
+  };
+  const createPeer = () => {
+    if (typeof userStream?.current === "undefined")
+      throw new Error("Media stream is undefined");
+    const peer = new Peer({
+      initiator: true,
+      trickle: false,
+      stream: userStream.current,
+      config: ICE_Config,
+    });
+    peer.on("signal", (signal) => {
+      socket?.emit("private_conversation_video_chat_sending_signal", {
+        userToSignal: conversationWith,
+        callerSid: String(peerRef.current?.peerSID),
+        signal,
+      });
+    });
+    return peer;
+  };
+  const addPeer = (
+    incomingSignal: Peer.SignalData,
+    stream: MediaStream | undefined,
+    callerSid: string
+  ) => {
+    if (typeof stream === "undefined")
+      throw new Error("Media stream is undefined");
+    const peer = new Peer({
+      initiator: false,
+      trickle: false,
+      stream,
+      config: ICE_Config,
+    });
+    peer.on("signal", (signal) => {
+      socket?.emit("private_conversation_video_chat_returning_signal", {
+        signal,
+        callerSid,
+      });
+    });
+    setTimeout(() => {
+      peer.signal(incomingSignal);
+    });
+    return peer;
+  };
+
   return (
     <div className="w-full h-full flex flex-col items-between justify-between">
+      {(isStreaming || peer) && (
+        <Videos
+          peersData={peer ? [{ ...peer, peerUID: conversationWith }] : []}
+        />
+      )}
       <MessageList messages={messages} status={status} error={error} />
       {err && <MessengerError err={err} closeError={() => setErr("")} />}
       <MessageForm
@@ -177,6 +317,7 @@ export default function ConversationSection({
         handleMessageInput={handleMessageInput}
         handleMessageSubmit={handleMessageSubmit}
         messageInput={messageInput}
+        handleVidChatIconClicked={handleVidChatClicked}
       />
     </div>
   );

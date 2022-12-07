@@ -105,7 +105,7 @@ export default function User({
   const renderDateTime = (dateString: string) => {
     return (
       <div
-      style={{lineHeight:"0.866"}}
+        style={{ lineHeight: "0.866" }}
         className={`flex tracking-tight mb-1 flex-col text-xs ${
           reverse ? "items-end" : "items-start"
         }`}
@@ -118,7 +118,7 @@ export default function User({
 
   return (
     <div
-    style={style}
+      style={style}
       ref={containerRef}
       className={`${reverse ? "text-right" : "text-left"} flex ${
         reverse ? "flex-row-reverse" : ""
@@ -134,12 +134,28 @@ export default function User({
             onClick={onLikeClick}
             Icon={liked ? AiFillLike : AiOutlineLike}
             aria-label={liked ? "Unlike" : "Like"}
-            color={fixDarkBackgroundContrast ? (liked ? "text-stone-200 dark:text-stone-200" : "text-stone-400 dark:text-stone-400") : (liked ? "text-stone-500 dark:text-stone-400" : "text-stone-400 dark:text-stone-400")}
+            color={
+              fixDarkBackgroundContrast
+                ? liked
+                  ? "text-stone-200 dark:text-stone-200"
+                  : "text-stone-400 dark:text-stone-400"
+                : liked
+                ? "text-stone-500 dark:text-stone-400"
+                : "text-stone-400 dark:text-stone-400"
+            }
           >
             {likes > 0 && (
               <div
-                style={{ zIndex: "96", top: "-25%", left: reverse ? "27.5%" : "-27.5%" }}
-                className={`absolute text-md ${fixDarkBackgroundContrast ? "text-green-400" : "text-stone-900 dark:text-green-500"} font-extrabold drop-shadow leading-3 tracking-tighter`}
+                style={{
+                  zIndex: "96",
+                  top: "-25%",
+                  left: reverse ? "27.5%" : "-27.5%",
+                }}
+                className={`absolute text-md ${
+                  fixDarkBackgroundContrast
+                    ? "text-green-400"
+                    : "text-stone-900 dark:text-green-500"
+                } font-extrabold drop-shadow leading-3 tracking-tighter`}
               >
                 {likes}
               </div>
@@ -149,12 +165,28 @@ export default function User({
             onClick={onShareClick}
             Icon={shared ? BsShareFill : BsShare}
             aria-label={shared ? "Unshare" : "Share"}
-            color={fixDarkBackgroundContrast ? (shared ? "text-stone-200 dark:text-stone-200" : "text-stone-400 dark:text-stone-400") : (shared ? "text-stone-500 dark:text-stone-400" : "text-stone-400 dark:text-stone-400")}
+            color={
+              fixDarkBackgroundContrast
+                ? shared
+                  ? "text-stone-200 dark:text-stone-200"
+                  : "text-stone-400 dark:text-stone-400"
+                : shared
+                ? "text-stone-500 dark:text-stone-400"
+                : "text-stone-400 dark:text-stone-400"
+            }
           >
             {shares > 0 && (
               <div
-                style={{ zIndex: "96", top: "-25%", left: reverse ? "27.5%" : "-27.5%" }}
-                className={`absolute text-md ${fixDarkBackgroundContrast ? "text-green-400" : "text-stone-900 dark:text-green-500"} font-extrabold drop-shadow leading-3 tracking-tighter`}
+                style={{
+                  zIndex: "96",
+                  top: "-25%",
+                  left: reverse ? "27.5%" : "-27.5%",
+                }}
+                className={`absolute text-md ${
+                  fixDarkBackgroundContrast
+                    ? "text-green-400"
+                    : "text-stone-900 dark:text-green-500"
+                } font-extrabold drop-shadow leading-3 tracking-tighter`}
               >
                 {shares}
               </div>
@@ -188,20 +220,22 @@ export default function User({
           if (currentUser && uid)
             if (user?.id !== currentUser?.id) openUserdropdown(uid, chatroomId);
         }}
-        className={`${micro ? "w-5 h-5" : (date && !isServer ? "w-10 h-10" : "w-8 h-8")} border ${fixDarkBackgroundContrast ? "border-white" : "border-black"} dark:border-white relative ${
+        className={`${
+          micro ? "w-5 h-5" : date && !isServer ? "w-10 h-10" : "w-8 h-8"
+        } border ${
+          fixDarkBackgroundContrast ? "border-white" : "border-black"
+        } dark:border-white relative ${
           ((currentUser && user?.id !== currentUser?.id && uid) || pfpCursor) &&
           "cursor-pointer"
-        } ${micro ? "rounded" : "rounded-full"} ${
-          !isServer && "shadow-md"
-        }`}
+        } ${micro ? "rounded" : "rounded-full"} ${!isServer && "shadow-md"}`}
       >
         {user?.online && (
           <span
             style={{
               width: "0.5rem",
               height: "0.5rem",
-              bottom: 0,
-              right: 0,
+              bottom: micro ? "-6px" : 0,
+              right: micro ? "-6px" : 0,
             }}
             className="absolute rounded-full shadow border border-black bg-green-500"
           />
@@ -230,19 +264,21 @@ export default function User({
           />
         </div>
       )}
-      {!micro && <div className="leading-3 mt-0.5 px-1">
-        {user && (
-          <h1
-            className={`font-bold ${
-              date ? "text-sm" : "text-xs"
-            } leading-4 tracking-tight whitespace-nowrap`}
-          >
-            {by && "By "}
-            {user?.name}
-          </h1>
-        )}
-        {date && renderDateTime(getDateString(date))}
-      </div>}
+      {!micro && (
+        <div className="leading-3 mt-0.5 px-1">
+          {user && (
+            <h1
+              className={`font-bold ${
+                date ? "text-sm" : "text-xs"
+              } leading-4 tracking-tight whitespace-nowrap`}
+            >
+              {by && "By "}
+              {user?.name}
+            </h1>
+          )}
+          {date && renderDateTime(getDateString(date))}
+        </div>
+      )}
     </div>
   );
 }

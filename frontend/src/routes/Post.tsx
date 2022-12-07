@@ -37,13 +37,7 @@ export default function Post() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const post = getPostData(String(slug));
-
-  useEffect(() => {
-    if (!slug) return;
-    postEnteredView(slug);
-    return () => postLeftView(slug);
-  }, [slug]);
-
+  
   useEffect(() => {
     if (!socket) return;
     socket.on("post_visible_deleted", (delSlug) => {
@@ -70,9 +64,11 @@ export default function Post() {
   useEffect(() => {
     if (slug) {
       openPost(slug);
+      postEnteredView(slug);
     }
     return () => {
       closePost(slug!);
+      postLeftView(slug!);
     };
   }, [slug]);
 
@@ -193,10 +189,10 @@ export default function Post() {
           <section className="w-full p-2 mt-6">
             {
               <div className="mx-auto py-0.5 text-xs text-center">
-                {post.comments?.length === 0
+                {!post.commentCount
                   ? "No comments"
-                  : `${post.comments?.length} comment${
-                      post.comments?.length! > 1 && "s"
+                  : `${post.commentCount} comment${
+                      post.commentCount! > 1 && "s"
                     }`}
               </div>
             }

@@ -66,17 +66,15 @@ const socketAuth = (socket) => __awaiter(void 0, void 0, void 0, function* () {
 io.use(socketAuthMiddleware);
 io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     yield socketAuth(socket);
-    socket.on("auth", () => __awaiter(void 0, void 0, void 0, function* () {
-        yield socketAuth(socket);
-    }));
     socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
     socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
     socket.on("post_card_visible", (slug) => socket.join(`post_card=${slug}`));
     socket.on("post_card_not_visible", (slug) => socket.leave(`post_card=${slug}`));
     socket.on("open_profile", (uid) => socket.join(`profile=${uid}`));
     socket.on("close_profile", (uid) => socket.leave(`profile=${uid}`));
-    socket.on("open_post_comments", (slug) => socket.join(slug));
-    socket.on("leave_post_comments", (slug) => socket.leave(slug));
+    socket.on("open_post", (slug) => socket.join(slug));
+    socket.on("leave_post", (slug) => socket.leave(slug));
+    socket.on("auth", () => __awaiter(void 0, void 0, void 0, function* () { return yield socketAuth(socket); }));
     socket.on("room_video_chat_sending_signal", (payload) => {
         var _a;
         io.to(payload.userToSignal).emit("room_video_chat_user_joined", payload.signal, payload.callerSid, String((_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.id));
@@ -84,12 +82,22 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     socket.on("room_video_chat_returning_signal", (payload) => {
         io.to(payload.callerSid).emit("room_video_chat_receiving_returned_signal", payload.signal, socket.id);
     });
+    socket.on("private_conversation_video_chat_sending_signal", (payload) => {
+        io.to(payload.userToSignal).emit("private_conversation_video_chat_user_joined", payload.signal, payload.callerSid);
+    });
+    socket.on("private_conversation_video_chat_returning_signal", (payload) => {
+        io.to(payload.callerSid).emit("private_conversation_video_chat_receiving_returned_signal", payload.signal, socket.id);
+    });
+    socket.on("private_conversation_video_chat_close", () => {
+        socket.data.vidChatOpen = false;
+    });
     socket.on("disconnect", () => {
         if (socket.data.user)
             io.to(`user=${socket.data.user.id}`).emit("user_visible_update", {
                 id: socket.data.user.id,
                 online: false,
             });
+        socket.data.user = undefined;
         socket.rooms.forEach((room) => {
             var _a;
             if (room.startsWith("room="))

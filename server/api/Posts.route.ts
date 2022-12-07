@@ -27,9 +27,16 @@ router.route("/popular").get(
 );
 router.route("/page/:page").get(
   slowDown({
-    windowMs: 2000,
-    delayAfter: 4,
-    delayMs: 1000,
+    windowMs: 1000,
+    delayAfter: 3,
+    delayMs: 500,
+  }),
+  simpleRateLimit({
+    routeName:"getPage",
+    maxReqs: 4,
+    windowMs: 1000,
+    blockDuration: 2000,
+    msg:"Your request rate is surpassing the debouncer."
   }),
   withUser,
   PostsController.getPage

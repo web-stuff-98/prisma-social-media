@@ -700,7 +700,9 @@ export default class ChatDAO {
         throw new Error("Room does not exist");
       });
     if (!room.public && !room.members.find((member) => member.id === uid))
-      throw new Error("You need an invitation to join this room. If the owner has sent you an invitation then you can accept it by finding the message in the conversations section.");
+      throw new Error(
+        "You need an invitation to join this room. If the owner has sent you an invitation then you can accept it by finding the message in the conversations section."
+      );
     if (room.banned.find((banned) => banned.id === uid))
       throw new Error("You are banned from this room");
     await prisma.room.update({
@@ -1227,5 +1229,16 @@ export default class ChatDAO {
       .filter((ids) => ids.sid !== socket.id);
     socket.data.vidChatOpen = true;
     socket.emit("room_video_chat_all_users", sids);
+  }
+
+  static async conversationOpenVideoChat(uid: string, otherUsersId: string) {
+    console.log("Other users id : " + otherUsersId)
+    const callerSocket = await getUserSocket(uid);
+    const calledSocket = await getUserSocket(otherUsersId);
+    if (!callerSocket) throw new Error("You have no socket connection");
+    callerSocket.data.vidChatOpen = true;
+    if (!calledSocket)
+      throw new Error("The user you tried to call is not online");
+    callerSocket.emit("private_conversation_video_chat_user", calledSocket.id);
   }
 }

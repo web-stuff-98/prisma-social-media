@@ -201,6 +201,18 @@ class ChatController {
             }));
         });
     }
+    static conversationOpenVideoChat(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield Chat_dao_1.default.conversationOpenVideoChat(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.uid);
+                res.status(200).end();
+            }
+            catch (e) {
+                res.status(400).json({ msg: `${e}` });
+            }
+        });
+    }
     // Rooms
     static getRooms(req, res) {
         return __awaiter(this, void 0, void 0, function* () {

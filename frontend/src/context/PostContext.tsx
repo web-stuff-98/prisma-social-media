@@ -58,9 +58,9 @@ export function PostProvider({ children }: { children: ReactNode }) {
   const [replyingTo, setReplyingTo] = useState("");
 
   useEffect(() => {
-    if (socket) socket.emit("open_post_comments", String(slug));
+    if (socket) socket.emit("open_post", String(slug));
     return () => {
-      if (socket) socket.emit("leave_post_comments", String(slug));
+      if (socket) socket.emit("leave_post", String(slug));
     };
   }, [slug]);
 

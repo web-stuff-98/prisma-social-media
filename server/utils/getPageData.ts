@@ -30,8 +30,6 @@ export default async (
     rawTags = query.tags;
     if(query.term)
     rawTerm = query.term;
-    console.log(rawTags)
-    console.log(rawTerm)
     clientQueryInput = {
       pageOffset: Number(Math.max(Number(params?.page) - 1, 0) * 20),
       tags: rawTags

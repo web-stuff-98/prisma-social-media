@@ -74,6 +74,9 @@ router.route("/conversation/message/attachment/:msgId/:bytes").post(
   }),
   ChatController.uploadPrivateMessageAttachment
 );
+router.route("/conversation/videoCall/:uid").post(
+  ChatController.conversationOpenVideoChat
+);
 
 //Chatroom messages
 router.route("/room/message").post(

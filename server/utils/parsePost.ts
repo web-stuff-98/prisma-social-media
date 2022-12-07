@@ -11,6 +11,7 @@ export type ParsedPost = Omit<
   sharedByMe: boolean;
   comments: ParsedComment[];
   tags: string[];
+  commentCount: number;
 };
 
 export type ParsedComment = Omit<Comment, "likes" | "children"> & {
@@ -51,5 +52,6 @@ export default async (post: any, uid?: string) => {
           };
         })
       : [],
-  };
+    commentCount: post._count.comments,
+  } as ParsedPost;
 };

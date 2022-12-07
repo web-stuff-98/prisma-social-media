@@ -8,17 +8,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const __1 = require("..");
+const has_1 = __importDefault(require("lodash/has"));
 exports.default = (uid) => __awaiter(void 0, void 0, void 0, function* () {
     const sockets = yield __1.io.fetchSockets();
     for (const socket of sockets) {
-        if (!socket.data.user.id) {
-            console.warn("No uid for socket " + socket.id);
-            return undefined;
+        if ((0, has_1.default)(socket.data.user, "id")) {
+            if (socket.data.user.id === uid)
+                return socket;
         }
-        if (socket.data.user.id === uid)
-            return socket;
     }
     return undefined;
 });

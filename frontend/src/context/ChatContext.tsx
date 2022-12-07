@@ -2,10 +2,11 @@ import {
   useContext,
   createContext,
   useState,
-  useEffect,
   useCallback,
+  useRef,
+  useEffect,
 } from "react";
-import type { ReactNode, CSSProperties } from "react";
+import type { ReactNode, CSSProperties, MutableRefObject } from "react";
 
 import { BsFillChatRightFill } from "react-icons/bs";
 
@@ -21,6 +22,8 @@ import Room from "../components/chat/room/Room";
 import useCustomArrayAsync from "../hooks/useCustomArrayAsync";
 import { getRooms } from "../services/chat";
 import EditRoom from "../components/chat/editRoom/EditRoom";
+import { useAuth } from "./AuthContext";
+import { useLocation } from "react-router-dom";
 
 export type ChatSection =
   | "Menu"
@@ -63,6 +66,8 @@ export type MessengerError = {
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { width: scrollBarWidth } = useScrollbarSize();
+  const { user } = useAuth();
+  const location = useLocation()
 
   const [topText, setTopText] = useState("");
 
@@ -100,6 +105,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     error: roomsError,
     status: roomsStatus,
     value: rooms,
+    execute: getRoomsData,
   } = useCustomArrayAsync(
     getRooms,
     [],
@@ -108,10 +114,40 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     "room_created"
   );
 
+  useEffect(() => {
+    if (user && !rooms) getRoomsData();
+  }, [user]);
+
   const getRoom = useCallback(
     (id: string) => rooms.find((r) => r.id === id),
     [rooms]
   );
+
+  const userStream = useRef<MediaStream | undefined>(undefined);
+  const [selfMuted, setSelfMuted] = useState(false);
+  const initVideo = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+      userStream.current = stream;
+    } catch (e) {
+      if (`${e}`.includes("NotFoundError"))
+        throw new Error("Camera could not be found");
+      else throw new Error(`${e}`);
+    }
+  };
+  const toggleMuteSelf = () => {
+    if (!userStream.current) return;
+    const audioTracks = userStream.current.getAudioTracks();
+    if (audioTracks) {
+      audioTracks.forEach((track) => {
+        setSelfMuted(!track.enabled);
+        track.enabled = !track.enabled;
+      });
+    }
+  };
 
   return (
     <ChatContext.Provider
@@ -132,9 +168,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         openRoomEditor,
         editRoomId,
         getRoom,
+        toggleMuteSelf,
+        initVideo,
+        selfMuted,
+        userStream,
       }}
     >
-      <div
+      {user && <div
         style={{
           ...chatModalStyle,
           ...(chatOpen ? chatOpenStyle : chatClosedStyle),
@@ -142,7 +182,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             ? { width: "fit-content", height: "fit-content" }
             : {}),
           right: `calc(${scrollBarWidth}px + 0.125rem)`,
-          bottom: `calc(${scrollBarWidth}px + 0.125rem)`,
+          bottom: `calc(${scrollBarWidth}px + 0.125rem + ${location.pathname.includes("/blog") ? "4.0rem" : "0rem"})`,
         }}
         className={`mx-auto font-rubik dark:text-white relative ${
           chatOpen
@@ -188,8 +228,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             )}
           </>
         )}
-        {/*<VideoChatWindow />*/}
-      </div>
+      </div>}
       {children}
     </ChatContext.Provider>
   );
@@ -212,6 +251,10 @@ const ChatContext = createContext<{
   openRoomEditor: (roomId: string) => void;
   editRoomId: string;
   getRoom: (id: string) => IRoom | undefined;
+  userStream?: MutableRefObject<MediaStream | undefined>;
+  toggleMuteSelf: () => void;
+  initVideo: () => Promise<void>;
+  selfMuted: boolean;
 }>({
   chatOpen: false,
   openChat: () => {},
@@ -229,6 +272,10 @@ const ChatContext = createContext<{
   openRoomEditor: () => {},
   editRoomId: "",
   getRoom: () => undefined,
+  userStream: undefined,
+  toggleMuteSelf: () => {},
+  initVideo: async () => {},
+  selfMuted: false,
 });
 
 export const useChat = () => useContext(ChatContext);

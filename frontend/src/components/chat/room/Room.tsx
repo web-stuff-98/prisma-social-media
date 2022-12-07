@@ -49,13 +49,18 @@ const ICE_Config = {
 };
 
 export default function Room({ roomId }: { roomId: string }) {
-  const { rooms, setTopText } = useChat();
+  const {
+    rooms,
+    setTopText,
+    userStream,
+    toggleMuteSelf,
+    selfMuted,
+    initVideo,
+  } = useChat();
   const { socket } = useSocket();
   const { getUserData, cacheUserData, users } = useUsers();
 
-  const getAuthorName = (userData?: IUser) => {
-    return userData ? userData.name : "";
-  };
+  const getAuthorName = (userData?: IUser) => (userData ? userData.name : "");
 
   const [err, setErr] = useState("");
 
@@ -187,42 +192,14 @@ export default function Room({ roomId }: { roomId: string }) {
   ///////////////////////////////////// Video chat stuff /////////////////////////////////////
   const peersRef = useRef<PeerWithIDs[]>([]);
   const [peers, setPeers] = useState<PeerWithIDs[]>([]);
-  const userStream = useRef<MediaStream | undefined>(undefined);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [selfMuted, setSelfMuted] = useState(false);
-  const toggleMuteSelf = () => {
-    const audioTracks = userStream.current?.getAudioTracks();
-    if (audioTracks) {
-      for (const track of audioTracks) {
-        setSelfMuted(!track.enabled);
-        track.enabled = !track.enabled;
-      }
-    }
-  };
-  const initVideo = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
-      return stream;
-    } catch (e) {
-      if (`${e}`.includes("NotFoundError")) {
-        throw new Error("Camera could not be found");
-      } else {
-        throw new Error(`${e}`);
-      }
-    }
-  };
   const handleVidChatClicked = async () => {
-    try {
-      const stream = await initVideo();
-      userStream.current = stream;
-      setIsStreaming(true);
-      await roomOpenVideoChat(roomId);
-    } catch (e) {
-      setErr(`${e}`);
-    }
+    initVideo()
+      .then(() => {
+        setIsStreaming(true);
+        roomOpenVideoChat(roomId).catch((e) => setErr(`${e}`));
+      })
+      .catch((e) => setErr(`${e}`));
   };
   const handleVidChatAllUsers = useCallback(
     (ids: { sid: string; uid: string }[]) => {
@@ -231,7 +208,7 @@ export default function Room({ roomId }: { roomId: string }) {
         const peer = createPeer(
           ids.sid,
           String(socket?.id),
-          userStream.current
+          userStream?.current
         );
         peersRef.current.push({
           peerSID: ids.sid,
@@ -246,7 +223,7 @@ export default function Room({ roomId }: { roomId: string }) {
   );
   const handleVidChatUserJoined = useCallback(
     (signal: any, callerSid: string, callerUid: string) => {
-      const peer = addPeer(signal, callerSid, userStream.current);
+      const peer = addPeer(signal, callerSid, userStream?.current);
       setPeers((peers: PeerWithIDs[]) => [
         ...peers,
         { peer, peerSID: callerSid, peerUID: callerUid },
@@ -335,9 +312,7 @@ export default function Room({ roomId }: { roomId: string }) {
         handleVidChatReceivingReturningSignal
       );
       socket?.off("room_video_chat_user_left", handleVidChatUserLeft);
-      for (const p of peersRef.current) {
-        p.peer.destroy();
-      }
+      peersRef.current.forEach((p) => p.peer.destroy())
       leaveRoom(roomId);
     };
   }, []);
@@ -345,14 +320,7 @@ export default function Room({ roomId }: { roomId: string }) {
   return (
     <div>
       <>
-        {(isStreaming || peers.length > 0) && (
-          <Videos
-            selfMuted={selfMuted}
-            toggleMuteSelf={toggleMuteSelf}
-            usersStream={userStream.current}
-            peersData={peers}
-          />
-        )}
+        {(isStreaming || peers.length > 0) && <Videos peersData={peers} />}
         <MessageList
           roomId={roomId}
           messages={messages}
@@ -373,15 +341,3 @@ export default function Room({ roomId }: { roomId: string }) {
   );
 }
 
-/*<Videos
-vidWindowsData={(isStreaming
-  ? [{ stream: userStream.current, uid: String(user?.id) }]
-  : []
-).concat(
-  peers.map((peer) => ({
-    peer: peer.peer,
-    stream: undefined,
-    uid: peer.peerUID,
-  }))
-)}
-/>*/

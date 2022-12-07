@@ -86,7 +86,7 @@ export default class UsersController {
         .end();
     }
     try {
-      const user = await UsersDAO.createUser(username, password);
+      const user = await UsersDAO.createUser(username.trim(), password);
       res.cookie(
         "token",
         jwt.sign(
@@ -97,6 +97,7 @@ export default class UsersController {
           secure: process.env.NODE_ENV === "production",
           httpOnly: true,
           sameSite: "strict",
+          maxAge: 60 * 60 * 24,
         }
       );
       req.user = user;
@@ -124,8 +125,8 @@ export default class UsersController {
     }
     let user;
     try {
-      user = await prisma.user.findUniqueOrThrow({
-        where: { name: username },
+      user = await prisma.user.findFirstOrThrow({
+        where: { name: { equals: username, mode: "insensitive" } },
       });
     } catch (e) {
       res.status(404).json({ msg: "User does not exist" });
@@ -154,6 +155,7 @@ export default class UsersController {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
         sameSite: "strict",
+        maxAge: 60 * 60 * 24,
       }
     );
     if (user)
@@ -168,14 +170,19 @@ export default class UsersController {
     if (req.user) {
       const socket = await getUserSocket(req.user.id);
       if (socket) {
-        socket.disconnect();
+        socket.data.user = {
+          id: "",
+          name: "",
+          room: undefined,
+        };
       }
       io.to(`user=${req.user?.id}`).emit("user_visible_update", {
         id: req.user.id,
         online: false,
       });
     }
-    res.status(200).clearCookie("token", { path: "/" }).end();
+    delete req.user;
+    res.status(200).clearCookie("token", { path: "/", maxAge: 0 }).end();
   }
 
   static async checkLogin(req: Req, res: Res) {

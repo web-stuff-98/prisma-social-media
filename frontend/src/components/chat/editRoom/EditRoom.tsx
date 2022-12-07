@@ -37,7 +37,7 @@ export default function EditRoom({ room }: { room: IRoom }) {
             />
           </div>
           <h2 className="text-center text-md font-bold">Members</h2>
-          <div className="flex flex-col gap-2">
+          <div style={{maxHeight:"10pc"}} className="flex overflow-y-auto flex-col gap-2">
             {room.members.map(({ id: memberUid }) => (
               <div
                 key={memberUid}
@@ -75,7 +75,7 @@ export default function EditRoom({ room }: { room: IRoom }) {
           </div>
           {room.banned.length > 0 && <>
           <h2 className="text-center text-md mt-2 font-bold">Banned users</h2>
-          <div className="flex flex-col gap-2">
+          <div style={{maxHeight:"10pc"}} className="flex flex-col gap-2 overflow-y-auto">
             {room.banned.map(({ id: bannedUid }) => (
               <div
                 key={bannedUid}

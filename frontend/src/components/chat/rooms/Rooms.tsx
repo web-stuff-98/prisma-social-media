@@ -11,7 +11,7 @@ import MessengerError from "../MessengerError";
 import Room from "./Room";
 
 export default function Rooms() {
-  const { setChatSection, rooms, roomsError, roomsStatus, setRoomId } =
+  const { rooms, roomsError, roomsStatus } =
     useChat();
 
   const [err, setErr] = useState("");
@@ -36,7 +36,7 @@ export default function Rooms() {
         {roomsStatus === "error" && (
           <div className="text-lg text-rose-600 drop-shadow text-center flex flex-col items-center justify-center">
             <>
-              <MdError className="text-2xl" />
+              <MdError className="text-2xl mt-2 mb-0" />
               {roomsError}
             </>
           </div>

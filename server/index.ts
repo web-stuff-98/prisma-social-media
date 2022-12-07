@@ -73,9 +73,6 @@ io.use(socketAuthMiddleware);
 
 io.on("connection", async (socket) => {
   await socketAuth(socket);
-  socket.on("auth", async () => {
-    await socketAuth(socket);
-  });
 
   socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
   socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
@@ -86,8 +83,10 @@ io.on("connection", async (socket) => {
 
   socket.on("open_profile", (uid: string) => socket.join(`profile=${uid}`));
   socket.on("close_profile", (uid: string) => socket.leave(`profile=${uid}`));
-  socket.on("open_post_comments", (slug) => socket.join(slug));
-  socket.on("leave_post_comments", (slug) => socket.leave(slug));
+  socket.on("open_post", (slug) => socket.join(slug));
+  socket.on("leave_post", (slug) => socket.leave(slug));
+
+  socket.on("auth", async () => await socketAuth(socket))
 
   socket.on("room_video_chat_sending_signal", (payload) => {
     io.to(payload.userToSignal).emit(
@@ -97,7 +96,6 @@ io.on("connection", async (socket) => {
       String(socket.data.user?.id)
     );
   });
-
   socket.on("room_video_chat_returning_signal", (payload) => {
     io.to(payload.callerSid).emit(
       "room_video_chat_receiving_returned_signal",
@@ -106,12 +104,32 @@ io.on("connection", async (socket) => {
     );
   });
 
+  socket.on("private_conversation_video_chat_sending_signal", (payload) => {
+    io.to(payload.userToSignal).emit(
+      "private_conversation_video_chat_user_joined",
+      payload.signal,
+      payload.callerSid
+    );
+  });
+  socket.on("private_conversation_video_chat_returning_signal", (payload) => {
+    io.to(payload.callerSid).emit(
+      "private_conversation_video_chat_receiving_returned_signal",
+      payload.signal,
+      socket.id
+    );
+  });
+
+  socket.on("private_conversation_video_chat_close", () => {
+    socket.data.vidChatOpen = false;
+  });
+
   socket.on("disconnect", () => {
     if (socket.data.user)
       io.to(`user=${socket.data.user.id}`).emit("user_visible_update", {
         id: socket.data.user.id,
         online: false,
       });
+    socket.data.user = undefined;
     socket.rooms.forEach((room) => {
       if (room.startsWith("room="))
         io.to(room).emit(

@@ -1176,5 +1176,18 @@ class ChatDAO {
             socket.emit("room_video_chat_all_users", sids);
         });
     }
+    static conversationOpenVideoChat(uid, otherUsersId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log("Other users id : " + otherUsersId);
+            const callerSocket = yield (0, getUserSocket_1.default)(uid);
+            const calledSocket = yield (0, getUserSocket_1.default)(otherUsersId);
+            if (!callerSocket)
+                throw new Error("You have no socket connection");
+            callerSocket.data.vidChatOpen = true;
+            if (!calledSocket)
+                throw new Error("The user you tried to call is not online");
+            callerSocket.emit("private_conversation_video_chat_user", calledSocket.id);
+        });
+    }
 }
 exports.default = ChatDAO;

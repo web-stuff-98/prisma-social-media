@@ -42,5 +42,5 @@ exports.default = (post, uid) => __awaiter(void 0, void 0, void 0, function* () 
                         ? usersCommentLikes.find((like) => like.commentId === cmt.id)
                         : undefined, likeCount: _count.likes });
             })
-            : [] });
+            : [], commentCount: post._count.comments });
 });

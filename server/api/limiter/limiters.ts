@@ -260,7 +260,6 @@ export const bruteRateLimit = (
     const ip = getReqIp(req);
     const ipBlockInfo = await findIPBlockInfo(ip);
     if (ipBlockInfo) {
-      console.log("found");
       const { blocked, attempts, lastAttempt } = await checkBlockedByBruteBlock(
         {
           info: ipBlockInfo,
@@ -277,8 +276,6 @@ export const bruteRateLimit = (
           lastAttempt
         );
       }
-    } else {
-      console.log("not found");
     }
     await prepBruteRateLimit(params, ip);
     next();

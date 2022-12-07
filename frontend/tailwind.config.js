@@ -18,7 +18,7 @@ module.exports = {
         threadGap: "20%",
       },
       fontFamily: {
-        rubik: '"Kulim Park"',
+        rubik: '"Sulphur Point"',
       },
       colors: {
         foreground: "white",

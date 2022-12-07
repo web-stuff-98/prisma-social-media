@@ -20,6 +20,7 @@ const parsePost_1 = __importDefault(require("../../utils/parsePost"));
 const getPageData_1 = __importDefault(require("../../utils/getPageData"));
 const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
 const readableStreamToBlob_1 = __importDefault(require("../../utils/readableStreamToBlob"));
+const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
 class PostsDAO {
     static getPosts(uid) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -364,7 +365,8 @@ class PostsDAO {
                 where: { id: postId },
                 select: { slug: true },
             });
-            __1.io.to(`post_card=${post === null || post === void 0 ? void 0 : post.slug}`).emit("post_visible_like_update", addLike, uid, postId);
+            const socket = yield (0, getUserSocket_1.default)(uid);
+            __1.io.to(`post_card=${post === null || post === void 0 ? void 0 : post.slug}`).emit("post_visible_like_update", addLike, socket === null || socket === void 0 ? void 0 : socket.id, postId);
             return { addLike };
         });
     }
@@ -391,7 +393,8 @@ class PostsDAO {
                 where: { id: postId },
                 select: { slug: true },
             });
-            __1.io.to(`post_card=${post === null || post === void 0 ? void 0 : post.slug}`).emit("post_visible_share_update", addShare, uid, postId);
+            const socket = yield (0, getUserSocket_1.default)(uid);
+            __1.io.to(`post_card=${post === null || post === void 0 ? void 0 : post.slug}`).emit("post_visible_share_update", addShare, socket === null || socket === void 0 ? void 0 : socket.id, postId);
             return { addShare };
         });
     }

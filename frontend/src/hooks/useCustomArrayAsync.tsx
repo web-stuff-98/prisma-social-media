@@ -32,12 +32,12 @@ itemCreatedEventName = The name of your socket event for when an item in the arr
 
 const useCustomArrayAsync = (
   asyncFunction: Function,
-  asyncFuncArgs: any[] | undefined,
+  asyncFuncArgs: any[] = [],
   itemUpdatedEventName: string,
   itemDeletedEventName: string,
   itemCreatedEventName: string,
   sortFunction?: (a: any, b: any) => number,
-  filterFunction: (item: any) => boolean = () => true
+  filterFunction: (item: any) => boolean = () => true,
 ) => {
   const [status, setStatus] = useState<
     "idle" | "pending" | "error" | "success"
@@ -45,43 +45,49 @@ const useCustomArrayAsync = (
   const [value, setValue] = useState<any[]>([]);
   const [error, setError] = useState(null);
 
-  const setValueState = (cb: (prevState: any[]) => any[]) => setValue(cb);
+  const setValueState = useCallback(
+    (cb: (prevState: any[]) => any[]) => setValue(cb),
+    []
+  );
 
   const execute = useCallback(() => {
     setStatus("pending");
     setValue([]);
     setError(null);
-    return asyncFunction(...asyncFuncArgs || undefined)
-          .then((response: any[]) => {
-            setValue(sortFunction ? response.sort(sortFunction) : response);
-            setStatus("success");
-          })
-          .catch((error: any) => {
-            setError(error);
-            setStatus("error");
-          });
+    return asyncFunction(...asyncFuncArgs)
+      .then((response: any[]) => {
+        setValue(sortFunction ? response.sort(sortFunction) : response);
+        setStatus("success");
+      })
+      .catch((error: any) => {
+        setError(error);
+        setStatus("error");
+      });
   }, [asyncFunction]);
 
   const { socket } = useSocket();
   const handleItemCreated = useCallback((data: any) => {
     setValue((p) =>
       sortFunction
-        ? [...p, { ...data }].sort(sortFunction).filter(filterFunction)
-        : [...p, { ...data }].filter(filterFunction)
+        ? [...p, data].sort(sortFunction).filter(filterFunction)
+        : [...p, data].filter(filterFunction)
     );
   }, []);
-  const handleItemUpdated = useCallback((data: any) => {
-    setValue((p) => {
-      let newVal = p;
-      const i = p.findIndex((item) => item.id === data.id);
-      newVal[i] = { ...newVal[i], ...data };
-      return [
-        ...(sortFunction ? newVal.sort(sortFunction) : newVal).filter(
-          filterFunction
-        ),
-      ];
-    });
-  }, [value]);
+  const handleItemUpdated = useCallback(
+    (data: any) => {
+      setValue((p) => {
+        let newVal = p;
+        const i = p.findIndex((item) => item.id === data.id);
+        newVal[i] = { ...newVal[i], ...data };
+        return [
+          ...(sortFunction ? newVal.sort(sortFunction) : newVal).filter(
+            filterFunction
+          ),
+        ];
+      });
+    },
+    [value]
+  );
   const handleItemDeleted = useCallback((id: string) => {
     setValue((p) => [
       ...(sortFunction
@@ -95,7 +101,7 @@ const useCustomArrayAsync = (
 
   useEffect(() => {
     execute();
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (!socket) return;

@@ -1,4 +1,3 @@
-import axios from "axios";
 import { IPost } from "../context/PostsContext";
 import { makeRequest } from "./makeRequest";
 

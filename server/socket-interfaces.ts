@@ -59,6 +59,26 @@ export interface ServerToClientEvents {
   ) => void;
   room_message_attachment_progress: (progress: number, id: string) => void;
 
+  private_conversation_video_chat_user_joined: (
+    signal: Peer.SignalData,
+    callerSid: string,
+  ) => void;
+  private_conversation_video_chat_user_left: (uid: string) => void;
+  private_conversation_video_chat_sending_signal: (payload: {
+    userToSignal: string;
+    callerSid: string;
+    signal: Peer.SignalData;
+  }) => void;
+  private_conversation_video_chat_returning_signal: (payload: {
+    signal: Peer.SignalData;
+    callerSid: string;
+  }) => void;
+  private_conversation_video_chat_receiving_returned_signal: (
+    signal: Peer.SignalData,
+    sid: string
+  ) => void;
+  private_conversation_video_chat_user: (sid: string) => void;
+
   room_video_chat_user_joined: (
     signal: Peer.SignalData,
     callerSid: string,
@@ -102,12 +122,12 @@ export interface ServerToClientEvents {
   post_visible_update: (data: Partial<ParsedPost>) => void;
   post_visible_like_update: (
     addLike: boolean,
-    uid: string,
+    sid: string,
     postId: string
   ) => void;
   post_visible_share_update: (
     addShare: boolean,
-    uid: string,
+    sid: string,
     postId: string
   ) => void;
   post_visible_comment_update: (addComment: boolean, slug: string) => void;
@@ -115,10 +135,8 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  auth: () => void;
-
-  open_post_comments: (slug: string) => void;
-  leave_post_comments: (slug: string) => void;
+  open_post: (slug: string) => void;
+  leave_post: (slug: string) => void;
 
   user_visible: (uid: string) => void;
   user_not_visible: (uid: string) => void;
@@ -136,6 +154,19 @@ export interface ClientToServerEvents {
     signal: Peer.SignalData;
     callerSid: string;
   }) => void;
+
+  private_conversation_video_chat_sending_signal: (payload: {
+    userToSignal: string;
+    callerSid: string;
+    signal: Peer.SignalData;
+  }) => void;
+  private_conversation_video_chat_returning_signal: (payload: {
+    signal: Peer.SignalData;
+    callerSid: string;
+  }) => void;
+  private_conversation_video_chat_close: () => void;
+
+  auth: () => void;
 }
 
 export interface InterServerEvents {

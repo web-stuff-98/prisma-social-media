@@ -2,7 +2,7 @@ import { IPost } from "../../context/PostsContext";
 
 export default function PopularPostCard(post?: IPost) {
   return (
-    <article key={post!.slug} className="leading-5 py-1 my-1 rounded-sm">
+    <article key={post!.slug} className="leading-5 rounded-sm">
       {post ? (
         <>
           <h2 className="text-xs leading-3 my-0 mb-0.5 py-0.5">

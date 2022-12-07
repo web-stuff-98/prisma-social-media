@@ -11,6 +11,7 @@ import Peer from "simple-peer";
 import { ImSpinner8 } from "react-icons/im";
 import User from "../../User";
 import useUsers from "../../../context/UsersContext";
+import { useChat } from "../../../context/ChatContext";
 
 /*
   For the client only stream and UID are used, peer is left undefined.
@@ -23,17 +24,14 @@ export default function VideoChatWindow({
   stream,
   uid,
   peer,
-  selfMuted,
-  toggleMuteSelf,
 }: {
   stream?: MediaStream;
   uid: string;
   peer?: Peer.Instance;
-  selfMuted?: boolean;
-  toggleMuteSelf?: () => void;
 }) {
   const { user } = useAuth();
   const { getUserData } = useUsers();
+  const { selfMuted, toggleMuteSelf} = useChat()
 
   const videoRef = useRef<HTMLVideoElement | any>();
 

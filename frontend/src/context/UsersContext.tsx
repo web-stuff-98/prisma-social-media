@@ -6,7 +6,7 @@ import {
   useEffect,
 } from "react";
 import type { ReactNode } from "react";
-import { IUser } from "./AuthContext";
+import { IUser, useAuth } from "./AuthContext";
 import { getUser } from "../services/users";
 import { useSocket } from "./SocketContext";
 
@@ -56,6 +56,7 @@ export const UsersContext = createContext<{
 
 export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const { socket } = useSocket();
+  const { user } = useAuth();
 
   const [users, setUsers] = useState<IUser[]>([]);
 
@@ -78,7 +79,9 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     try {
       const found = users.find((u) => u.id === uid);
       if (found && !force) return;
-      const u = await getUser(uid);
+      let u = await getUser(uid);
+      if(user && uid === user?.id)
+        u.online = true
       setUsers((p) => [...p, u]);
     } catch (e) {
       console.warn("Could not cache data for user : " + uid);

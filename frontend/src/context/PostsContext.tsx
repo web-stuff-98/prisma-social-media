@@ -4,7 +4,7 @@ import {
   useCallback,
   useState,
   useEffect,
-  useMemo
+  useMemo,
 } from "react";
 import type { ReactNode } from "react";
 import {
@@ -55,7 +55,7 @@ type DisappearedPost = {
 
 const PostsContext = createContext<{
   error: string;
-  status: "idle" | "pending" | "error" | "success";
+  status: "idle" | "pending" | "pending-search" | "error" | "success";
 
   // slug arrays
   pagePosts: string[];
@@ -103,7 +103,7 @@ const PostsContext = createContext<{
 export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const { socket } = useSocket();
   const { cacheUserData } = useUsers();
-  const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm, pageNumber } =
+  const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm } =
     useFilter();
   const { user } = useAuth();
   const query = useParams();
@@ -131,7 +131,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const [status, setStatus] = useState<
-    "idle" | "pending" | "error" | "success"
+    "idle" | "pending" | "pending-search" | "error" | "success"
   >("idle");
   const [error, setError] = useState("");
 
@@ -143,10 +143,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     ]);
   };
 
-  const getAndSetPage = () =>{
-    setStatus("pending");
+  const getAndSetPage = () => {
     getPage(
-      Number(query.page),
+      Number(query.page) || 1,
       searchTags.join("+") || "",
       searchTerm.replace(" ", "+") || ""
     )
@@ -169,12 +168,19 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         setError(`${e}`);
         setStatus("error");
       });
+  };
 
-  }
-
-  const handleGetAndSetPage = useMemo(() => debounce(getAndSetPage, 300), []);
+  const handleGetAndSetPage = useMemo(
+    () =>
+      debounce(() => {
+        getAndSetPage();
+        setStatus("pending-search");
+      }, 300),
+    []
+  );
 
   useEffect(() => {
+    console.log(query.page);
     if (!query.page) return;
     handleGetAndSetPage();
   }, [searchTags, searchTerm, query.page]);
@@ -182,23 +188,25 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const [err, setErr] = useState("");
 
   useEffect(() => {
+    setStatus("pending");
+    getAndSetPage();
     getPopularPosts()
       .then((posts) => {
         const slugs: string[] = posts.map((p: IPost) => p.slug);
-        addToPostsData(posts);
         slugs.forEach((slug) => postEnteredView(slug));
+        addToPostsData(posts);
         setPopularPosts(slugs);
       })
       .catch((e) => setErr(`Error getting popular posts : ${e}`));
   }, []);
 
   const openPost = (slug: string) => {
-    socket?.emit("open_post_comments", slug);
+    socket?.emit("open_post", slug);
     setPostsOpen((p) => [...p.filter((checkSlug) => checkSlug !== slug), slug]);
     cachePostData(slug, true);
   };
   const closePost = (slug: string) => {
-    socket?.emit("leave_post_comments", slug);
+    socket?.emit("leave_post", slug);
     setPostsOpen((p) => [...p.filter((checkSlug) => checkSlug !== slug)]);
   };
 
@@ -249,14 +257,14 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
 
   const subscribeToPost = useCallback(
     (slug: string) => {
-      if (!socket) throw new Error("No socket!");
+      if (!socket) return;
       socket?.emit("post_card_visible", slug);
     },
     [socket]
   );
   const unsubscribeFromPost = useCallback(
     (slug: string) => {
-      if (!socket) throw new Error("No socket!");
+      if (!socket) return;
       socket?.emit("post_card_not_visible", slug);
     },
     [socket]
@@ -341,10 +349,10 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
 
   const handleVisiblePostLikeUpdate = (
     addLike: boolean,
-    uid: string,
+    sid: string,
     postId: string
   ) => {
-    if (user && uid === user.id) return;
+    if (sid === socket?.id) return;
     //@ts-ignore
     setPostsData((p: any) => {
       let newPosts = p;
@@ -360,10 +368,10 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
 
   const handleVisiblePostShareUpdate = (
     addShare: boolean,
-    uid: string,
+    sid: string,
     postId: string
   ) => {
-    if (user && uid === user.id) return;
+    if (sid === socket?.id) return;
     //@ts-ignore
     setPostsData((p: any) => {
       let newPosts = p;

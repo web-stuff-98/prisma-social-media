@@ -43,9 +43,15 @@ router.route("/popular").get((0, express_slow_down_1.default)({
     delayMs: 1000,
 }), authMiddleware_1.withUser, Posts_controller_1.default.getPopularPosts);
 router.route("/page/:page").get((0, express_slow_down_1.default)({
-    windowMs: 2000,
-    delayAfter: 4,
-    delayMs: 1000,
+    windowMs: 1000,
+    delayAfter: 3,
+    delayMs: 500,
+}), (0, limiters_1.simpleRateLimit)({
+    routeName: "getPage",
+    maxReqs: 4,
+    windowMs: 1000,
+    blockDuration: 2000,
+    msg: "Your request rate is surpassing the debouncer."
 }), authMiddleware_1.withUser, Posts_controller_1.default.getPage);
 router.route("/").post((0, express_slow_down_1.default)({
     windowMs: 120000,

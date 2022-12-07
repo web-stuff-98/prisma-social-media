@@ -66,21 +66,29 @@ export default class ChatController {
     }
   }
 
-  static async acceptInvite(req:Req, res:Res) {
+  static async acceptInvite(req: Req, res: Res) {
     try {
-      await ChatDAO.acceptInvite(String(req.user?.id), req.body.senderId, req.body.roomName),
-      res.status(200).end()
+      await ChatDAO.acceptInvite(
+        String(req.user?.id),
+        req.body.senderId,
+        req.body.roomName
+      ),
+        res.status(200).end();
     } catch (e) {
-      res.status(400).json({msg:`${e}`})
+      res.status(400).json({ msg: `${e}` });
     }
   }
 
-  static async declineInvite(req:Req, res:Res) {
+  static async declineInvite(req: Req, res: Res) {
     try {
-      await ChatDAO.declineInvite(String(req.user?.id), req.body.senderId, req.body.roomName),
-      res.status(200).end()
+      await ChatDAO.declineInvite(
+        String(req.user?.id),
+        req.body.senderId,
+        req.body.roomName
+      ),
+        res.status(200).end();
     } catch (e) {
-      res.status(400).json({msg:`${e}`})
+      res.status(400).json({ msg: `${e}` });
     }
   }
 
@@ -201,6 +209,18 @@ export default class ChatController {
             .end();
         });
     });
+  }
+
+  static async conversationOpenVideoChat(req: Req, res: Res) {
+    try {
+      await ChatDAO.conversationOpenVideoChat(
+        String(req.user?.id),
+        req.params.uid
+      );
+      res.status(200).end();
+    } catch (e) {
+      res.status(400).json({ msg: `${e}` });
+    }
   }
 
   // Rooms

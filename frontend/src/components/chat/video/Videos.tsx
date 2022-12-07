@@ -1,8 +1,8 @@
 import VideoChatWindow from "./VideoChatWindow";
 import useScrollbarSize from "react-scrollbar-size";
 import { useAuth } from "../../../context/AuthContext";
-
 import { PeerWithIDs } from "../room/Room";
+import { useChat } from "../../../context/ChatContext";
 
 /*
   For the client only stream and UID are used, peer is left undefined.
@@ -11,19 +11,10 @@ import { PeerWithIDs } from "../room/Room";
   required.
 */
 
-export default function Videos({
-  peersData,
-  usersStream,
-  toggleMuteSelf,
-  selfMuted,
-}: {
-  peersData: PeerWithIDs[];
-  usersStream?: MediaStream;
-  toggleMuteSelf?: () => void,
-  selfMuted?: boolean
-}) {
+export default function Videos({ peersData }: { peersData: PeerWithIDs[] }) {
   const { width: scrollWidth } = useScrollbarSize();
   const { user } = useAuth();
+  const { userStream } = useChat();
 
   return (
     <div
@@ -33,8 +24,8 @@ export default function Videos({
       }}
       className="w-full absolute p-0.5 flex border-b border-stone-600 dark:border-stone-800 flex-wrap z-40"
     >
-      {user && usersStream && (
-        <VideoChatWindow selfMuted={selfMuted} toggleMuteSelf={toggleMuteSelf} uid={user.id} stream={usersStream} />
+      {user && userStream && (
+        <VideoChatWindow uid={user.id} stream={userStream.current} />
       )}
       {peersData.map((vidWinData) => (
         <VideoChatWindow

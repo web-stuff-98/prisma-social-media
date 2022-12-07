@@ -196,6 +196,12 @@ const getRoom = (roomId: string) =>
 const getRoomMessages = (roomId: string) =>
   makeRequest(`/api/chat/room/${roomId}/messages`, { withCredentials: true });
 
+const conversationOpenVideoChat = (uid: string) =>
+  makeRequest(`/api/chat/conversation/videoCall/${uid}`, {
+    method: "POST",
+    withCredentials: true,
+  });
+
 export {
   getConversations,
   getConversation,
@@ -224,4 +230,5 @@ export {
   sendInvite,
   declineInvite,
   acceptInvite,
+  conversationOpenVideoChat
 };

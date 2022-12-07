@@ -195,7 +195,6 @@ const bruteRateLimit = (params = {
         const ip = (0, getReqIp_1.default)(req);
         const ipBlockInfo = yield (0, limiterStore_1.findIPBlockInfo)(ip);
         if (ipBlockInfo) {
-            console.log("found");
             const { blocked, attempts, lastAttempt } = yield checkBlockedByBruteBlock({
                 info: ipBlockInfo,
                 routeName: params.routeName,
@@ -203,9 +202,6 @@ const bruteRateLimit = (params = {
             if (blocked) {
                 return bruteRateLimitResponse(res, params.msg || "", params.blockDuration, attempts, params.failsRequired, lastAttempt);
             }
-        }
-        else {
-            console.log("not found");
         }
         yield (0, limiterStore_1.prepBruteRateLimit)(params, ip);
         next();

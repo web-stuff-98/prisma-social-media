@@ -135,11 +135,12 @@ class UsersController {
                     .end();
             }
             try {
-                const user = yield Users_dao_1.default.createUser(username, password);
+                const user = yield Users_dao_1.default.createUser(username.trim(), password);
                 res.cookie("token", jsonwebtoken_1.default.sign(JSON.stringify({ id: String(user === null || user === void 0 ? void 0 : user.id), name: user.name }), String(process.env.JWT_SECRET)), {
                     secure: process.env.NODE_ENV === "production",
                     httpOnly: true,
                     sameSite: "strict",
+                    maxAge: 60 * 60 * 24,
                 });
                 req.user = user;
                 res.status(201).json(user).end();
@@ -169,8 +170,8 @@ class UsersController {
             }
             let user;
             try {
-                user = yield prisma_1.default.user.findUniqueOrThrow({
-                    where: { name: username },
+                user = yield prisma_1.default.user.findFirstOrThrow({
+                    where: { name: { equals: username, mode: "insensitive" } },
                 });
             }
             catch (e) {
@@ -195,6 +196,7 @@ class UsersController {
                 secure: process.env.NODE_ENV === "production",
                 httpOnly: true,
                 sameSite: "strict",
+                maxAge: 60 * 60 * 24,
             });
             if (user)
                 __1.io.to(`user=${user.id}`).emit("user_visible_update", {
@@ -210,14 +212,19 @@ class UsersController {
             if (req.user) {
                 const socket = yield (0, getUserSocket_1.default)(req.user.id);
                 if (socket) {
-                    socket.disconnect();
+                    socket.data.user = {
+                        id: "",
+                        name: "",
+                        room: undefined,
+                    };
                 }
                 __1.io.to(`user=${(_a = req.user) === null || _a === void 0 ? void 0 : _a.id}`).emit("user_visible_update", {
                     id: req.user.id,
                     online: false,
                 });
             }
-            res.status(200).clearCookie("token", { path: "/" }).end();
+            delete req.user;
+            res.status(200).clearCookie("token", { path: "/", maxAge: 0 }).end();
         });
     }
     static checkLogin(req, res) {

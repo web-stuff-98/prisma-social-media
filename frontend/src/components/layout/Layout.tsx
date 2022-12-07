@@ -7,6 +7,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
+import useScrollbarSize from "react-scrollbar-size";
 import { useFilter } from "../../context/FilterContext";
 import { useInterface } from "../../context/InterfaceContext";
 import Header from "./Header";
@@ -24,6 +25,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const query = useParams();
   let [searchParams] = useSearchParams();
+  const { width } = useScrollbarSize()
 
   useEffect(() => {
     if (iState.darkMode) document.body.classList.add("dark");
@@ -118,8 +120,8 @@ export default function Layout() {
             </main>
           </div>
           {location.pathname.includes("/blog") && (
-            <div
-              style={{ bottom: "0" }}
+            <footer
+              style={{ bottom: "0", width:`calc(100vw - ${width}px)` }}
               className="fixed flex items-center justify-center bg-neutral-900 dark:bg-zinc-900 border-t border-black dark:border-zinc-800 w-screen min-h-footer"
             >
               <BsChevronLeft
@@ -138,7 +140,7 @@ export default function Layout() {
                 onClick={() => nextPage()}
                 className="text-white cursor-pointer text-3xl"
               />
-            </div>
+            </footer>
           )}
         </ScrollToTopContext.Provider>
       </ScrollYContext.Provider>

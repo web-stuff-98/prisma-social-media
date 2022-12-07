@@ -24,8 +24,6 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
             rawTags = query.tags;
         if (query.term)
             rawTerm = query.term;
-        console.log(rawTags);
-        console.log(rawTerm);
         clientQueryInput = {
             pageOffset: Number(Math.max(Number(params === null || params === void 0 ? void 0 : params.page) - 1, 0) * 20),
             tags: rawTags

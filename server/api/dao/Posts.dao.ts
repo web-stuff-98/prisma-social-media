@@ -9,6 +9,7 @@ import internal from "stream";
 import busboy from "busboy";
 import imageProcessing from "../../utils/imageProcessing";
 import readableStreamToBlob from "../../utils/readableStreamToBlob";
+import getUserSocket from "../../utils/getUserSocket";
 
 export default class PostsDAO {
   static async getPosts(uid?: string) {
@@ -408,10 +409,11 @@ export default class PostsDAO {
       where: { id: postId },
       select: { slug: true },
     });
+    const socket = await getUserSocket(uid);
     io.to(`post_card=${post?.slug}`).emit(
       "post_visible_like_update",
       addLike,
-      uid,
+      socket?.id!,
       postId
     );
     return { addLike };
@@ -438,10 +440,11 @@ export default class PostsDAO {
       where: { id: postId },
       select: { slug: true },
     });
+    const socket = await getUserSocket(uid);
     io.to(`post_card=${post?.slug}`).emit(
       "post_visible_share_update",
       addShare,
-      uid,
+      socket?.id!,
       postId
     );
     return { addShare };

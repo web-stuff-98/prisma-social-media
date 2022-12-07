@@ -15,7 +15,7 @@ import {
 
 const SocketContext = createContext<{
   socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
-  authSocket: () => void;
+  authSocket?: () => void;
 }>({
   socket: undefined,
   authSocket: () => {},
@@ -34,7 +34,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const authSocket = () => {
-    socket?.emit("auth");
+    socket?.emit("auth")
   };
 
   useEffect(() => {
