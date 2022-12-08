@@ -84,8 +84,9 @@ class UsersDAO {
                     pfp: { select: { base64: true } },
                 },
             });
+            const socket = yield (0, getUserSocket_1.default)(id);
             const out = user
-                ? Object.assign({ id: user.id, name: user.name }, (((_a = user.pfp) === null || _a === void 0 ? void 0 : _a.base64) ? { pfp: user.pfp.base64 } : {})) : undefined;
+                ? Object.assign(Object.assign({ id: user.id, name: user.name }, (((_a = user.pfp) === null || _a === void 0 ? void 0 : _a.base64) ? { pfp: user.pfp.base64 } : {})), { online: socket ? true : false }) : undefined;
             return out;
         });
     }
@@ -106,9 +107,12 @@ class UsersDAO {
                     pfp: { select: { base64: true } },
                 },
             });
+            if (!findQ[0])
+                return undefined;
+            const socket = yield (0, getUserSocket_1.default)(findQ[0].id);
             const out = findQ[0]
-                ? Object.assign({ id: findQ[0].id, name: findQ[0].name }, (((_a = findQ[0].pfp) === null || _a === void 0 ? void 0 : _a.base64) ? { pfp: findQ[0].pfp.base64 } : {})) : undefined;
-            return out || undefined;
+                ? Object.assign({ id: findQ[0].id, name: findQ[0].name, online: socket ? true : false }, (((_a = findQ[0].pfp) === null || _a === void 0 ? void 0 : _a.base64) ? { pfp: findQ[0].pfp.base64 } : {})) : undefined;
+            return out;
         });
     }
     static updateUser(uid, data) {

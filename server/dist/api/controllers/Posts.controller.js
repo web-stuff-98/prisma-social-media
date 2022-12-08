@@ -260,7 +260,7 @@ class PostsController {
                 headers: req.headers,
                 limits: { files: 1, fields: 0, fileSize: 10000000 },
             });
-            bb.on("file", (name, stream, info) => __awaiter(this, void 0, void 0, function* () {
+            bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
                 var _b;
                 gotFile = true;
                 const socket = yield (0, getUserSocket_1.default)((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);

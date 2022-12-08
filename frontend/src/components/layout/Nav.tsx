@@ -1,35 +1,45 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { CgDarkMode } from "react-icons/cg";
 import { useInterface } from "../../context/InterfaceContext";
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef } from "react";
+import type { ChangeEvent } from "react";
 import { GiHamburgerMenu } from "react-icons/gi";
+import { ImSpinner8 } from "react-icons/im";
+import { IoSearch } from "react-icons/io5";
+import { IconBtn } from "../IconBtn";
+import { useFilter } from "../../context/FilterContext";
+import { usePosts } from "../../context/PostsContext";
 
 export default function Nav() {
   const containerRef = useRef<HTMLElement>(null);
   const { logout, user } = useAuth();
   const { state: iState, dispatch: iDispatch } = useInterface();
+  const { searchTerm, setSearchTerm } = useFilter();
+  const { status } = usePosts();
 
-  /*
-  fade in navmenu items after the height transition, if the nav
-  menu items are immediately visible then the height transition
-  doesn't work
-  */
-  const renderDarkModeToggle = () => (
-    <div
-      onClick={() => iDispatch({ darkMode: !iState.darkMode })}
-      className="text-white whitespace-nowrap cursor-pointer flex items-center text-xs gap-1 font-extrabold uppercase"
-    >
-      {iState.darkMode ? "Dark" : "Light"} mode
-      <CgDarkMode
-        style={{
-          transition: "transform 250ms ease-in-out",
-          transform: iState.darkMode ? "rotateY(180deg)" : "rotateY(0deg)",
-        }}
-        className="text-xl"
-      />
-    </div>
-  );
+  const renderSearchBar = () => {
+    return (
+      <form className="flex dark items-center gap-1">
+        <input
+          value={searchTerm}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setSearchTerm(e.target.value)
+          }
+          placeholder="Search posts..."
+          type="text"
+          style={{ width: "7.5rem" }}
+          className="px-1"
+        />
+        <IconBtn
+          aria-label="Submit search query"
+          Icon={status === "pending-search" ? ImSpinner8 : IoSearch}
+          color={`${
+            status === "pending-search" ? "animate-spin" : ""
+          } text-xl text-white`}
+        />
+      </form>
+    );
+  };
 
   return (
     <nav
@@ -134,9 +144,12 @@ export default function Nav() {
               )}
             </div>
           )}
-          {iState.breakPoint !== "sm" && renderDarkModeToggle()}
           {iState.breakPoint === "sm" && (
-            <div className={`flex ${iState.mobileMenuOpen ? "" : "my-auto"} w-full`}>
+            <div
+              className={`flex ${
+                iState.mobileMenuOpen ? "" : "my-auto"
+              } w-full`}
+            >
               <button
                 onClick={() =>
                   iDispatch({ mobileMenuOpen: !iState.mobileMenuOpen })
@@ -146,9 +159,10 @@ export default function Nav() {
               >
                 <GiHamburgerMenu className="text-white text-2xl my-auto h-full" />
               </button>
-              {renderDarkModeToggle()}
+              {iState.breakPoint === "sm" && renderSearchBar()}
             </div>
           )}
+          {iState.breakPoint !== "sm" && renderSearchBar()}
         </div>
       </>
     </nav>

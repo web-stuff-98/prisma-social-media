@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const buffer_1 = require("buffer");
 /**
  * Progress is in the range of 0 - 1
- * Not sure if progress event actually gives the correct value... will need to check.
  */
 exports.default = (stream, mimeType, useProgress) => new Promise((resolve, reject) => {
     let chunks = [];

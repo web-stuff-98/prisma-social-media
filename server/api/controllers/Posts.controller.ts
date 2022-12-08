@@ -218,7 +218,7 @@ export default class PostsController {
       headers: req.headers,
       limits: { files: 1, fields: 0, fileSize: 10000000 },
     });
-    bb.on("file", async (name, stream, info) => {
+    bb.on("file", async (_, stream, info) => {
       gotFile = true;
       const socket = await getUserSocket(req.user?.id!);
       const { key, blur } = await PostsDAO.uploadCoverImage(

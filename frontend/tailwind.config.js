@@ -3,6 +3,8 @@ module.exports = {
   darkMode: 'class',
   theme: {
     screens: {
+      /*when you change any of this, go into the interface context
+      in react and make sure the breakpoints match up there also*/
       sm: "420px",
       md: "512px",
       xl: "768px",

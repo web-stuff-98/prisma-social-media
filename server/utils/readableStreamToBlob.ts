@@ -3,7 +3,6 @@ import { Blob } from "buffer";
 
 /**
  * Progress is in the range of 0 - 1
- * Not sure if progress event actually gives the correct value... will need to check.
  */
 
 export default (

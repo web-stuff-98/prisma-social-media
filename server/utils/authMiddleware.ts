@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from "express";
 
 /**
  * Use auth middleware if you want to protect a route
- * 
+ *
  * Use withUser if you want to have the users data returned from the cookie on a route,
  * without rejecting them if they aren't logged in
  */
@@ -27,16 +27,14 @@ const authMiddleware = async (
   next();
 };
 
-export const withUser = async (req: Request, res: Response, next: NextFunction) => {
+export const withUser = (req: Request, _: Response, next: NextFunction) => {
   const { token } = req.cookies;
   if (token) {
-    try {
-      const decodedToken = jwt.verify(token, String(process.env.JWT_SECRET));
-      if (!req.user) {
-        const verifiedData = JSON.parse(JSON.stringify(decodedToken));
-        req.user = verifiedData;
-      }
-    } catch (error) {}
+    const decodedToken = jwt.verify(token, String(process.env.JWT_SECRET));
+    if (!req.user) {
+      const verifiedData = JSON.parse(JSON.stringify(decodedToken));
+      req.user = verifiedData;
+    }
   }
   next();
 };

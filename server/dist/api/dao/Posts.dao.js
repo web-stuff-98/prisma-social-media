@@ -431,7 +431,10 @@ class PostsDAO {
                 }
             }
             const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType, {
-                onProgress: (progress) => __1.io.to(socketId).emit("post_cover_image_progress", progress * 0.5, slug),
+                onProgress: (progress) => {
+                    if (socketId)
+                        __1.io.to(socketId).emit("post_cover_image_progress", progress * 0.5, slug);
+                },
                 totalBytes: bytes,
             });
             const scaled = yield (0, imageProcessing_1.default)(blob, { width: 1024, height: 768 }, true);
@@ -456,6 +459,8 @@ class PostsDAO {
                         reject(e);
                     resolve();
                 }).on("httpUploadProgress", (e) => {
+                    if (!socketId)
+                        return;
                     p++;
                     //only send progress updates every 2nd event, otherwise it's probably too many emits
                     if (p === 2) {
@@ -478,6 +483,8 @@ class PostsDAO {
                         reject(e);
                     resolve({ key, blur });
                 }).on("httpUploadProgress", (e) => {
+                    if (!socketId)
+                        return;
                     p++;
                     //only send progress updates every 2nd event, otherwise it's probably too many emits
                     if (p === 2) {

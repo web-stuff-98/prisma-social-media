@@ -144,7 +144,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
 
   const getAndSetPage = () => {
     getPage(
-      Number(query.page) || 1,
+      query.page ? Number(query.page) : 1,
       searchTags.join("+") || "",
       searchTerm.replace(" ", "+") || ""
     )
@@ -156,7 +156,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
           fullCount: number;
         }) => {
           addToPostsData(data.posts);
-          setPagePosts((_) => [...data.posts.map((p) => p.slug)]);
+          setPagePosts((p) => [...data.posts.map((p) => p.slug)]);
           setStatus("success");
           setMaxPage(data.maxPage);
           setPageCount(data.pageCount);
@@ -173,14 +173,14 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     () =>
       debounce(() => {
         getAndSetPage();
-        setStatus("pending-search");
-      }, 300),
-    []
+      }, 500),
+    [searchTags, searchTerm, query.page]
   );
 
   useEffect(() => {
     if (!query.page) return;
     handleGetAndSetPage();
+    setStatus("pending-search");
   }, [searchTags, searchTerm, query.page]);
 
   const [err, setErr] = useState("");

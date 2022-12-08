@@ -5,7 +5,8 @@ import { Blob } from "buffer";
 //@ts-ignore
 
 /**
- * The output image will never be upscaled. It is clamped to the original width and height. Dimensions are for downscaling the image.
+ * The output image will never be upscaled. It is clamped to the original width and height.
+ * Dimensions are only for downscaling the image. Don't need to upscale images.
  */
 
 interface IDimensions {

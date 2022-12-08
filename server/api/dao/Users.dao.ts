@@ -72,11 +72,13 @@ export default class UsersDAO {
         pfp: { select: { base64: true } },
       },
     });
+    const socket = await getUserSocket(id);
     const out = user
       ? {
           id: user.id,
           name: user.name,
           ...(user.pfp?.base64 ? { pfp: user.pfp.base64 } : {}),
+          online: socket ? true : false,
         }
       : undefined;
     return out;
@@ -97,14 +99,17 @@ export default class UsersDAO {
         pfp: { select: { base64: true } },
       },
     });
+    if (!findQ[0]) return undefined;
+    const socket = await getUserSocket(findQ[0].id);
     const out = findQ[0]
       ? {
           id: findQ[0].id,
           name: findQ[0].name,
+          online: socket ? true : false,
           ...(findQ[0].pfp?.base64 ? { pfp: findQ[0].pfp.base64 } : {}),
         }
       : undefined;
-    return out || undefined;
+    return out;
   }
 
   static async updateUser(uid: string, data: { name?: string; pfp?: string }) {

@@ -36,19 +36,16 @@ const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     }
     next();
 });
-const withUser = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const withUser = (req, _, next) => {
     const { token } = req.cookies;
     if (token) {
-        try {
-            const decodedToken = jsonwebtoken_1.default.verify(token, String(process.env.JWT_SECRET));
-            if (!req.user) {
-                const verifiedData = JSON.parse(JSON.stringify(decodedToken));
-                req.user = verifiedData;
-            }
+        const decodedToken = jsonwebtoken_1.default.verify(token, String(process.env.JWT_SECRET));
+        if (!req.user) {
+            const verifiedData = JSON.parse(JSON.stringify(decodedToken));
+            req.user = verifiedData;
         }
-        catch (error) { }
     }
     next();
-});
+};
 exports.withUser = withUser;
 exports.default = authMiddleware;

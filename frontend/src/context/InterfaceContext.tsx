@@ -12,9 +12,9 @@ interface State {
 Make sure theres are the same as the breakpoints in the tailwind config
 */
 const breakPoints = {
-  sm: 512,
-  md: 728,
-  xl: 820,
+  sm: 420,
+  md: 512,
+  xl: 768,
 };
 
 const InterfaceContext = createContext<{
