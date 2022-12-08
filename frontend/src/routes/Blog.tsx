@@ -1,24 +1,17 @@
 import { useRef, useEffect } from "react";
-import type { ChangeEvent } from "react";
 import { useScrollToTop } from "../components/layout/Layout";
-import PopularPostCard from "../components/postList/PopularPostCard";
 import PostCard from "../components/postList/PostCard";
 import { useInterface } from "../context/InterfaceContext";
 import { IPost, usePosts } from "../context/PostsContext";
-
-import { IoSearch } from "react-icons/io5";
-import { IconBtn } from "../components/IconBtn";
 import { useFilter } from "../context/FilterContext";
 import Tag from "../components/postList/Tag";
 import { ImSpinner8 } from "react-icons/im";
-import useScrollbarWidth from "../hooks/useElementScrollbarWidth";
 
 export default function Blog() {
-  const { pagePosts, popularPosts, getPostData, status } = usePosts();
-  const { searchTags, setSearchTerm, searchTerm } = useFilter();
+  const { pagePosts, getPostData, status } = usePosts();
+  const { searchTags } = useFilter();
   const { state: iState } = useInterface();
   const scrollToTop = useScrollToTop();
-  const width = useScrollbarWidth();
   const postsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,7 +66,7 @@ export default function Blog() {
           ))}
         <span style={{ minHeight: "5rem" }} />
       </div>
-      {false && (
+      {/* && (
         <div
           style={{
             width: `10rem`,
@@ -124,7 +117,7 @@ export default function Blog() {
               )}
           </aside>
         </div>
-      )}
+            )*/}
     </div>
   );
 }

@@ -23,7 +23,7 @@ export default function PostCard({
   const { getUserData } = useUsers();
   const { likePost, sharePost, postEnteredView, postLeftView } = usePosts();
   const { openModal } = useModal();
-  const { state:iState } = useInterface()
+  const { state: iState } = useInterface();
   const { user } = useAuth();
   const { searchTags, autoAddRemoveSearchTag } = useFilter();
 
@@ -62,7 +62,7 @@ export default function PostCard({
               backgroundImage: `url(${post.blur})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
-              ...(iState.breakPoint === "sm" ? {height:"256px"} : {})
+              ...(iState.breakPoint === "sm" ? { height: "256px" } : {}),
             }}
             className="relative border border-zinc-700 shadow-md sm:w-full sm:h-28 md:w-64 md:min-w-postWidth md:max-w-postWidth md:h-postImageHeight bg-gray-200 shadow rounded overflow-hidden shadow"
           >
@@ -135,7 +135,7 @@ export default function PostCard({
           </div>
           <div
             className={`flex flex-col my-auto h-fit justify-center items-${
-              reverse ? "end" : "start"
+              iState.breakPoint !== "sm" ? (reverse ? "end" : "start") : "center"
             } mx-auto grow p-1`}
           >
             <h3
@@ -157,12 +157,14 @@ export default function PostCard({
             <div
               aria-label="Tags"
               style={{ filter: "drop-shadow(0px 1.5px 1px rgba(0,0,0,0.5))" }}
-              className={`flex py-0.5 flex-wrap ${iState.breakPoint === "sm" ? "justify-center" : ""} ${
+              className={`flex py-0.5 flex-wrap ${
+                iState.breakPoint === "sm" ? "justify-center" : ""
+              } ${
                 reverse ? "md:justify-end" : "md:justify-start"
               } w-full gap-0.5`}
             >
               {post.tags.map((tag) => (
-                <Tag tag={tag}/>
+                <Tag tag={tag} />
               ))}
             </div>
             <span className="sm:mx-auto mt-1 md:mx-0">
@@ -182,12 +184,18 @@ export default function PostCard({
               />
             </span>
             <div>
-            {typeof post.commentCount !== undefined && <span
-            aria-label="View post comments"
-              className={`italic font-bold text-xs leading-3 px-0 bg-transparent tracking-tighter pt-2`}
-            >
-              {post.commentCount! > 0 ? `${post.commentCount} comment${post.commentCount! > 1 ? "s" : ""}` : "No comments"}
-            </span>}
+              {typeof post.commentCount !== undefined && (
+                <span
+                  aria-label="View post comments"
+                  className={`italic font-bold text-xs leading-3 px-0 bg-transparent tracking-tighter pt-2`}
+                >
+                  {post.commentCount! > 0
+                    ? `${post.commentCount} comment${
+                        post.commentCount! > 1 ? "s" : ""
+                      }`
+                    : "No comments"}
+                </span>
+              )}
             </div>
           </div>
         </>

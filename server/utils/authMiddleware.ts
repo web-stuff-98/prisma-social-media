@@ -22,7 +22,7 @@ const authMiddleware = async (
       req.user = verifiedData;
     }
   } catch (error) {
-    return res.status(403).json({ msg: "Unauthorized" });
+    return res.status(403).json({ msg: "Unauthorized" }).end();
   }
   next();
 };

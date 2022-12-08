@@ -72,8 +72,6 @@ const socketAuth = async (socket: any) => {
 io.use(socketAuthMiddleware);
 
 io.on("connection", async (socket) => {
-  await socketAuth(socket);
-
   socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
   socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
   socket.on("post_card_visible", (slug) => socket.join(`post_card=${slug}`));

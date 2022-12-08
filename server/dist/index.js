@@ -65,7 +65,6 @@ const socketAuth = (socket) => __awaiter(void 0, void 0, void 0, function* () {
 });
 io.use(socketAuthMiddleware);
 io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
-    yield socketAuth(socket);
     socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
     socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
     socket.on("post_card_visible", (slug) => socket.join(`post_card=${slug}`));

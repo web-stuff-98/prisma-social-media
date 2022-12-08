@@ -17,9 +17,8 @@ import {
 import { useSocket } from "./SocketContext";
 import useUsers from "./UsersContext";
 import { IPostComment } from "./PostContext";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useFilter } from "./FilterContext";
-import { useAuth } from "./AuthContext";
 import { debounce } from "lodash";
 
 export interface IPost {
@@ -171,9 +170,10 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
 
   const handleGetAndSetPage = useMemo(
     () =>
+      // the way this is set up is probably not good, should have implemented debouncing earlier on
       debounce(() => {
         getAndSetPage();
-      }, 500),
+      }, 300),
     [searchTags, searchTerm, query.page]
   );
 

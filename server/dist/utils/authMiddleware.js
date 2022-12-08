@@ -32,7 +32,7 @@ const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         }
     }
     catch (error) {
-        return res.status(403).json({ msg: "Unauthorized" });
+        return res.status(403).json({ msg: "Unauthorized" }).end();
     }
     next();
 });

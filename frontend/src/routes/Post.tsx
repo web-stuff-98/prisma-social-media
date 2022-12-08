@@ -16,6 +16,7 @@ import { useModal } from "../context/ModalContext";
 import { deletePost } from "../services/posts";
 import { useScrollY } from "../components/layout/Layout";
 import { useSocket } from "../context/SocketContext";
+import { useInterface } from "../context/InterfaceContext";
 
 export default function Post() {
   const { socket } = useSocket();
@@ -33,11 +34,12 @@ export default function Post() {
   const { openModal } = useModal();
   const { slug } = useParams();
   const { user } = useAuth();
+  const { state: iState } = useInterface();
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const post = getPostData(String(slug));
-  
+
   useEffect(() => {
     if (!socket) return;
     socket.on("post_visible_deleted", (delSlug) => {
@@ -93,15 +95,15 @@ export default function Post() {
                 background: "rgba(0,0,0,0.166)",
                 borderTop: "1px outset rgba(255,255,255,0.1)",
               }}
-              className="flex p-2 dark:border-stone-800 drop-shadow-lg items-end pb-2"
+              className="md:flex md:flex-row sm:flex sm:flex-col sm:justify-center p-2 dark:border-stone-800 drop-shadow-lg items-end pb-2"
             >
               <h1
                 style={{ textShadow: "0px 3px 4.5px black" }}
-                className="md:text-4xl sm:text-2xl font-bold grow mr-4"
+                className="md:text-4xl sm:text-md font-bold grow mr-4"
               >
                 {post?.title}
               </h1>
-              <div className="my-2 drop-shadow-xl flex flex-col justify-end items-end w-fit">
+              <div className="my-2 drop-shadow-xl flex flex-col md:justify-end items-end sm:justify-center w-fit">
                 <User
                   style={{ textShadow: "0px 3px 4.5px black" }}
                   uid={String(post?.author!.id)}
@@ -115,7 +117,7 @@ export default function Post() {
                   date={post?.createdAt ? new Date(post.createdAt) : undefined}
                   by
                   user={getUserData(String(post?.author!.id))}
-                  reverse
+                  reverse={iState.breakPoint !== "sm"}
                   fixDarkBackgroundContrast
                 />
                 {user && post?.author!.id === user?.id && (
@@ -196,12 +198,14 @@ export default function Post() {
                     }`}
               </div>
             }
-            <CommentForm
-              placeholder="Add a comment..."
-              loading={false}
-              error={commentError}
-              onSubmit={postComment}
-            />
+            {user && (
+              <CommentForm
+                placeholder="Add a comment..."
+                loading={false}
+                error={commentError}
+                onSubmit={postComment}
+              />
+            )}
             {rootComments != null && rootComments.length > 0 && (
               <div className="mt-4 pb-1 w-full">
                 {rootComments.map((comment) => (
