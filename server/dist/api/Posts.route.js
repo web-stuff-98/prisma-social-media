@@ -31,7 +31,29 @@ const authMiddleware_1 = __importStar(require("../utils/authMiddleware"));
 const Posts_controller_1 = __importDefault(require("./controllers/Posts.controller"));
 const limiters_1 = require("./limiter/limiters");
 const express_slow_down_1 = __importDefault(require("express-slow-down"));
+const validateBodyMiddleware_1 = __importDefault(require("../utils/validateBodyMiddleware"));
+const Yup = __importStar(require("yup"));
 const router = express_1.default.Router();
+const postValidateSchema = {
+    title: Yup.string().required().max(80).required(),
+    body: Yup.string().required().max(10000).required(),
+    description: Yup.string().max(160).required(),
+    tags: Yup.string()
+        .max(80, "Tags too long. Maximum 80 characters")
+        .test("missingHashtag", "You need an # symbol for each tag.", (value) => Boolean(value && value.charAt(0) === "#"))
+        .test("tooManyTags", "Maximum 8 tags.", (value) => Boolean(value && value.split("#").filter((t) => t.trim() !== "").length <= 8))
+        .test("tagTooLong", "One of your tags is too long. Max 24 characters for each tag.", (value) => {
+        if (!value)
+            return true;
+        const tags = value.split("#");
+        for (const tag of tags) {
+            if (tag.length > 24)
+                return false;
+        }
+        return true;
+    })
+        .required(),
+};
 router.route("/").get((0, express_slow_down_1.default)({
     windowMs: 2000,
     delayAfter: 10,
@@ -51,18 +73,18 @@ router.route("/page/:page").get((0, express_slow_down_1.default)({
     maxReqs: 4,
     windowMs: 1000,
     blockDuration: 2000,
-    msg: "Your request rate is surpassing the debouncer."
+    msg: "Your request rate is surpassing the debouncer.",
 }), authMiddleware_1.withUser, Posts_controller_1.default.getPage);
-router.route("/").post((0, express_slow_down_1.default)({
+router.route("/").post(authMiddleware_1.default, (0, express_slow_down_1.default)({
     windowMs: 120000,
     delayAfter: 10,
     delayMs: 5000,
-}), authMiddleware_1.default, Posts_controller_1.default.createPost);
-router.route("/:slug").put((0, express_slow_down_1.default)({
+}), (0, validateBodyMiddleware_1.default)(postValidateSchema), Posts_controller_1.default.createPost);
+router.route("/:slug").put(authMiddleware_1.default, (0, express_slow_down_1.default)({
     windowMs: 120000,
     delayAfter: 10,
     delayMs: 5000,
-}), authMiddleware_1.default, Posts_controller_1.default.updatePost);
+}), (0, validateBodyMiddleware_1.default)(postValidateSchema), Posts_controller_1.default.updatePost);
 router.route("/:slug").delete((0, express_slow_down_1.default)({
     windowMs: 120000,
     delayAfter: 10,
@@ -74,16 +96,12 @@ router.route("/:id/toggleLike").post((0, express_slow_down_1.default)({
     delayAfter: 20,
     delayMs: 3000,
 }), authMiddleware_1.default, Posts_controller_1.default.togglePostLike);
-router
-    .route("/:slug/image/:bytes")
-    .post((0, express_slow_down_1.default)({
+router.route("/:slug/image/:bytes").post((0, express_slow_down_1.default)({
     windowMs: 10000,
     delayAfter: 3,
     delayMs: 2000,
 }), authMiddleware_1.default, Posts_controller_1.default.uploadCoverImage);
-router
-    .route("/:slug/image/:bytes")
-    .put((0, express_slow_down_1.default)({
+router.route("/:slug/image/:bytes").put((0, express_slow_down_1.default)({
     windowMs: 10000,
     delayAfter: 3,
     delayMs: 2000,
@@ -93,20 +111,24 @@ router.route("/:id/toggleShare").post((0, express_slow_down_1.default)({
     delayAfter: 20,
     delayMs: 3000,
 }), authMiddleware_1.default, Posts_controller_1.default.togglePostShare);
-router.route("/:id/comments").post((0, limiters_1.simpleRateLimit)({
+router.route("/:id/comments").post(authMiddleware_1.default, (0, limiters_1.simpleRateLimit)({
     routeName: "postComment",
     blockDuration: 300000,
     maxReqs: 30,
     windowMs: 300000,
     msg: "Max 30 comments every 5 minutes. You must wait BLOCKDURATION to comment again.",
-}), authMiddleware_1.default, Posts_controller_1.default.addComment);
-router.route("/:id/comments/:commentId").put((0, limiters_1.simpleRateLimit)({
+}), (0, validateBodyMiddleware_1.default)({
+    message: Yup.string().required().max(300),
+}), Posts_controller_1.default.addComment);
+router.route("/:id/comments/:commentId").put(authMiddleware_1.default, (0, limiters_1.simpleRateLimit)({
     routeName: "editPostComment",
     blockDuration: 300000,
     maxReqs: 30,
     windowMs: 300000,
     msg: "You have edited comments too many times. Wait BLOCKDURATION.",
-}), authMiddleware_1.default, Posts_controller_1.default.updateComment);
+}), (0, validateBodyMiddleware_1.default)({
+    message: Yup.string().required().max(300),
+}), Posts_controller_1.default.updateComment);
 router
     .route("/:id/comments/:commentId")
     .delete(authMiddleware_1.default, Posts_controller_1.default.deleteComment);

@@ -1,9 +1,6 @@
 import prisma from "../../utils/prisma";
 import { Request as Req, Response as Res } from "express";
 
-import * as Yup from "yup";
-import YupPassword from "yup-password";
-YupPassword(Yup);
 import bcrypt from "bcrypt";
 
 import jwt from "jsonwebtoken";
@@ -12,11 +9,6 @@ import { io } from "../..";
 import getUserSocket from "../../utils/getUserSocket";
 import { bruteFail, bruteSuccess } from "../limiter/limiters";
 import getReqIp from "../../utils/getReqIp";
-
-const loginValidateSchema = Yup.object().shape({
-  username: Yup.string().required().max(100),
-  password: Yup.string().password().required(),
-});
 
 export default class UsersController {
   static async getUsers(req: Req, res: Res) {
@@ -67,17 +59,6 @@ export default class UsersController {
 
   static async register(req: Req, res: Res) {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ msg: "You cannot provide an empty input" });
-    }
-    try {
-      await loginValidateSchema.strict().validate(req.body);
-    } catch (e) {
-      return res
-        .status(400)
-        .json({ msg: `${e}`.replace("ValidationError: ", "") })
-        .end();
-    }
     const foundUser = await UsersDAO.getUserByName(username);
     if (foundUser) {
       return res
@@ -112,17 +93,6 @@ export default class UsersController {
 
   static async login(req: Req, res: Res) {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ msg: "You cannot provide an empty input" });
-    }
-    try {
-      await loginValidateSchema.strict().validate(req.body);
-    } catch (e) {
-      return res
-        .status(400)
-        .json({ msg: `${e}`.replace("ValidationError: ", "") })
-        .end();
-    }
     let user;
     try {
       user = await prisma.user.findFirstOrThrow({

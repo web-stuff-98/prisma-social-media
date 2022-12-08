@@ -129,15 +129,6 @@ class PostsController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield createPostSchema.strict().validate(req.body);
-            }
-            catch (e) {
-                return res
-                    .status(400)
-                    .json({ msg: `${e}`.replace("ValidationError: ", "") })
-                    .end();
-            }
-            try {
                 const post = yield Posts_dao_1.default.createPost(req.body.title, req.body.body, req.body.description, req.body.tags, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 res.status(201).json({ slug: post.slug }).end();
             }
@@ -150,15 +141,6 @@ class PostsController {
     static updatePost(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield createPostSchema.strict().validate(req.body);
-            }
-            catch (e) {
-                return res
-                    .status(400)
-                    .json({ msg: `${e}`.replace("ValidationError: ", "") })
-                    .end();
-            }
             try {
                 const post = yield Posts_dao_1.default.updatePost(req.body.title, req.body.body, req.body.description, req.body.tags, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.slug);
                 res.status(201).json(post).end();
@@ -173,15 +155,6 @@ class PostsController {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield commentSchema.validate(req.body);
-            }
-            catch (e) {
-                console.error(e);
-                return res
-                    .status(400)
-                    .json({ msg: `${e}`.replace("ValidationError: ", "") });
-            }
-            try {
                 const cmt = yield Posts_dao_1.default.addComment(req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.id, req.body.parentId, String((_b = req.user) === null || _b === void 0 ? void 0 : _b.name));
                 return res.status(201).json(cmt).end();
             }
@@ -194,14 +167,6 @@ class PostsController {
     static updateComment(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield commentSchema.validate(req.body);
-            }
-            catch (e) {
-                return res
-                    .status(400)
-                    .json({ msg: `${e}`.replace("ValidationError: ", "") });
-            }
             try {
                 const cmt = yield Posts_dao_1.default.updateComment(req.body.message, req.params.commentId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
                 if (!cmt) {

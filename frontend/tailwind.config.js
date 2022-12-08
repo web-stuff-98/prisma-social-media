@@ -3,9 +3,9 @@ module.exports = {
   darkMode: 'class',
   theme: {
     screens: {
-      sm: "512px",
-      md: "768px",
-      xl: "820px",
+      sm: "420px",
+      md: "512px",
+      xl: "768px",
     },
     extend: {
       minHeight: {
@@ -18,7 +18,7 @@ module.exports = {
         threadGap: "20%",
       },
       fontFamily: {
-        rubik: '"Sulphur Point"',
+        rubik: '"Outfit"',
       },
       colors: {
         foreground: "white",

@@ -1,11 +1,28 @@
 import express from "express";
 import authMiddleware from "../utils/authMiddleware";
+import validateBodyMiddleware from "../utils/validateBodyMiddleware";
 import ChatController from "./controllers/Chat.controller";
 import { simpleRateLimit } from "./limiter/limiters";
+import * as Yup from "yup";
+import slowDown from "express-slow-down";
 
 const router = express.Router().use(authMiddleware);
 
-router.route("/search/user/:name").post(ChatController.searchUser);
+router.route("/search/user/:name").post(
+  simpleRateLimit({
+    routeName: "searchUser",
+    maxReqs: 10,
+    windowMs: 5000,
+    msg: "You have to wait BLOCKDURATION before you can search again",
+    blockDuration: 2000,
+  }),
+  slowDown({
+    windowMs: 2000,
+    delayAfter: 10,
+    delayMs: 1000,
+  }),
+  ChatController.searchUser
+);
 
 //Conversation (private messaging)
 router.route("/conversations").get(ChatController.getConversations);
@@ -18,6 +35,11 @@ router.route("/conversation/message").post(
     windowMs: 10000,
     msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
+  }),
+  validateBodyMiddleware({
+    message: Yup.string().required(),
+    hasAttachment: Yup.boolean().nullable().notRequired(),
+    recipientId: Yup.string().required(),
   }),
   ChatController.sendPrivateMessage
 );
@@ -32,6 +54,10 @@ router.route("/conversation/message").put(
     msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait BLOCKDURATION.",
     blockDuration: 20000,
   }),
+  validateBodyMiddleware({
+    messageId: Yup.string().required(),
+    message: Yup.string().required(),
+  }),
   ChatController.updatePrivateMessage
 );
 router.route("/conversation/roomInvite").post(
@@ -41,6 +67,10 @@ router.route("/conversation/roomInvite").post(
     windowMs: 10000,
     msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
+  }),
+  validateBodyMiddleware({
+    recipientId: Yup.string().required(),
+    roomName: Yup.string().required(),
   }),
   ChatController.sendInvite
 );
@@ -52,6 +82,10 @@ router.route("/conversation/roomInvite/accept").post(
     msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
   }),
+  validateBodyMiddleware({
+    senderId: Yup.string().required(),
+    roomName: Yup.string().required(),
+  }),
   ChatController.acceptInvite
 );
 router.route("/conversation/roomInvite/decline").post(
@@ -61,6 +95,10 @@ router.route("/conversation/roomInvite/decline").post(
     windowMs: 10000,
     msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
+  }),
+  validateBodyMiddleware({
+    senderId: Yup.string().required(),
+    roomName: Yup.string().required(),
   }),
   ChatController.declineInvite
 );
@@ -74,9 +112,9 @@ router.route("/conversation/message/attachment/:msgId/:bytes").post(
   }),
   ChatController.uploadPrivateMessageAttachment
 );
-router.route("/conversation/videoCall/:uid").post(
-  ChatController.conversationOpenVideoChat
-);
+router
+  .route("/conversation/videoCall/:uid")
+  .post(ChatController.conversationOpenVideoChat);
 
 //Chatroom messages
 router.route("/room/message").post(
@@ -86,6 +124,11 @@ router.route("/room/message").post(
     windowMs: 10000,
     msg: "You have sent too many messages. Max 5 every 10 seconds. You must wait BLOCKDURATION before you can send another message.",
     blockDuration: 20000,
+  }),
+  validateBodyMiddleware({
+    message: Yup.string().required(),
+    hasAttachment: Yup.boolean().nullable().notRequired(),
+    roomId: Yup.string().required(),
   }),
   ChatController.sendRoomMessage
 );
@@ -97,6 +140,10 @@ router.route("/room/message").put(
     windowMs: 10000,
     msg: "You have been editing messages too fast. You can edit no more than 3 messages every 10 seconds. You must wait BLOCKDURATION.",
     blockDuration: 20000,
+  }),
+  validateBodyMiddleware({
+    message: Yup.string().required(),
+    messageId: Yup.string().required(),
   }),
   ChatController.updateRoomMessage
 );
@@ -112,12 +159,22 @@ router.route("/room/message/attachment/:msgId/:bytes").post(
 );
 //Chatrooms
 router.route("/room").get(ChatController.getRooms);
-router.route("/room").post(ChatController.createRoom);
+router.route("/room").post(
+  validateBodyMiddleware({
+    name: Yup.string().required(),
+  }),
+  ChatController.createRoom
+);
 router.route("/room/:roomId").get(ChatController.getRoom);
 router.route("/room/:roomId/users").get(ChatController.getRoomUsers);
 router.route("/room/:roomId/messages").get(ChatController.getRoomMessages);
 router.route("/room/:roomId").delete(ChatController.deleteRoom);
-router.route("/room/:roomId").patch(ChatController.updateRoom);
+router.route("/room/:roomId").patch(
+  validateBodyMiddleware({
+    name: Yup.string().required(),
+  }),
+  ChatController.updateRoom
+);
 router.route("/room/:roomId/video/join").post(ChatController.roomOpenVideoChat);
 //Chatroom User actions (join/leave/kick/ban)
 router.route("/room/:roomId/join").post(ChatController.joinRoom);

@@ -4,8 +4,40 @@ import PostsController from "./controllers/Posts.controller";
 
 import { simpleRateLimit } from "./limiter/limiters";
 import slowDown from "express-slow-down";
+import validateBodyMiddleware from "../utils/validateBodyMiddleware";
+
+import * as Yup from "yup";
 
 const router = express.Router();
+
+const postValidateSchema = {
+  title: Yup.string().required().max(80).required(),
+  body: Yup.string().required().max(10000).required(),
+  description: Yup.string().max(160).required(),
+  tags: Yup.string()
+    .max(80, "Tags too long. Maximum 80 characters")
+    .test("missingHashtag", "You need an # symbol for each tag.", (value) =>
+      Boolean(value && value.charAt(0) === "#")
+    )
+    .test("tooManyTags", "Maximum 8 tags.", (value) =>
+      Boolean(
+        value && value.split("#").filter((t) => t.trim() !== "").length <= 8
+      )
+    )
+    .test(
+      "tagTooLong",
+      "One of your tags is too long. Max 24 characters for each tag.",
+      (value) => {
+        if (!value) return true;
+        const tags = value.split("#");
+        for (const tag of tags) {
+          if (tag.length > 24) return false;
+        }
+        return true;
+      }
+    )
+    .required(),
+};
 
 router.route("/").get(
   slowDown({
@@ -32,31 +64,33 @@ router.route("/page/:page").get(
     delayMs: 500,
   }),
   simpleRateLimit({
-    routeName:"getPage",
+    routeName: "getPage",
     maxReqs: 4,
     windowMs: 1000,
     blockDuration: 2000,
-    msg:"Your request rate is surpassing the debouncer."
+    msg: "Your request rate is surpassing the debouncer.",
   }),
   withUser,
   PostsController.getPage
 );
 router.route("/").post(
+  authMiddleware,
   slowDown({
     windowMs: 120000,
     delayAfter: 10,
     delayMs: 5000,
   }),
-  authMiddleware,
+  validateBodyMiddleware(postValidateSchema),
   PostsController.createPost
 );
 router.route("/:slug").put(
+  authMiddleware,
   slowDown({
     windowMs: 120000,
     delayAfter: 10,
     delayMs: 5000,
   }),
-  authMiddleware,
+  validateBodyMiddleware(postValidateSchema),
   PostsController.updatePost
 );
 router.route("/:slug").delete(
@@ -78,28 +112,24 @@ router.route("/:id/toggleLike").post(
   authMiddleware,
   PostsController.togglePostLike
 );
-router
-  .route("/:slug/image/:bytes")
-  .post(
-    slowDown({
-      windowMs: 10000,
-      delayAfter: 3,
-      delayMs: 2000,
-    }),
-    authMiddleware,
-    PostsController.uploadCoverImage
-  );
-  router
-  .route("/:slug/image/:bytes")
-  .put(
-    slowDown({
-      windowMs: 10000,
-      delayAfter: 3,
-      delayMs: 2000,
-    }),
-    authMiddleware,
-    PostsController.uploadCoverImage
-  );
+router.route("/:slug/image/:bytes").post(
+  slowDown({
+    windowMs: 10000,
+    delayAfter: 3,
+    delayMs: 2000,
+  }),
+  authMiddleware,
+  PostsController.uploadCoverImage
+);
+router.route("/:slug/image/:bytes").put(
+  slowDown({
+    windowMs: 10000,
+    delayAfter: 3,
+    delayMs: 2000,
+  }),
+  authMiddleware,
+  PostsController.uploadCoverImage
+);
 router.route("/:id/toggleShare").post(
   slowDown({
     windowMs: 10000,
@@ -110,6 +140,7 @@ router.route("/:id/toggleShare").post(
   PostsController.togglePostShare
 );
 router.route("/:id/comments").post(
+  authMiddleware,
   simpleRateLimit({
     routeName: "postComment",
     blockDuration: 300000,
@@ -117,10 +148,13 @@ router.route("/:id/comments").post(
     windowMs: 300000,
     msg: "Max 30 comments every 5 minutes. You must wait BLOCKDURATION to comment again.",
   }),
-  authMiddleware,
+  validateBodyMiddleware({
+    message: Yup.string().required().max(300),
+  }),
   PostsController.addComment
 );
 router.route("/:id/comments/:commentId").put(
+  authMiddleware,
   simpleRateLimit({
     routeName: "editPostComment",
     blockDuration: 300000,
@@ -128,7 +162,9 @@ router.route("/:id/comments/:commentId").put(
     windowMs: 300000,
     msg: "You have edited comments too many times. Wait BLOCKDURATION.",
   }),
-  authMiddleware,
+  validateBodyMiddleware({
+    message: Yup.string().required().max(300),
+  }),
   PostsController.updateComment
 );
 router

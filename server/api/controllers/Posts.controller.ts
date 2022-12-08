@@ -78,15 +78,6 @@ export default class PostsController {
 
   static async createPost(req: Req, res: Res) {
     try {
-      await createPostSchema.strict().validate(req.body);
-    } catch (e) {
-      return res
-        .status(400)
-        .json({ msg: `${e}`.replace("ValidationError: ", "") })
-        .end();
-    }
-
-    try {
       const post = await PostsDAO.createPost(
         req.body.title,
         req.body.body,
@@ -102,15 +93,6 @@ export default class PostsController {
   }
 
   static async updatePost(req: Req, res: Res) {
-    try {
-      await createPostSchema.strict().validate(req.body);
-    } catch (e) {
-      return res
-        .status(400)
-        .json({ msg: `${e}`.replace("ValidationError: ", "") })
-        .end();
-    }
-
     try {
       const post = await PostsDAO.updatePost(
         req.body.title,
@@ -129,15 +111,6 @@ export default class PostsController {
 
   static async addComment(req: Req, res: Res) {
     try {
-      await commentSchema.validate(req.body);
-    } catch (e) {
-      console.error(e);
-      return res
-        .status(400)
-        .json({ msg: `${e}`.replace("ValidationError: ", "") });
-    }
-
-    try {
       const cmt = await PostsDAO.addComment(
         req.body.message,
         String(req.user?.id),
@@ -153,14 +126,6 @@ export default class PostsController {
   }
 
   static async updateComment(req: Req, res: Res) {
-    try {
-      await commentSchema.validate(req.body);
-    } catch (e) {
-      return res
-        .status(400)
-        .json({ msg: `${e}`.replace("ValidationError: ", "") });
-    }
-
     try {
       const cmt = await PostsDAO.updateComment(
         req.body.message,

@@ -105,7 +105,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const { cacheUserData } = useUsers();
   const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm } =
     useFilter();
-  const { user } = useAuth();
   const query = useParams();
 
   //Slugs only
@@ -180,7 +179,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   );
 
   useEffect(() => {
-    console.log(query.page);
     if (!query.page) return;
     handleGetAndSetPage();
   }, [searchTags, searchTerm, query.page]);
