@@ -57,7 +57,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         withCredentials: true,
       });
       if (authSocket) authSocket();
-      console.log(checkedUser.id)
       setUser(checkedUser);
     } catch (e) {
       openModal("Message", {

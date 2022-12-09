@@ -273,12 +273,12 @@ const generatePostImages = async () => {
     const image = Buffer.from(imageRes.data, "binary");
     const scaled = (await imageProcessing(
       image,
-      { width: 1024, height: 768 },
+      { width: 768, height: 500 },
       true
     )) as string;
     const thumb = (await imageProcessing(
       image,
-      { width: 256, height: 256 },
+      { width: 300, height: 300 },
       true
     )) as string;
     await new Promise<void>((resolve, reject) => {

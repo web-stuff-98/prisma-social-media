@@ -86,7 +86,6 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
                     <div className="w-full flex gap-2 items-center justify-center">
                       <button
                         aria-label="Cancel"
-                        className="bg-rose-600"
                         onClick={() => {
                           if (modalData.cancellationCallback)
                             modalData.cancellationCallback();

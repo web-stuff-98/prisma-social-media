@@ -14,10 +14,11 @@ import Toggler from "../../Toggler";
 
 export default function EditRoom({ room }: { room: IRoom }) {
   const { editRoomId } = useChat();
-
   const { getUserData } = useUsers();
 
   const [err, setErr] = useState("");
+
+  
 
   return (
     <div className="w-full h-full p-2">

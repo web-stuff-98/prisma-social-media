@@ -14,7 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import User from "../User";
 import useUsers from "../../context/UsersContext";
 import { usePosts } from "../../context/PostsContext";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useModal } from "../../context/ModalContext";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -32,6 +32,8 @@ export function Comment({
   likedByMe,
 }: IPostComment) {
   const { openModal } = useModal();
+  const navigate = useNavigate();
+  const { slug } = useParams();
 
   /*
 This function is from the web dev simplified video. It is supposed to be in the useAsync hook but that was causing infinite rerenders in the original PostContext, so I changed it to the useAync hook from usehooks.com and it worked. But I'll keep this function here anyway because it works here and dont need to change anything aside from the name.
@@ -60,8 +62,6 @@ This function is from the web dev simplified video. It is supposed to be in the 
     return { loading, error, value, execute };
   }
 
-  const { slug } = useParams();
-
   const [areChildrenHidden, setAreChildrenHidden] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const {
@@ -86,13 +86,18 @@ This function is from the web dev simplified video. It is supposed to be in the 
   const { setReplyingTo, replyingTo } = usePost();
   const { getUserData } = useUsers();
 
-  const onCommentReply = (message: string) =>
+  const onCommentReply = (message: string) => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
     createCommentFn
       .execute({ postId: post?.id, message, parentId: id })
       .then((comment: IPostComment) => {
         if (replyingTo === id) setReplyingTo("");
         createLocalComment(comment);
       });
+  };
 
   const onCommentUpdate = (message: string) =>
     updateCommentFn
@@ -115,12 +120,17 @@ This function is from the web dev simplified video. It is supposed to be in the 
     });
   };
 
-  const onToggleCommentLike = () =>
+  const onToggleCommentLike = () => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
     toggleCommentLikeFn
       .execute({ id, postId: post?.id })
       .then(({ addLike }: { addLike: boolean }) =>
         toggleLocalCommentLike(id, addLike)
       );
+  };
 
   const [hideRepliesBarHover, setHideRepliesBarHover] = useState(false);
   const handleHideRepliesBarEnter = () => setHideRepliesBarHover(true);
@@ -136,37 +146,18 @@ This function is from the web dev simplified video. It is supposed to be in the 
   return (
     <>
       <div className="w-full mb-2 flex">
-        <div className="mr-4 my-auto">
-          <User
-            editDeleteIcons={currentUser && currentUser.id === user.id}
-            onDeleteClick={() => onCommentDelete()}
-            onEditClick={() => setIsEditing((p) => !p)}
-            isEditing={isEditing}
-            isDeleting={deleteCommentFn.loading}
-            date={new Date(createdAt)}
-            user={getUserData(user.id)}
-            uid={user.id}
-          />
-        </div>
-        <div className="w-full flex items-center">
-          {isEditing ? (
-            <CommentForm
-              autoFocus
-              initialValue={message}
-              onSubmit={onCommentUpdate}
-              loading={updateCommentFn.loading}
-              error={updateCommentFn.error}
-              placeholder={"Edit comment..."}
-              onClickOutside={() => setIsEditing(false)}
+        <div className="flex flex-col items-start w-full">
+          <div className="mr-4 my-auto flex justify-between items-center w-full">
+            <User
+              editDeleteIcons={currentUser && currentUser.id === user.id}
+              onDeleteClick={() => onCommentDelete()}
+              onEditClick={() => setIsEditing((p) => !p)}
+              isEditing={isEditing}
+              isDeleting={deleteCommentFn.loading}
+              date={new Date(createdAt)}
+              user={getUserData(user.id)}
+              uid={user.id}
             />
-          ) : (
-            <p className="flex my-auto leading-4 tracking-tight text-xs p-0 grow items-center">
-              {message}
-              {updatedAt !== createdAt &&
-                renderEditedAtTimeString(getDateString(new Date(updatedAt)))}
-            </p>
-          )}
-          {currentUser && (
             <div className="flex flex-col">
               <IconBtn
                 onClick={onToggleCommentLike}
@@ -174,8 +165,11 @@ This function is from the web dev simplified video. It is supposed to be in the 
                 Icon={likedByMe ? AiFillLike : AiOutlineLike}
                 aria-label={likedByMe ? "Unlike" : "Like"}
               >
-                <div style={{left:"50%", top:"-50%"}} className="drop-shadow-md absolute text-green-500">
-                {likeCount}
+                <div
+                  style={{ left: "50%", top: "-50%" }}
+                  className="drop-shadow-md absolute text-green-500"
+                >
+                  {likeCount}
                 </div>
               </IconBtn>
               <IconBtn
@@ -188,7 +182,26 @@ This function is from the web dev simplified video. It is supposed to be in the 
                 aria-label={replyingTo === id ? "Cancel Reply" : "Reply"}
               />
             </div>
-          )}
+          </div>
+          <div className="w-full flex items-center">
+            {isEditing ? (
+              <CommentForm
+                autoFocus
+                initialValue={message}
+                onSubmit={onCommentUpdate}
+                loading={updateCommentFn.loading}
+                error={updateCommentFn.error}
+                placeholder={"Edit comment..."}
+                onClickOutside={() => setIsEditing(false)}
+              />
+            ) : (
+              <p className="flex my-auto leading-4 tracking-tight text-xs p-0 grow items-center">
+                {message}
+                {updatedAt !== createdAt &&
+                  renderEditedAtTimeString(getDateString(new Date(updatedAt)))}
+              </p>
+            )}
+          </div>
           {deleteCommentFn.error && (
             <div className="error-msg mt-1">{deleteCommentFn.error}</div>
           )}
@@ -226,7 +239,11 @@ This function is from the web dev simplified video. It is supposed to be in the 
               onClick={() => setAreChildrenHidden(true)}
             >
               <span
-                style={{ width: "2px", borderRadius: "2px", transition:"100ms linear background" }}
+                style={{
+                  width: "2px",
+                  borderRadius: "2px",
+                  transition: "100ms linear background",
+                }}
                 className={`${
                   hideRepliesBarHover ? "bg-amber-600" : "bg-stone-300"
                 } h-full`}

@@ -1,6 +1,17 @@
 import { useContext, createContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { DropdownItem } from "../components/Dropdown";
+
+export const SortOrderOptions: DropdownItem[] = [
+  { name: "Descending", node: "Descending" }, // high to low
+  { name: "Ascending", node: "Ascending" }, //low to high
+];
+
+export const SortModeOptions: DropdownItem[] = [
+  { name: "Popularity", node: "Popularity" },
+  { name: "Created at", node: "Created at" },
+];
 
 const FilterContext = createContext<
   | {
@@ -16,6 +27,10 @@ const FilterContext = createContext<
       setPageCount: (to: number) => void;
       setFullCount: (to: number) => void;
       setMaxPage: (to: number) => void;
+      sortOrderIndex: number;
+      sortModeIndex: number;
+      setSortOrderIndex: (to: number) => void;
+      setSortModeIndex: (to: number) => void;
     }
   | any
 >(undefined);
@@ -27,6 +42,10 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
   const [maxPage, setMaxPage] = useState(1);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTermState] = useState("");
+  const [sortOrderIndex, setSortOrderIndexState] = useState(0);
+  const setSortOrderIndex = (to: number) => setSortOrderIndexState(to);
+  const [sortModeIndex, setSortModeIndexState] = useState(0);
+  const setSortModeIndex = (to: number) => setSortModeIndexState(to);
 
   let [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -130,6 +149,10 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
         setSearchTerm,
         searchOpen,
         setSearchOpen,
+        sortModeIndex,
+        sortOrderIndex,
+        setSortModeIndex,
+        setSortOrderIndex,
       }}
     >
       {children}

@@ -111,11 +111,14 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     [],
     "room_updated",
     "room_deleted",
-    "room_created"
+    "room_created",
+    undefined,
+    undefined,
+    true
   );
 
   useEffect(() => {
-    if (user && !rooms) getRoomsData();
+    if (user) getRoomsData();
   }, [user]);
 
   const getRoom = useCallback(

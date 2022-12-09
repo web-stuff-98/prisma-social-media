@@ -155,14 +155,14 @@ export default function Profile() {
           />
           <button
             onClick={() => backgroundImageInputRef.current?.click()}
-            className="bg-rose-500 w-full"
+            className="w-full"
             type="button"
             aria-label="Select background image"
           >
             Select background image
           </button>
           <button
-            className="bg-rose-500 w-full"
+            className="w-full"
             type="submit"
             aria-label="Update profile"
           >

@@ -6,6 +6,7 @@ import { IPost, usePosts } from "../context/PostsContext";
 import { useFilter } from "../context/FilterContext";
 import Tag from "../components/postList/Tag";
 import { ImSpinner8 } from "react-icons/im";
+import useScrollbarSize from "react-scrollbar-size";
 
 export default function Blog() {
   const { pagePosts, getPostData, status } = usePosts();
@@ -13,6 +14,7 @@ export default function Blog() {
   const { state: iState } = useInterface();
   const scrollToTop = useScrollToTop();
   const postsContainerRef = useRef<HTMLDivElement>(null);
+  const { width: scrollWidth } = useScrollbarSize()
 
   useEffect(() => {
     scrollToTop();
@@ -36,6 +38,7 @@ export default function Blog() {
               backdropFilter: "blur(2px)",
               borderBottom: "1px solid rgba(255,255,255,0.166)",
               zIndex: "97",
+              width: `calc(100vw - ${scrollWidth}px)`
             }}
             className="w-full flex p-2 items-center justify-center h-fit shadow-xl bg-gray-500"
           >
@@ -66,58 +69,6 @@ export default function Blog() {
           ))}
         <span style={{ minHeight: "5rem" }} />
       </div>
-      {/* && (
-        <div
-          style={{
-            width: `10rem`,
-            height: "calc(100% - 13rem)",
-            top: "7.25rem",
-            right: `calc((100% - ${postsContainerRef.current
-              ?.clientWidth!}px) / 2)`,
-          }}
-          className="fixed bg-foreground overflow-y-auto overflow-x-hidden border border-stone-200 dark:border-stone-800 shadow dark:bg-darkmodeForeground pointer text-center rounded p-2"
-        >
-          <form className="flex items-center gap-1">
-            <input
-              value={searchTerm}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setSearchTerm(e.target.value)
-              }
-              placeholder="Search posts..."
-              type="text"
-              style={{ width: `calc(7.5rem - ${width || 0}px)` }}
-              className="px-1"
-            />
-            <IconBtn
-              aria-label="Submit search query"
-              Icon={status === "pending-search" ? ImSpinner8 : IoSearch}
-              color={`${
-                status === "pending-search" ? "animate-spin" : ""
-              } text-xl`}
-            />
-          </form>
-          {searchTags && (
-            <div
-              style={{ filter: "drop-shadow(0px 1.5px 1px rgba(0,0,0,0.5))" }}
-              className="flex flex-wrap justify-center py-1 gap-0.5"
-            >
-              {searchTags.map((tag: string) => (
-                <Tag isSearchTag key={tag} tag={tag} />
-              ))}
-            </div>
-          )}
-          <h2 className="whitespace-nowrap font-extrabold tracking-tight text-md">
-            Popular posts
-          </h2>
-          <aside className="flex flex-col items-center justify-center">
-            {popularPosts &&
-              popularPosts.length > 0 &&
-              popularPosts.map((slug) =>
-                PopularPostCard(getPostData(slug) as IPost)
-              )}
-          </aside>
-        </div>
-            )*/}
     </div>
   );
 }

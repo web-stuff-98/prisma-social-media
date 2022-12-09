@@ -50,7 +50,6 @@ export default function PostCard({
   return (
     <article
       ref={containerRef}
-      key={post?.id}
       className={`p-2 md:pl-2 bg-foreground dark:bg-darkmodeForeground shadow rounded border-stone-200 border dark:border-stone-800 text-center md:h-postHeight gap-1 sm:flex-col md:flex ${
         reverse ? "md:flex-row-reverse" : "md:flex-row"
       } h-full w-full justify-evenly`}

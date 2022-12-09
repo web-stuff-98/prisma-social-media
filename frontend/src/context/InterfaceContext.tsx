@@ -12,8 +12,8 @@ interface State {
 Make sure theres are the same as the breakpoints in the tailwind config
 */
 const breakPoints = {
-  sm: 420,
-  md: 512,
+  sm: 520,
+  md: 600,
   xl: 768,
 };
 

@@ -38,6 +38,7 @@ const useCustomArrayAsync = (
   itemCreatedEventName: string,
   sortFunction?: (a: any, b: any) => number,
   filterFunction: (item: any) => boolean = () => true,
+  notImmediate?: boolean
 ) => {
   const [status, setStatus] = useState<
     "idle" | "pending" | "error" | "success"
@@ -100,7 +101,7 @@ const useCustomArrayAsync = (
   }, []);
 
   useEffect(() => {
-    execute();
+    if (!notImmediate) execute();
   }, []);
 
   useEffect(() => {

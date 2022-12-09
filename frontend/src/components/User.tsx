@@ -131,6 +131,7 @@ export default function User({
           } flex flex-col gap-1`}
         >
           <IconBtn
+            redirectToLogin
             onClick={onLikeClick}
             Icon={liked ? AiFillLike : AiOutlineLike}
             aria-label={liked ? "Unlike" : "Like"}
@@ -162,6 +163,7 @@ export default function User({
             )}
           </IconBtn>
           <IconBtn
+            redirectToLogin
             onClick={onShareClick}
             Icon={shared ? BsShareFill : BsShare}
             aria-label={shared ? "Unshare" : "Share"}
@@ -221,7 +223,7 @@ export default function User({
             if (user?.id !== currentUser?.id) openUserdropdown(uid, chatroomId);
         }}
         className={`${
-          micro ? "w-5 h-5" : date && !isServer ? "w-10 h-10" : "w-8 h-8"
+          micro ? "w-5 h-5" : date && !isServer ? "w-9 h-9" : "w-8 h-8"
         } border ${
           fixDarkBackgroundContrast ? "border-white" : "border-black"
         } dark:border-white relative ${

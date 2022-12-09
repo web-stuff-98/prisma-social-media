@@ -166,7 +166,6 @@ export default function Editor() {
             type="button"
             onClick={() => hiddenCoverImageRef.current?.click()}
             aria-label="Select cover image"
-            className="bg-rose-500"
           >
             Select cover image
           </button>
@@ -179,7 +178,6 @@ export default function Editor() {
           <button
             type="submit"
             aria-label={slug ? "Update post" : "Create post"}
-            className="bg-rose-500"
           >
             {slug ? "Update post" : "Create post"}
           </button>
@@ -217,7 +215,6 @@ export default function Editor() {
               }}
               type="button"
               aria-label="Delete post"
-              className="bg-rose-500"
             >
               Delete post
             </button>

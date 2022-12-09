@@ -376,8 +376,8 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
                 responseType: "arraybuffer",
             });
             const image = Buffer.from(imageRes.data, "binary");
-            const scaled = (yield (0, imageProcessing_1.default)(image, { width: 1024, height: 768 }, true));
-            const thumb = (yield (0, imageProcessing_1.default)(image, { width: 256, height: 256 }, true));
+            const scaled = (yield (0, imageProcessing_1.default)(image, { width: 768, height: 500 }, true));
+            const thumb = (yield (0, imageProcessing_1.default)(image, { width: 300, height: 300 }, true));
             yield new Promise((resolve, reject) => {
                 s3.upload({
                     Bucket: "prisma-socialmedia",

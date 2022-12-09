@@ -35,7 +35,7 @@ export default function Register() {
         type="text"
         required
       />
-      <button className="w-full mt-2 py-1">Register</button>
+      <button type="submit" className="w-full mt-2 py-1">Register</button>
     </form>
   );
 }

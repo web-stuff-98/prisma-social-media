@@ -34,7 +34,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const authSocket = () => {
-    socket?.emit("auth")
+    if (socket) socket.disconnect();
+    connectSocket();
   };
 
   useEffect(() => {

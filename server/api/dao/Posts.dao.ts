@@ -90,7 +90,7 @@ export default class PostsDAO {
       },
       take: 8,
     });
-    return posts;
+    return posts.map((post) => ({...post, tags: post.tags.map((tag) => tag.name)}));
   }
 
   static async deletePostBySlug(slug: string, uid: string) {
@@ -504,12 +504,12 @@ export default class PostsDAO {
     });
     const scaled = await imageProcessing(
       blob,
-      { width: 1024, height: 768 },
+      { width: 768, height: 500 },
       true
     );
     const thumb = await imageProcessing(
       blob,
-      { width: 200, height: 200 },
+      { width: 300, height: 300 },
       true
     );
     const blur = (await imageProcessing(blob, {

@@ -7,25 +7,52 @@ import { GiHamburgerMenu } from "react-icons/gi";
 import { ImSpinner8 } from "react-icons/im";
 import { IoSearch } from "react-icons/io5";
 import { IconBtn } from "../IconBtn";
-import { useFilter } from "../../context/FilterContext";
+import {
+  SortModeOptions,
+  SortOrderOptions,
+  useFilter,
+} from "../../context/FilterContext";
 import { usePosts } from "../../context/PostsContext";
+import Dropdown from "../Dropdown";
 
 export default function Nav() {
   const containerRef = useRef<HTMLElement>(null);
   const { logout, user } = useAuth();
   const { state: iState, dispatch: iDispatch } = useInterface();
-  const { searchTerm, setSearchTerm } = useFilter();
+  const {
+    searchTerm,
+    setSearchTerm,
+    sortOrderIndex,
+    sortModeIndex,
+    setSortModeIndex,
+    setSortOrderIndex,
+  } = useFilter();
   const { status } = usePosts();
 
-  const renderSearchBar = () => {
+  const renderBlogControls = () => {
     return (
-      <form className="flex dark items-center gap-1">
+      <div className="flex dark items-center gap-1">
+        <div className="flex">
+          <Dropdown
+            items={SortOrderOptions}
+            index={sortOrderIndex}
+            setIndex={(to: number) => setSortOrderIndex(to)}
+            noRightBorderRadius
+            noRightBorder
+          />
+          <Dropdown
+            items={SortModeOptions}
+            index={sortModeIndex}
+            setIndex={(to: number) => setSortModeIndex(to)}
+            noLeftBorderRadius
+            noLeftBorder
+          />
+        </div>
         <input
           value={searchTerm}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setSearchTerm(e.target.value)
           }
-          placeholder="Search posts..."
           type="text"
           style={{ width: "7.5rem" }}
           className="px-1"
@@ -37,7 +64,7 @@ export default function Nav() {
             status === "pending-search" ? "animate-spin" : ""
           } text-xl text-white`}
         />
-      </form>
+      </div>
     );
   };
 
@@ -51,7 +78,7 @@ export default function Nav() {
               ...(iState.mobileMenuOpen
                 ? {
                     flexDirection: "column",
-                    height: "15.5pc",
+                    height: "14pc",
                   }
                 : {}),
             }
@@ -71,8 +98,8 @@ export default function Nav() {
             <div
               className={`${
                 iState.breakPoint === "sm"
-                  ? "flex flex-col gap-2 pt-2"
-                  : "flex gap-5"
+                  ? "flex flex-col gap-1 pt-2"
+                  : "flex gap-4 tracking-tighter"
               } text-white`}
             >
               <Link to="/" aria-label="Home" className="text-md font-bold">
@@ -159,10 +186,10 @@ export default function Nav() {
               >
                 <GiHamburgerMenu className="text-white text-2xl my-auto h-full" />
               </button>
-              {iState.breakPoint === "sm" && renderSearchBar()}
+              {iState.breakPoint === "sm" && renderBlogControls()}
             </div>
           )}
-          {iState.breakPoint !== "sm" && renderSearchBar()}
+          {iState.breakPoint !== "sm" && renderBlogControls()}
         </div>
       </>
     </nav>

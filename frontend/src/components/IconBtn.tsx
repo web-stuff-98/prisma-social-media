@@ -1,5 +1,7 @@
 import { IconType } from "react-icons/lib";
 import type { ReactNode } from "react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export function IconBtn({
   Icon,
@@ -7,6 +9,7 @@ export function IconBtn({
   color,
   children,
   onClick,
+  redirectToLogin = false,
   ...props
 }: {
   isActive?: boolean;
@@ -15,10 +18,14 @@ export function IconBtn({
   children?: ReactNode;
   onClick?: () => void;
   disabled?: boolean;
+  redirectToLogin?: boolean;
 }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   return (
     <button
       onClick={() => {
+        if (redirectToLogin && !user) navigate("/login");
         if (onClick) onClick();
       }}
       className={`flex px-0 bg-transparent relative items-center ${
@@ -27,7 +34,7 @@ export function IconBtn({
       {...props}
     >
       <span className={`${children != null ? "mr-0.5" : ""}`}>
-        <Icon className={color?.includes("text") ? color : ""}/>
+        <Icon className={color?.includes("text") ? color : ""} />
       </span>
       {children}
     </button>

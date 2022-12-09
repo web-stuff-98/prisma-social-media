@@ -5,8 +5,8 @@ module.exports = {
     screens: {
       /*when you change any of this, go into the interface context
       in react and make sure the breakpoints match up there also*/
-      sm: "420px",
-      md: "512px",
+      sm: "520px",
+      md: "600px",
       xl: "768px",
     },
     extend: {
@@ -24,9 +24,11 @@ module.exports = {
       },
       colors: {
         foreground: "white",
+        foregroundHover: "rgb(249,249,255)",
         background: "white",
         foregroundContrast: "#17181a",
         darkmodeForeground: "#17181a",
+        darkmodeForegroundHover: "#12141a",
         darkmodeBackground: "#17181a",
         darkmodeForegroundContrast: "#18181b"
       },

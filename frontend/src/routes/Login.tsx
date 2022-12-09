@@ -37,7 +37,7 @@ export default function Login() {
         required
         className="text-center"
       />
-      <button className="w-full mt-2 py-1">Login</button>
+      <button type="submit" className="w-full mt-2 py-1">Login</button>
     </form>
   );
 }

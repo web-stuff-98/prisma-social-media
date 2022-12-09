@@ -88,7 +88,7 @@ class PostsDAO {
                 },
                 take: 8,
             });
-            return posts;
+            return posts.map((post) => (Object.assign(Object.assign({}, post), { tags: post.tags.map((tag) => tag.name) })));
         });
     }
     static deletePostBySlug(slug, uid) {
@@ -437,8 +437,8 @@ class PostsDAO {
                 },
                 totalBytes: bytes,
             });
-            const scaled = yield (0, imageProcessing_1.default)(blob, { width: 1024, height: 768 }, true);
-            const thumb = yield (0, imageProcessing_1.default)(blob, { width: 200, height: 200 }, true);
+            const scaled = yield (0, imageProcessing_1.default)(blob, { width: 768, height: 500 }, true);
+            const thumb = yield (0, imageProcessing_1.default)(blob, { width: 300, height: 300 }, true);
             const blur = (yield (0, imageProcessing_1.default)(blob, {
                 width: 14,
                 height: 10,

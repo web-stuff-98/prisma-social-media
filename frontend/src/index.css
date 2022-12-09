@@ -12,7 +12,7 @@
       @apply text-xl;
     }
 
-    input, textarea {
+    input, textarea, option {
         @apply bg-foreground;
         @apply dark:bg-darkmodeForeground;
         @apply border;
