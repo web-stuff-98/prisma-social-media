@@ -45,6 +45,23 @@ export interface ServerToClientEvents {
   private_message_delete: (id: string) => void;
   private_message_request_attachment_upload: (id: string) => void;
   private_conversation_deleted: (conversationWith: string) => void;
+  private_conversation_video_chat_user_joined: (
+    signal: Peer.SignalData,
+    callerSid: string,
+  ) => void;
+  private_conversation_video_chat_user_left: () => void;
+  private_conversation_video_chat_sending_signal: (payload: {
+    userToSignal: string;
+    signal: Peer.SignalData;
+  }) => void;
+  private_conversation_video_chat_returning_signal: (payload: {
+    signal: Peer.SignalData;
+    callerSid: string;
+  }) => void;
+  private_conversation_video_chat_receiving_returned_signal: (
+    signal: Peer.SignalData,
+  ) => void;
+  private_conversation_video_chat_user: (sid: string) => void;
 
   room_message: (data: RoomMessage) => void;
   room_message_request_attachment_upload: (id: string) => void;
@@ -59,25 +76,6 @@ export interface ServerToClientEvents {
   ) => void;
   room_message_attachment_progress: (progress: number, id: string) => void;
 
-  private_conversation_video_chat_user_joined: (
-    signal: Peer.SignalData,
-    callerSid: string,
-  ) => void;
-  private_conversation_video_chat_user_left: (uid: string) => void;
-  private_conversation_video_chat_sending_signal: (payload: {
-    userToSignal: string;
-    callerSid: string;
-    signal: Peer.SignalData;
-  }) => void;
-  private_conversation_video_chat_returning_signal: (payload: {
-    signal: Peer.SignalData;
-    callerSid: string;
-  }) => void;
-  private_conversation_video_chat_receiving_returned_signal: (
-    signal: Peer.SignalData,
-    sid: string
-  ) => void;
-  private_conversation_video_chat_user: (sid: string) => void;
 
   room_video_chat_user_joined: (
     signal: Peer.SignalData,
@@ -157,14 +155,17 @@ export interface ClientToServerEvents {
 
   private_conversation_video_chat_sending_signal: (payload: {
     userToSignal: string;
-    callerSid: string;
     signal: Peer.SignalData;
   }) => void;
   private_conversation_video_chat_returning_signal: (payload: {
     signal: Peer.SignalData;
     callerSid: string;
   }) => void;
-  private_conversation_video_chat_close: () => void;
+
+  private_conversation_close: () => void;
+  private_conversation_open: (conversationWith: string) => void;
+  private_conversation_vid_chat_open: () => void;
+  private_conversation_vid_chat_close: () => void;
 
   auth: () => void;
 }
@@ -180,4 +181,5 @@ export interface SocketData {
     room?: string;
   };
   vidChatOpen: boolean;
+  conversationSubjectUid: string;
 }

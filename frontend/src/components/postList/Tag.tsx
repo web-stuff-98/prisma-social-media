@@ -5,7 +5,6 @@ export default function Tag({tag, isSearchTag}:{tag:string, isSearchTag?:boolean
 
     return <span
     onClick={() => autoAddRemoveSearchTag(tag.trim())}
-    key={tag}
     style={
       searchTags.includes(tag) && !isSearchTag
         ? {

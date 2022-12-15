@@ -239,7 +239,7 @@ export default function User({
               bottom: micro ? "-6px" : 0,
               right: micro ? "-6px" : 0,
             }}
-            className="absolute rounded-full shadow border border-black bg-green-500"
+            className="absolute z-30 rounded-full shadow border border-black bg-green-500"
           />
         )}
       </div>

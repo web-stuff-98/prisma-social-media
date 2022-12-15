@@ -2,11 +2,9 @@ import { IPost } from "../context/PostsContext";
 import { makeRequest } from "./makeRequest";
 
 const getPosts = () => makeRequest("/api/posts", { withCredentials: true });
-const getPage = async (page: number, tags?: string, term?: string) => {
+const getPage = async (queryAndPagePortion:string) => {
   return await makeRequest(
-    `/api/posts/page/${page}${term ? `?term=${term}` : ""}${
-      tags ? `${!term ? "?" : "&"}tags=${tags}` : ""
-    }`,
+    `/api/posts/page/${queryAndPagePortion}`,
     { withCredentials: true }
   );
 };

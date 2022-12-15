@@ -1232,13 +1232,17 @@ export default class ChatDAO {
   }
 
   static async conversationOpenVideoChat(uid: string, otherUsersId: string) {
-    console.log("Other users id : " + otherUsersId)
+    console.log("Other users id : " + otherUsersId);
     const callerSocket = await getUserSocket(uid);
     const calledSocket = await getUserSocket(otherUsersId);
     if (!callerSocket) throw new Error("You have no socket connection");
     callerSocket.data.vidChatOpen = true;
     if (!calledSocket)
       throw new Error("The user you tried to call is not online");
-    callerSocket.emit("private_conversation_video_chat_user", calledSocket.id);
+    if (calledSocket.data.vidChatOpen && calledSocket.data.conversationSubjectUid === uid)
+      callerSocket.emit(
+        "private_conversation_video_chat_user",
+        calledSocket.id
+      );
   }
 }

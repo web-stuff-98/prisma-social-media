@@ -102,7 +102,7 @@ const PostsContext = createContext<{
 export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const { socket } = useSocket();
   const { cacheUserData } = useUsers();
-  const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm } =
+  const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm, sortModeIndex, sortOrderIndex } =
     useFilter();
   const query = useParams();
 
@@ -142,10 +142,9 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getAndSetPage = () => {
+    const queryPortion:string = (window.location.href.split("/blog/")[1] || "").split("?")[1] || ""
     getPage(
-      query.page ? Number(query.page) : 1,
-      searchTags.join("+") || "",
-      searchTerm.replace(" ", "+") || ""
+      `${query.page ? Number(query.page) : 1}${queryPortion ? `?${queryPortion}` : ""}`
     )
       .then(
         (data: {
@@ -181,7 +180,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     if (!query.page) return;
     handleGetAndSetPage();
     setStatus("pending-search");
-  }, [searchTags, searchTerm, query.page]);
+  }, [searchTags, searchTerm, query.page, sortOrderIndex, sortModeIndex]);
 
   const [err, setErr] = useState("");
 

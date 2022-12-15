@@ -33,6 +33,7 @@ export default class PostsController {
       );
       res.status(200).json(data);
     } catch (error) {
+      console.log(error)
       res.status(500).json({ msg: "Internal error" });
     }
   }

@@ -1,1 +1,1 @@
-Not finished yet. Nearly done.
+This is done now, I just have to host it.

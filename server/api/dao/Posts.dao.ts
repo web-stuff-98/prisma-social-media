@@ -55,11 +55,11 @@ export default class PostsDAO {
 
   static async getPage(
     page: number,
-    query: { term?: string; tags?: string },
+    query: { term?: string; tags?: string, mode?: string, order?:string },
     uid?: string
   ) {
     const data = await getPage(
-      { tags: query.tags || "", term: query.term || "" },
+      { tags: query.tags || "", term: query.term || "", mode: query.mode || "", order: query.order || "" },
       { page },
       uid
     );

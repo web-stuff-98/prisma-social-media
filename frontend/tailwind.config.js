@@ -5,9 +5,9 @@ module.exports = {
     screens: {
       /*when you change any of this, go into the interface context
       in react and make sure the breakpoints match up there also*/
-      sm: "520px",
-      md: "600px",
-      xl: "768px",
+      sm: "512px",
+      md: "570px",
+      xl: "680px",
     },
     extend: {
       minHeight: {

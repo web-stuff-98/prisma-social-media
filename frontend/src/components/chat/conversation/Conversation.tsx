@@ -98,6 +98,7 @@ export default function ConversationSection({
       "private_message_request_attachment_upload",
       handleUploadAttachment
     );
+    socket.emit("private_conversation_open", conversationWith);
     socket.on("private_conversation_deleted", handleConversationDeleted);
     socket.on("private_message_attachment_complete", handleAttachmentComplete);
     socket.on("private_message_attachment_failed", handleAttachmentFailed);
@@ -146,7 +147,7 @@ export default function ConversationSection({
         "private_conversation_video_chat_user_left",
         handleVidChatUserLeft
       );
-      socket.emit("private_conversation_video_chat_close");
+      socket.emit("private_conversation_close");
     };
   }, [socket]);
 
@@ -230,7 +231,8 @@ export default function ConversationSection({
       .catch((e) => setErr(`${e}`));
   };
   const handleReceiveVideoCall = useCallback((sid: string) => {
-    const peer = createPeer();
+    console.log("Received call from " + sid)
+    const peer = createPeer(sid);
     peerRef.current = {
       peerSID: sid,
       peer,
@@ -250,16 +252,17 @@ export default function ConversationSection({
   );
   const handleVidChatReceivingReturningSignal = (
     signal: Peer.SignalData,
-    sid: string
   ) => {
-    setTimeout(() => peerRef.current?.peer.signal(signal));
+    setTimeout(() => {
+      peerRef.current?.peer.signal(signal);
+    });
   };
   const handleVidChatUserLeft = () => {
     peerRef.current?.peer.destroy();
     setPeer(undefined);
     peerRef.current = undefined;
   };
-  const createPeer = () => {
+  const createPeer = (sid:string) => {
     if (typeof userStream?.current === "undefined")
       throw new Error("Media stream is undefined");
     const peer = new Peer({
@@ -268,10 +271,10 @@ export default function ConversationSection({
       stream: userStream.current,
       config: ICE_Config,
     });
+
     peer.on("signal", (signal) => {
       socket?.emit("private_conversation_video_chat_sending_signal", {
         userToSignal: conversationWith,
-        callerSid: String(peerRef.current?.peerSID),
         signal,
       });
     });
@@ -306,6 +309,7 @@ export default function ConversationSection({
     <div className="w-full h-full flex flex-col items-between justify-between">
       {(isStreaming || peer) && (
         <Videos
+          windowSize="1/2"
           peersData={peer ? [{ ...peer, peerUID: conversationWith }] : []}
         />
       )}

@@ -69,9 +69,8 @@ const socketAuth = async (socket: any) => {
   }
 };
 
-io.use(socketAuthMiddleware);
-
 io.on("connection", async (socket) => {
+  await socketAuth(socket);
   socket.on("user_visible", (uid) => socket.join(`user=${uid}`));
   socket.on("user_not_visible", (uid) => socket.leave(`user=${uid}`));
   socket.on("post_card_visible", (slug) => socket.join(`post_card=${slug}`));
@@ -84,10 +83,11 @@ io.on("connection", async (socket) => {
   socket.on("open_post", (slug) => socket.join(slug));
   socket.on("leave_post", (slug) => socket.leave(slug));
 
-  socket.on("auth", async () => await socketAuth(socket))
+  socket.on("auth", async () => await socketAuth(socket));
 
-  socket.on("room_video_chat_sending_signal", (payload) => {
-    io.to(payload.userToSignal).emit(
+  socket.on("room_video_chat_sending_signal", async (payload) => {
+    const otherUserSocket = await getUserSocket(payload.userToSignal);
+    io.to(otherUserSocket?.id!).emit(
       "room_video_chat_user_joined",
       payload.signal,
       payload.callerSid,
@@ -102,32 +102,73 @@ io.on("connection", async (socket) => {
     );
   });
 
-  socket.on("private_conversation_video_chat_sending_signal", (payload) => {
-    io.to(payload.userToSignal).emit(
-      "private_conversation_video_chat_user_joined",
-      payload.signal,
-      payload.callerSid
-    );
-  });
+  socket.on(
+    "private_conversation_video_chat_sending_signal",
+    async (payload) => {
+      const calledSocket = await getUserSocket(payload.userToSignal);
+      io.to(calledSocket?.id!).emit(
+        "private_conversation_video_chat_user_joined",
+        payload.signal,
+        socket.id
+      );
+    }
+  );
   socket.on("private_conversation_video_chat_returning_signal", (payload) => {
     io.to(payload.callerSid).emit(
       "private_conversation_video_chat_receiving_returned_signal",
-      payload.signal,
-      socket.id
+      payload.signal
     );
   });
 
-  socket.on("private_conversation_video_chat_close", () => {
+  socket.on("private_conversation_open", (subjectUid: string) => {
     socket.data.vidChatOpen = false;
+    socket.data.conversationSubjectUid = subjectUid;
+  });
+  socket.on("private_conversation_close", async () => {
+    if (socket.data.vidChatOpen && socket.data.conversationSubjectUid) {
+      const otherSocket = await getUserSocket(
+        socket.data.conversationSubjectUid
+      );
+      if (otherSocket)
+        io
+          .to(otherSocket.id)
+          .emit("private_conversation_video_chat_user_left")!;
+    }
+    socket.data.vidChatOpen = false;
+    socket.data.conversationSubjectUid = "";
+  });
+  socket.on("private_conversation_vid_chat_close", async () => {
+    socket.data.vidChatOpen = false;
+    if (socket.data.conversationSubjectUid) {
+      const otherSocket = await getUserSocket(
+        socket.data.conversationSubjectUid
+      );
+      if (otherSocket)
+        io
+          .to(otherSocket.id)
+          .emit("private_conversation_video_chat_user_left")!;
+    }
+  });
+  socket.on("private_conversation_vid_chat_open", () => {
+    socket.data.vidChatOpen = true;
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     if (socket.data.user)
       io.to(`user=${socket.data.user.id}`).emit("user_visible_update", {
         id: socket.data.user.id,
         online: false,
       });
     socket.data.user = undefined;
+    if (socket.data.vidChatOpen && socket.data.conversationSubjectUid) {
+      const otherSocket = await getUserSocket(
+        socket.data.conversationSubjectUid
+      );
+      if (otherSocket)
+        io.to(otherSocket.id).emit("private_conversation_video_chat_user_left");
+    }
+    socket.data.vidChatOpen = false;
+    socket.data.conversationSubjectUid = "";
     socket.rooms.forEach((room) => {
       if (room.startsWith("room="))
         io.to(room).emit(
@@ -147,6 +188,7 @@ import {
   ServerToClientEvents,
   SocketData,
 } from "./socket-interfaces";
+import getUserSocket from "./utils/getUserSocket";
 
 app.use("/api/posts", Posts);
 app.use("/api/users", Users);

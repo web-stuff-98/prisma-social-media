@@ -21,10 +21,12 @@ import { useChat } from "../../../context/ChatContext";
 */
 
 export default function VideoChatWindow({
+  size,
   stream,
   uid,
   peer,
 }: {
+  size: "1/4" | "1/3" | "1/2"
   stream?: MediaStream;
   uid: string;
   peer?: Peer.Instance;
@@ -59,7 +61,7 @@ export default function VideoChatWindow({
   const [muted, setMuted] = useState(false);
 
   return (
-    <div className="w-1/4 p-0.5 z-50">
+    <div style={{maxWidth:"50%"}} className={`w-${size} p-0.5 z-50`}>
       <div className="relative h-full w-full rounded shadow overflow-hidden bg-foreground dark:bg-darkmodeForeground border border-zinc-600 dark:border-stone-800 flex flex-col">
         <span
           aria-label="Partner stream controls"
@@ -100,7 +102,7 @@ export default function VideoChatWindow({
               : { filter: "opacity(0)" }),
             transition: "filter 150ms ease",
           }}
-          className="mt-6 grow"
+          className="mt-6 z-20 grow"
         />
         <div
           style={{

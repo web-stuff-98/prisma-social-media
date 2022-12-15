@@ -110,12 +110,18 @@ const generatePost = () => __awaiter(void 0, void 0, void 0, function* () {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "") +
         crypto_1.default.randomBytes(64).toString("hex").slice(0, 6);
+    const randomCreationDate = Math.ceil(Math.random() * 345600000 * (Math.random() > 0.5 ? -1 : 1));
     const p = yield prisma_1.default.post.create({
         data: {
             title,
             description,
             slug,
             body,
+            createdAt: new Date(Date.now() + randomCreationDate),
+            updatedAt: new Date(Math.random() < 0.8
+                ? randomCreationDate
+                : randomCreationDate +
+                    (Date.now() - randomCreationDate) * Math.random()),
             authorId: generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id,
             tags: {
                 connectOrCreate: lipsum

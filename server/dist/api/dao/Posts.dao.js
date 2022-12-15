@@ -59,7 +59,7 @@ class PostsDAO {
     }
     static getPage(page, query, uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield (0, getPageData_1.default)({ tags: query.tags || "", term: query.term || "" }, { page }, uid);
+            const data = yield (0, getPageData_1.default)({ tags: query.tags || "", term: query.term || "", mode: query.mode || "", order: query.order || "" }, { page }, uid);
             return data;
         });
     }

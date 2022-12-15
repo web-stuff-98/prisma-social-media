@@ -24,8 +24,8 @@ export default function Nav() {
     setSearchTerm,
     sortOrderIndex,
     sortModeIndex,
-    setSortModeIndex,
-    setSortOrderIndex,
+    setSortMode,
+    setSortOrder,
   } = useFilter();
   const { status } = usePosts();
 
@@ -33,17 +33,19 @@ export default function Nav() {
     return (
       <div className="flex dark items-center gap-1">
         <div className="flex">
+          <div style={{width:"3rem"}}>
           <Dropdown
             items={SortOrderOptions}
             index={sortOrderIndex}
-            setIndex={(to: number) => setSortOrderIndex(to)}
+            setIndex={(to: number) => setSortOrder(to)}
             noRightBorderRadius
             noRightBorder
           />
+          </div>
           <Dropdown
             items={SortModeOptions}
             index={sortModeIndex}
-            setIndex={(to: number) => setSortModeIndex(to)}
+            setIndex={(to: number) => setSortMode(to)}
             noLeftBorderRadius
             noLeftBorder
           />

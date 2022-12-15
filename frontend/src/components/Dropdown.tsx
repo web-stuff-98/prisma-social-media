@@ -127,7 +127,7 @@ export default function Dropdown({
   };
 
   return (
-    <div onMouseLeave={() => setDropdownOpen(false)} className="w-full w-20">
+    <div onMouseLeave={() => setDropdownOpen(false)} className="w-full">
       <div className="relative" ref={rootItemContainerRef}>
         {renderItem(
           items[dropdownOpen ? 0 : index].name,

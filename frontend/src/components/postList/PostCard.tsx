@@ -163,7 +163,7 @@ export default function PostCard({
               } w-full gap-0.5`}
             >
               {post.tags.map((tag) => (
-                <Tag tag={tag} />
+                <Tag key={tag} tag={tag} />
               ))}
             </div>
             <span className="sm:mx-auto mt-1 md:mx-0">

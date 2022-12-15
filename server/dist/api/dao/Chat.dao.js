@@ -1186,7 +1186,8 @@ class ChatDAO {
             callerSocket.data.vidChatOpen = true;
             if (!calledSocket)
                 throw new Error("The user you tried to call is not online");
-            callerSocket.emit("private_conversation_video_chat_user", calledSocket.id);
+            if (calledSocket.data.vidChatOpen && calledSocket.data.conversationSubjectUid === uid)
+                callerSocket.emit("private_conversation_video_chat_user", calledSocket.id);
         });
     }
 }

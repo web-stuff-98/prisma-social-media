@@ -53,8 +53,6 @@ export default function Room({ roomId }: { roomId: string }) {
     rooms,
     setTopText,
     userStream,
-    toggleMuteSelf,
-    selfMuted,
     initVideo,
   } = useChat();
   const { socket } = useSocket();
@@ -320,7 +318,7 @@ export default function Room({ roomId }: { roomId: string }) {
   return (
     <div>
       <>
-        {(isStreaming || peers.length > 0) && <Videos peersData={peers} />}
+        {(isStreaming || peers.length > 0) && <Videos peersData={peers} windowSize="1/4" />}
         <MessageList
           roomId={roomId}
           messages={messages}

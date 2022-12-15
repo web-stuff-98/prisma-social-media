@@ -1,16 +1,22 @@
-import { useContext, createContext, useState, useEffect } from "react";
+import {
+  useContext,
+  createContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DropdownItem } from "../components/Dropdown";
 
 export const SortOrderOptions: DropdownItem[] = [
-  { name: "Descending", node: "Descending" }, // high to low
-  { name: "Ascending", node: "Ascending" }, //low to high
+  { name: "Descending", node: "Desc" }, // high to low
+  { name: "Ascending", node: "Asc" }, //low to high
 ];
 
 export const SortModeOptions: DropdownItem[] = [
-  { name: "Popularity", node: "Popularity" },
-  { name: "Created at", node: "Created at" },
+  { name: "Popularity", node: "Popular" },
+  { name: "Created at", node: "Created" },
 ];
 
 const FilterContext = createContext<
@@ -29,8 +35,8 @@ const FilterContext = createContext<
       setMaxPage: (to: number) => void;
       sortOrderIndex: number;
       sortModeIndex: number;
-      setSortOrderIndex: (to: number) => void;
-      setSortModeIndex: (to: number) => void;
+      setSortOrder: (to: number) => void;
+      setSortMode: (to: number) => void;
     }
   | any
 >(undefined);
@@ -42,80 +48,70 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
   const [maxPage, setMaxPage] = useState(1);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTermState] = useState("");
-  const [sortOrderIndex, setSortOrderIndexState] = useState(0);
-  const setSortOrderIndex = (to: number) => setSortOrderIndexState(to);
-  const [sortModeIndex, setSortModeIndexState] = useState(0);
-  const setSortModeIndex = (to: number) => setSortModeIndexState(to);
+  const [sortOrderIndex, setSortOrderIndex] = useState(0);
+  const [sortModeIndex, setSortModeIndex] = useState(0);
 
   let [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
+  //if value is an empty string, it removes the param from the url
+  const addUpdateOrRemoveParamsAndNavigateToUrl = (
+    name?: string,
+    value?: string
+  ) => {
+    const rawTags =
+      name === "tags" ? value : searchParams.get("tags")?.replaceAll(" ", "+");
+    const rawTerm =
+      name === "term" ? value : searchParams.get("term")?.replaceAll(" ", "+");
+    const rawOrder = name === "order" ? value : searchParams.get("order");
+    const rawMode = name === "mode" ? value : searchParams.get("mode");
+    let outTags = rawTags ? `&tags=${rawTags}` : "";
+    let outTerm = rawTerm ? `&term=${rawTerm}` : "";
+    let outOrder = rawOrder ? `&order=${rawOrder}` : "";
+    let outMode = rawMode ? `&mode=${rawMode}` : "";
+    const outStr = `/blog/1${outTags}${outTerm}${outOrder}${outMode}`;
+    navigate(`${outStr}`.replace("/blog/1&", "/blog/1?"));
+  };
+
   useEffect(() => {
     if (searchParams.get("term"))
       setSearchTermState(searchParams!.get("term")!.replaceAll("+", " "));
-    if (searchParams.get("tags"))
-      setSearchTags(
-        searchParams!
-          .get("tag")!
-          .split("+")
-          .filter((t) => t)
-      );
+    if (searchParams.get("tags")) {
+      const g = searchParams!.get("tag")!;
+      setSearchTags(g ? g.split("+").filter((t) => t) : []);
+    }
+    if (searchParams.get("order")) {
+      const g = searchParams.get("order");
+      if (g === "des") setSortOrderIndex(0);
+      if (g === "asc") setSortOrderIndex(1);
+    }
+    if (searchParams.get("mode")) {
+      const g = searchParams.get("mode");
+      if (g === "popular") setSortModeIndex(0);
+      if (g === "created") setSortModeIndex(1);
+    }
   }, []);
 
   const setSearchTerm = (to: string, dontPush?: boolean) => {
     setSearchTermState(to);
-    const rawTags = searchParams.get("tags");
-    let tags: string[] = [];
-    if (rawTags)
-      tags = String(rawTags)
-        .replaceAll(" ", "+")
-        .split("+")
-        .filter((tag: string) => tag.trim() !== "");
-    if (to.trim() !== "") {
-      setSearchTags(
-        tags.length > 0
-          ? tags
-              .sort((a: string, b: string) => a.localeCompare(b))
-              .filter((tag: string) => tag)
-          : []
+    if (!dontPush)
+      addUpdateOrRemoveParamsAndNavigateToUrl(
+        "term",
+        to
+          .replace(/[^a-zA-Z0-9 ]/g, "")
+          .replaceAll(" ", "+")
+          .toLowerCase()
+          .trim()
       );
-      if (!dontPush)
-        if (!tags)
-          navigate(
-            `/blog/1${to ? "?term=" : ""}${to.replaceAll(" ", "+").trim()}`
-          );
-        else
-          navigate(
-            `/blog/1?term=${to.replaceAll(" ", "+").trim()}&tags=${tags
-              .sort((a: string, b: string) => a.localeCompare(b))
-              .join("+")}`
-          );
-    } else if (!dontPush) {
-      navigate(
-        `/blog/1${to !== "" || tags.length > 0 ? "?" : ""}${
-          to !== "" ? "term=" : ""
-        }${to?.replaceAll(" ", "+")}${
-          !to && tags.length > 0
-            ? `?tags=${tags
-                .sort((a: string, b: string) => a.localeCompare(b))
-                .join("+")}`
-            : tags.length > 0 && to
-            ? `&tags=${tags
-                .sort((a: string, b: string) => a.localeCompare(b))
-                .join("+")}`
-            : ""
-        }`
-      );
-    }
   };
 
   const autoAddRemoveSearchTag = (tag: string) => {
     const rawTags = searchParams.get("tags");
-    const term = searchParams.get("term");
     let tags: string[] = [];
     if (rawTags)
       tags = String(rawTags)
         .replaceAll(" ", "+")
+        .toLowerCase()
         .split("+")
         .filter((tag: string) => tag.trim() !== "");
     if (tags.includes(tag.toLowerCase())) {
@@ -127,10 +123,27 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
     //not sure how localeCompare is used to sort alphabetically since i copied it from stack overflow
     tags = tags.sort((a: string, b: string) => a.localeCompare(b));
     setSearchTags(tags);
-    navigate(
-      `/blog/1${
-        term && term.length > 0 ? `?term=` + term.replaceAll(" ", "+") : ""
-      }${tags ? `${!term ? "?" : "&"}tags=${tags?.join("+")}` : ""}`
+    addUpdateOrRemoveParamsAndNavigateToUrl(
+      "tags",
+      tags
+        .filter((t) => t)
+        .map((t) => t.toLowerCase())
+        .join("+")
+    );
+  };
+
+  const setSortMode = (index: number) => {
+    setSortModeIndex(index);
+    addUpdateOrRemoveParamsAndNavigateToUrl(
+      "mode",
+      index === 0 ? "popular" : "created"
+    );
+  };
+  const setSortOrder = (index: number) => {
+    setSortOrderIndex(index);
+    addUpdateOrRemoveParamsAndNavigateToUrl(
+      "order",
+      index === 0 ? "des" : "asc"
     );
   };
 
@@ -151,8 +164,8 @@ export const FilterProvider = ({ children }: { children: ReactNode }) => {
         setSearchOpen,
         sortModeIndex,
         sortOrderIndex,
-        setSortModeIndex,
-        setSortOrderIndex,
+        setSortOrder,
+        setSortMode,
       }}
     >
       {children}
