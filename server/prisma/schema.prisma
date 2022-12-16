@@ -133,8 +133,6 @@ model PrivateMessage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  readByRecipient Boolean @default(false)
-
   @@index([senderId])
 }
 
