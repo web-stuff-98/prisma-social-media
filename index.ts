@@ -12,7 +12,7 @@ import path from "path";
 import { Server } from "socket.io";
 
 const origin =
-  false ? "https://prisma-social-media-js.herokuapp.com/" : "*";
+  process.env.NODE_ENV === "production" ? "https://prisma-social-media-js.herokuapp.com/" : "*";
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -23,7 +23,7 @@ const io = new Server<
   SocketData
 >(server, {
   cors: {
-    origin,
+    origin: "http://localhost:3000",
     credentials: true,
   },
 });
@@ -32,7 +32,7 @@ export { io };
 
 app.use(
   cors({
-    origin,
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );
@@ -41,12 +41,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
-  app.get("*", (_, res) => {
-    res.sendFile(
-      path.join(__dirname, "..", "frontend", "build", "index.html")
-    );
-  });
-  seed();
+  //app.get("*", (_, res) => {
+  //  res.sendFile(
+  //    path.join(__dirname, "..", "frontend", "build", "index.html")
+  //  );
+  //});
+  //seed();
 }
 
 import jwt from "jsonwebtoken";

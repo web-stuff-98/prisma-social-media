@@ -72,36 +72,6 @@ export default class PostsDAO {
     return data;
   }
 
-  static async getPopularPosts() {
-    const posts = await prisma.post.findMany({
-      where: { imagePending: false },
-      select: {
-        _count: { select: { comments: true, likes: true, shares: true } },
-        id: true,
-        slug: true,
-        title: true,
-        createdAt: true,
-        description: true,
-        author: {
-          select: {
-            id: true,
-          },
-        },
-        tags: true,
-      },
-      orderBy: {
-        likes: {
-          _count: "desc",
-        },
-      },
-      take: 8,
-    });
-    return posts.map((post) => ({
-      ...post,
-      tags: post.tags.map((tag) => tag.name),
-    }));
-  }
-
   static async deletePostBySlug(slug: string, uid: string) {
     let post: Post;
     try {

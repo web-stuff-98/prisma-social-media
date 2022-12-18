@@ -9,7 +9,6 @@ import {
 import type { ReactNode } from "react";
 import {
   getPage,
-  getPopularPosts,
   getPost,
   toggleLike,
   toggleShare,
@@ -58,7 +57,6 @@ const PostsContext = createContext<{
 
   // slug arrays
   pagePosts: string[];
-  popularPosts: string[];
   postsOpen: string[];
 
   cachePostData: (slug: string, force?: boolean) => void;
@@ -80,7 +78,6 @@ const PostsContext = createContext<{
   status: "idle",
 
   pagePosts: [],
-  popularPosts: [],
   postsOpen: [],
 
   cachePostData: () => {},
@@ -107,7 +104,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const query = useParams();
 
   //Slugs only
-  const [popularPosts, setPopularPosts] = useState<string[]>([]);
   const [pagePosts, setPagePosts] = useState<string[]>([]);
   const [postsOpen, setPostsOpen] = useState<string[]>([]);
 
@@ -187,14 +183,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setStatus("pending");
     getAndSetPage();
-    getPopularPosts()
-      .then((posts) => {
-        const slugs: string[] = posts.map((p: IPost) => p.slug);
-        slugs.forEach((slug) => postEnteredView(slug));
-        addToPostsData(posts);
-        setPopularPosts(slugs);
-      })
-      .catch((e) => setErr(`Error getting popular posts : ${e}`));
   }, []);
 
   const openPost = (slug: string) => {
@@ -404,7 +392,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         error,
         status,
         pagePosts,
-        popularPosts,
         postsOpen,
         visiblePosts,
         disappearedPosts,

@@ -51,7 +51,7 @@ router.route("/:id").get((0, express_slow_down_1.default)({
     delayMs: 5000,
 }), Users_controller_1.default.getUserById);
 router.route("/register").post((0, validateBodyMiddleware_1.default)({
-    name: Yup.string().required().max(24),
+    username: Yup.string().required().max(24),
     password: Yup.string().password().required().max(100),
 }), Users_controller_1.default.register);
 router.route("/profile/:uid").get(authMiddleware_1.withUser, Users_controller_1.default.getProfile);

@@ -48,15 +48,6 @@ router.route("/").get(
   withUser,
   PostsController.getPosts
 );
-router.route("/popular").get(
-  slowDown({
-    windowMs: 2000,
-    delayAfter: 10,
-    delayMs: 1000,
-  }),
-  withUser,
-  PostsController.getPopularPosts
-);
 router.route("/page/:page").get(
   slowDown({
     windowMs: 1000,

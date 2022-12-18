@@ -8,8 +8,6 @@ const getPage = async (queryAndPagePortion:string) => {
     { withCredentials: true }
   );
 };
-const getPopularPosts = () =>
-  makeRequest("/api/posts/popular", { withCredentials: true });
 const getPost = (slug: string) =>
   makeRequest(`/api/posts/${slug}`, { withCredentials: true });
 const deletePost = (slug: string) =>
@@ -60,7 +58,6 @@ export {
   getPage,
   getPost,
   getPosts,
-  getPopularPosts,
   toggleLike,
   toggleShare,
   uploadPostData,

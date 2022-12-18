@@ -68,34 +68,6 @@ class PostsDAO {
             return data;
         });
     }
-    static getPopularPosts() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const posts = yield prisma_1.default.post.findMany({
-                where: { imagePending: false },
-                select: {
-                    _count: { select: { comments: true, likes: true, shares: true } },
-                    id: true,
-                    slug: true,
-                    title: true,
-                    createdAt: true,
-                    description: true,
-                    author: {
-                        select: {
-                            id: true,
-                        },
-                    },
-                    tags: true,
-                },
-                orderBy: {
-                    likes: {
-                        _count: "desc",
-                    },
-                },
-                take: 8,
-            });
-            return posts.map((post) => (Object.assign(Object.assign({}, post), { tags: post.tags.map((tag) => tag.name) })));
-        });
-    }
     static deletePostBySlug(slug, uid) {
         return __awaiter(this, void 0, void 0, function* () {
             let post;

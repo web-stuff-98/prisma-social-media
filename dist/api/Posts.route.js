@@ -59,11 +59,6 @@ router.route("/").get((0, express_slow_down_1.default)({
     delayAfter: 10,
     delayMs: 1000,
 }), authMiddleware_1.withUser, Posts_controller_1.default.getPosts);
-router.route("/popular").get((0, express_slow_down_1.default)({
-    windowMs: 2000,
-    delayAfter: 10,
-    delayMs: 1000,
-}), authMiddleware_1.withUser, Posts_controller_1.default.getPopularPosts);
 router.route("/page/:page").get((0, express_slow_down_1.default)({
     windowMs: 1000,
     delayAfter: 3,

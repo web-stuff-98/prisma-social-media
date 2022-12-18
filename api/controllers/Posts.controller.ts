@@ -1,18 +1,8 @@
 import { Request as Req, Response as Res } from "express";
 import PostsDAO from "../dao/Posts.dao";
 
-import * as Yup from "yup";
 import getUserSocket from "../../utils/getUserSocket";
 import busboy from "busboy";
-
-const createPostSchema = Yup.object().shape({
-  title: Yup.string().required().max(100).required(),
-  body: Yup.string().required().max(10000).required(),
-});
-
-const commentSchema = Yup.object()
-  .shape({ message: Yup.string().required().max(300).required() })
-  .strict();
 
 export default class PostsController {
   static async getPosts(req: Req, res: Res) {
@@ -37,16 +27,7 @@ export default class PostsController {
       res.status(500).json({ msg: "Internal error" });
     }
   }
-
-  static async getPopularPosts(req: Req, res: Res) {
-    try {
-      const posts = await PostsDAO.getPopularPosts();
-      res.status(200).json(posts);
-    } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
-    }
-  }
-
+  
   static async getPostById(req: Req, res: Res) {
     try {
       const post = await PostsDAO.getPostById(req.params.id, req.user?.id);

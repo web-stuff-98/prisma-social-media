@@ -36,7 +36,7 @@ router.route("/:id").get(
 );
 router.route("/register").post(
   validateBodyMiddleware({
-    name: Yup.string().required().max(24),
+    username: Yup.string().required().max(24),
     password: Yup.string().password().required().max(100),
   }),
   UsersController.register
