@@ -46,6 +46,9 @@ app.use(express.urlencoded({ extended: true }));
       path.join(__dirname, "../..", "frontend", "build", "index.html")
     );
   });
+  app.get("/test", (_, res) => {
+    res.send("Fuck")
+  })
   //seed();
 //}
 
