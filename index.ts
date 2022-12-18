@@ -12,7 +12,9 @@ import path from "path";
 import { Server } from "socket.io";
 
 const origin =
-  process.env.NODE_ENV === "production" ? "https://prisma-social-media-js.herokuapp.com/" : "*";
+  process.env.NODE_ENV === "production"
+    ? "https://prisma-social-media-js.herokuapp.com/"
+    : "*";
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -41,11 +43,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
-  //app.get("*", (_, res) => {
-  //  res.sendFile(
-  //    path.join(__dirname, "..", "frontend", "build", "index.html")
-  //  );
-  //});
   //seed();
 }
 
@@ -202,6 +199,10 @@ import UsersDAO from "./api/dao/Users.dao";
 app.use("/api/posts", Posts);
 app.use("/api/users", Users);
 app.use("/api/chat", Chat);
+
+app.get("*", (_, res) => {
+  res.sendFile(path.join(__dirname, "..", "frontend", "build", "index.html"));
+});
 
 server.listen(process.env.PORT || 80, () => {
   console.log(`Server listening on port ${process.env.PORT || 80}`);
