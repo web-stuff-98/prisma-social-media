@@ -203,7 +203,7 @@ app.use("/api/posts", Posts);
 app.use("/api/users", Users);
 app.use("/api/chat", Chat);
 
-server.listen(process.env.PORT, () => {
+server.listen(process.env.PORT || 80, () => {
   console.log(`Server listening on port ${process.env.PORT}`);
 
   const deleteAccsInterval = setInterval(async () => {
