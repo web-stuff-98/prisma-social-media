@@ -11,7 +11,7 @@ import io, { Socket } from "socket.io-client";
 import {
   ServerToClientEvents,
   ClientToServerEvents,
-} from "../../../server/socket-interfaces";
+} from "../../../socket-interfaces";
 import { baseURL } from "../services/makeRequest";
 
 const SocketContext = createContext<{
