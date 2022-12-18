@@ -36,7 +36,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(cookieParser(process.env.COOKIE_SECRET));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
