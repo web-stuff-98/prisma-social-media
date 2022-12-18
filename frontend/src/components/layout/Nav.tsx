@@ -86,7 +86,7 @@ export default function Nav() {
             }
           : {}
       }
-      className={`w-full bg-neutral-900 dark:bg-zinc-900 border-b border-t border-zinc-800 dark:border-stone-800 dark:bg-zinc-900 min-h-nav`}
+      className={`w-full bg-neutral-900 dark:bg-zinc-900 border-b border-t border-zinc-800 dark:border-stone-800 min-h-nav`}
     >
       <>
         <div

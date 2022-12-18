@@ -141,7 +141,7 @@ export default function PostCard({
               style={{ lineHeight: "0.9" }}
               className={`font-Archivo tracking-tight sm:text-sm md:text-lg sm:mx-auto md:mx-0 sm:py-0 pt-0 mb-0.5 sm:text-center ${
                 reverse ? "md:text-right" : "md:text-left"
-              } font-black`}
+              }`}
             >
               {post.title}
             </h3>

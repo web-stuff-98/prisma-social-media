@@ -2,14 +2,17 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import seed from "./utils/seed";
-//seed();
 
 import cors from "cors";
 import express, { Express } from "express";
 import cookieParser from "cookie-parser";
 import http from "http";
+import path from "path";
 
 import { Server } from "socket.io";
+
+const origin =
+  process.env.NODE_ENV === "production" ? "https://site url here/" : "*";
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -20,7 +23,7 @@ const io = new Server<
   SocketData
 >(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin,
     credentials: true,
   },
 });
@@ -29,13 +32,22 @@ export { io };
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin,
     credentials: true,
   })
 );
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../..", "frontend", "build")));
+  app.get("*", (_, res) => {
+    res.sendFile(
+      path.join(__dirname, "../..", "frontend", "build", "index.html")
+    );
+  });
+  //seed();
+}
 
 import jwt from "jsonwebtoken";
 
@@ -203,10 +215,18 @@ server.listen(process.env.PORT, () => {
       const deleteAt = new Date(info.deleteAt).getTime();
       if (Date.now() >= deleteAt) {
         await UsersDAO.deleteUser(info.id);
-        deletedIds += info.id
+        deletedIds += info.id;
       }
     }
-    await redisClient.set("deleteAccountsCountdownList", JSON.stringify(deleteAccountsCountdownList.filter((info: {id:string, deletedAt:string}) => !deletedIds.includes(info.id))))
+    await redisClient.set(
+      "deleteAccountsCountdownList",
+      JSON.stringify(
+        deleteAccountsCountdownList.filter(
+          (info: { id: string; deletedAt: string }) =>
+            !deletedIds.includes(info.id)
+        )
+      )
+    );
   }, 10000);
   return () => {
     clearInterval(deleteAccsInterval);

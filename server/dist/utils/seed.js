@@ -36,14 +36,14 @@ function seed() {
     return __awaiter(this, void 0, void 0, function* () {
         yield prisma_1.default.user.deleteMany();
         yield s3.deleteBucket();
-        yield generateUsers(10);
-        yield generatePosts(20);
+        yield generateUsers(50);
+        yield generatePosts(1000);
         yield generateRooms(20);
         yield generatePostImages();
         yield generateCommentsOnPosts();
         yield generateLikesAndSharesOnPosts();
         yield generateLikesOnComments();
-        console.log(" --- DONE ---");
+        console.log(" --- GENERATED SEED ---");
     });
 }
 exports.default = seed;

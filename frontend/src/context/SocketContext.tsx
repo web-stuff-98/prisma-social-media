@@ -12,6 +12,7 @@ import {
   ServerToClientEvents,
   ClientToServerEvents,
 } from "../../../server/socket-interfaces";
+import { baseURL } from "../services/makeRequest";
 
 const SocketContext = createContext<{
   socket?: Socket<ServerToClientEvents, ClientToServerEvents>;
@@ -27,7 +28,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   >();
 
   const connectSocket = () => {
-    const socket = io("http://localhost:3001", {
+    const socket = io(baseURL, {
       withCredentials: true,
     }).connect();
     setSocket(socket);

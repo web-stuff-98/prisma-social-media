@@ -20,15 +20,15 @@ export default async function seed() {
   await prisma.user.deleteMany();
   await s3.deleteBucket();
 
-  await generateUsers(10);
-  await generatePosts(20);
+  await generateUsers(50);
+  await generatePosts(1000);
   await generateRooms(20);
   await generatePostImages();
   await generateCommentsOnPosts();
   await generateLikesAndSharesOnPosts();
   await generateLikesOnComments();
 
-  console.log(" --- DONE ---");
+  console.log(" --- GENERATED SEED ---");
 }
 
 const generateUser = async (i: number) => {
