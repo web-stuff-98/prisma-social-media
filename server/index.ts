@@ -12,7 +12,7 @@ import path from "path";
 import { Server } from "socket.io";
 
 const origin =
-  process.env.NODE_ENV === "production" ? "https://site url here/" : "*";
+  process.env.NODE_ENV === "production" ? "https://prisma-social-media-js.herokuapp.com/" : "*";
 
 const app: Express = express();
 const server = http.createServer(app);
