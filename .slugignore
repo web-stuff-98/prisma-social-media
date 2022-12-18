@@ -1,0 +1,9 @@
+/frontend/public
+/frontend/src
+/frontend/.gitignore
+/frontend/package.json
+/frontend/package-lock.json
+/frontend/postcss.config.json
+/frontend/README.md
+/frontend/tailwind.config.js
+/frontend/tsconfig.json
