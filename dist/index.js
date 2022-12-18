@@ -22,7 +22,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const seed_1 = __importDefault(require("./utils/seed"));
 const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
@@ -46,13 +45,13 @@ app.use((0, cors_1.default)({
 app.use((0, cookie_parser_1.default)());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-if (process.env.NODE_ENV === "production") {
-    app.use(express_1.default.static(path_1.default.join(__dirname, "../..", "frontend", "build")));
-    app.get("*", (_, res) => {
-        res.sendFile(path_1.default.join(__dirname, "../..", "frontend", "build", "index.html"));
-    });
-    (0, seed_1.default)();
-}
+//if (process.env.NODE_ENV === "production") {
+app.use(express_1.default.static(path_1.default.join(__dirname, "../..", "frontend", "build")));
+app.get("*", (_, res) => {
+    res.sendFile(path_1.default.join(__dirname, "../..", "frontend", "build", "index.html"));
+});
+//seed();
+//}
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const socketAuth = (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const rawCookie = socket.handshake.headers.cookie;
