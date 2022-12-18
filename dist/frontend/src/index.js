@@ -1,0 +1,22 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const jsx_runtime_1 = require("react/jsx-runtime");
+require("./index.css");
+const App_1 = __importDefault(require("./App"));
+const client_1 = require("react-dom/client");
+const react_router_dom_1 = require("react-router-dom");
+const PostContext_1 = require("./context/PostContext");
+const Home_1 = __importDefault(require("./routes/Home"));
+const Blog_1 = __importDefault(require("./routes/Blog"));
+const Login_1 = __importDefault(require("./routes/Login"));
+const Register_1 = __importDefault(require("./routes/Register"));
+const Post_1 = __importDefault(require("./routes/Post"));
+const Editor_1 = __importDefault(require("./routes/Editor"));
+const Settings_1 = __importDefault(require("./routes/Settings"));
+const Profile_1 = __importDefault(require("./routes/Profile"));
+const container = document.getElementById("root");
+const root = (0, client_1.createRoot)(container);
+root.render((0, jsx_runtime_1.jsx)(react_router_dom_1.BrowserRouter, { children: (0, jsx_runtime_1.jsx)(react_router_dom_1.Routes, { children: (0, jsx_runtime_1.jsxs)(react_router_dom_1.Route, Object.assign({ path: "/", element: (0, jsx_runtime_1.jsx)(App_1.default, {}) }, { children: [(0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { index: true, element: (0, jsx_runtime_1.jsx)(Home_1.default, {}) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "blog/:page", element: (0, jsx_runtime_1.jsx)(Blog_1.default, {}) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "login", element: (0, jsx_runtime_1.jsx)(Login_1.default, {}) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "register", element: (0, jsx_runtime_1.jsx)(Register_1.default, {}) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "settings", element: (0, jsx_runtime_1.jsx)(Settings_1.default, {}) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "profile/:id", element: (0, jsx_runtime_1.jsx)(Profile_1.default, {}) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "posts/:slug", element: (0, jsx_runtime_1.jsx)(PostContext_1.PostProvider, { children: (0, jsx_runtime_1.jsx)(Post_1.default, {}) }) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "editor/:slug", element: (0, jsx_runtime_1.jsx)(Editor_1.default, {}) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "editor", element: (0, jsx_runtime_1.jsx)(Editor_1.default, {}) }), (0, jsx_runtime_1.jsx)(react_router_dom_1.Route, { path: "*", element: (0, jsx_runtime_1.jsx)("h1", { children: "Not found" }) })] })) }) }));
