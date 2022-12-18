@@ -28,7 +28,7 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
 const path_1 = __importDefault(require("path"));
 const socket_io_1 = require("socket.io");
-const origin = process.env.NODE_ENV === "production" ? "https://prisma-social-media-js.herokuapp.com/" : "*";
+const origin = true ? "https://prisma-social-media-js.herokuapp.com/" : "*";
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
