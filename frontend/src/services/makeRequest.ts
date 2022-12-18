@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 
-export const baseURL = "http://localhost:3001"
+export const baseURL = process.env.NODE_ENV === "production" ? "https://prisma-social-media-js.herokuapp.com" : "http://localhost:3001"
 
 const api = axios.create({
   baseURL,

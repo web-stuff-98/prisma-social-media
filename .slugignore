@@ -1,5 +1,5 @@
-/frontend/public
-/frontend/src
+/frontend/public/*
+/frontend/src/*
 /frontend/.gitignore
 /frontend/package.json
 /frontend/package-lock.json
