@@ -41,12 +41,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
-  //app.get("*", (_, res) => {
-    //res.sendFile(
-    //  path.join(__dirname, "..", "frontend", "build", "index.html")
-    //);
-  //});
-  seed();
+  app.get("*", (_, res) => {
+    res.sendFile(
+      path.join(__dirname, "..", "frontend", "build", "index.html")
+    );
+  });
+  //seed();
 }
 
 import jwt from "jsonwebtoken";
