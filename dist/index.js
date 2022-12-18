@@ -50,6 +50,9 @@ app.use(express_1.default.static(path_1.default.join(__dirname, "../..", "fronte
 app.get("*", (_, res) => {
     res.sendFile(path_1.default.join(__dirname, "../..", "frontend", "build", "index.html"));
 });
+app.get("/test", (_, res) => {
+    res.send("Fuck");
+});
 //seed();
 //}
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
