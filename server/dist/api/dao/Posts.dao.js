@@ -59,7 +59,12 @@ class PostsDAO {
     }
     static getPage(page, query, uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            const data = yield (0, getPageData_1.default)({ tags: query.tags || "", term: query.term || "", mode: query.mode || "", order: query.order || "" }, { page }, uid);
+            const data = yield (0, getPageData_1.default)({
+                tags: query.tags || "",
+                term: query.term || "",
+                mode: query.mode || "",
+                order: query.order || "",
+            }, { page }, uid);
             return data;
         });
     }
@@ -105,6 +110,15 @@ class PostsDAO {
             yield prisma_1.default.post.delete({
                 where: { slug },
             });
+            const S3 = new aws_1.default.S3();
+            if (!post.imagePending)
+                yield new Promise((resolve, reject) => {
+                    S3.deleteObject({ Key: post.imageKey, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        if (err)
+                            reject(err);
+                        resolve();
+                    });
+                });
             __1.io.to(`post_card=${slug}`).emit("post_visible_deleted", slug);
         });
     }

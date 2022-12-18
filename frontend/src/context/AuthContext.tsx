@@ -76,6 +76,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       if (authSocket) authSocket();
       setUser(user);
+      openModal("Message", {
+        msg:"Account created. Your account and everything related to it will be deleted automatically after 20 minutes, including your posts and all your messages.",
+        err:false,
+        pen:false,
+      })
     } catch (e) {
       openModal("Message", {
         err: true,

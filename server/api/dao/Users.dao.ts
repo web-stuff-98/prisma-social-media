@@ -3,6 +3,9 @@ import bcrypt from "bcrypt";
 import imageProcessing from "../../utils/imageProcessing";
 import { io } from "../..";
 import getUserSocket from "../../utils/getUserSocket";
+import redisClient from "../../utils/redis";
+import AWS from "../../utils/aws";
+const S3 = new AWS.S3();
 
 export default class UsersDAO {
   static async getUsers() {
@@ -168,6 +171,7 @@ export default class UsersDAO {
   static async createUser(username: string, password: string) {
     const foundName = await prisma.user.findFirst({
       where: { name: { equals: username.trim(), mode: "insensitive" } },
+      select: { id: true },
     });
     if (foundName) throw new Error("There is a user with that name already");
     const passHash = await bcrypt.hash(password, 10);
@@ -181,6 +185,77 @@ export default class UsersDAO {
         name: true,
       },
     });
+    const keyVal = await redisClient.get("deleteAccountsCountdownList");
+    let deleteAccountsCountdownList = [
+      { id: user.id, deleteAt: new Date(Date.now() + 1200000).toISOString() },
+    ];
+    if (keyVal)
+      deleteAccountsCountdownList = [
+        ...deleteAccountsCountdownList,
+        ...(JSON.parse(keyVal) as any[]),
+      ];
+    await redisClient.set(
+      "deleteAccountsCountdownList",
+      JSON.stringify(deleteAccountsCountdownList)
+    );
     return user;
+  }
+
+  static async deleteUser(id: string) {
+    // delete all the users post images
+    const posts = await prisma.post.findMany({
+      where: { authorId: id, imagePending: false },
+    });
+    for await (const post of posts) {
+      await new Promise<void>((resolve, reject) => {
+        S3.deleteObject(
+          { Key: post.imageKey as string, Bucket: "prisma-socialmedia" },
+          (err, _) => {
+            if (err) reject(err);
+            resolve();
+          }
+        );
+      });
+      await new Promise<void>((resolve, reject) => {
+        S3.deleteObject(
+          { Key: `thumb.${post.imageKey}`, Bucket: "prisma-socialmedia" },
+          (err, _) => {
+            if (err) reject(err);
+            resolve();
+          }
+        );
+      });
+    }
+    // delete all the users attachments
+    const roomMessages = await prisma.roomMessage.findMany({
+      where: { senderId: id, hasAttachment: true },
+    });
+    for await (const msg of roomMessages) {
+      await new Promise<void>((resolve, reject) => {
+        S3.deleteObject(
+          { Key: msg.attachmentKey as string, Bucket: "prisma-socialmedia" },
+          (err, _) => {
+            if (err) reject(err);
+            resolve();
+          }
+        );
+      });
+    }
+    const privateMessages = await prisma.roomMessage.findMany({
+      where: { senderId: id, hasAttachment: true },
+    });
+    for await (const msg of privateMessages) {
+      await new Promise<void>((resolve, reject) => {
+        S3.deleteObject(
+          { Key: msg.attachmentKey as string, Bucket: "prisma-socialmedia" },
+          (err, _) => {
+            if (err) reject(err);
+            resolve();
+          }
+        );
+      });
+    }
+    //everything else is deleted automatically via SQL cascade
+    await prisma.user.delete({ where: { id } });
   }
 }

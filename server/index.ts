@@ -39,11 +39,6 @@ app.use(express.urlencoded({ extended: true }));
 
 import jwt from "jsonwebtoken";
 
-const socketAuthMiddleware = async (socket: any, next: any) => {
-  await socketAuth(socket);
-  next();
-};
-
 const socketAuth = async (socket: any) => {
   const rawCookie = socket.handshake.headers.cookie;
   if (rawCookie) {
@@ -189,6 +184,8 @@ import {
   SocketData,
 } from "./socket-interfaces";
 import getUserSocket from "./utils/getUserSocket";
+import redisClient from "./utils/redis";
+import UsersDAO from "./api/dao/Users.dao";
 
 app.use("/api/posts", Posts);
 app.use("/api/users", Users);
@@ -196,4 +193,22 @@ app.use("/api/chat", Chat);
 
 server.listen(process.env.PORT, () => {
   console.log(`Server listening on port ${process.env.PORT}`);
+
+  const deleteAccsInterval = setInterval(async () => {
+    const keyVal = await redisClient.get("deleteAccountsCountdownList");
+    let deleteAccountsCountdownList = [];
+    if (keyVal) deleteAccountsCountdownList = JSON.parse(keyVal);
+    let deletedIds: string[] = [];
+    for await (const info of deleteAccountsCountdownList) {
+      const deleteAt = new Date(info.deleteAt).getTime();
+      if (Date.now() >= deleteAt) {
+        await UsersDAO.deleteUser(info.id);
+        deletedIds += info.id
+      }
+    }
+    await redisClient.set("deleteAccountsCountdownList", JSON.stringify(deleteAccountsCountdownList.filter((info: {id:string, deletedAt:string}) => !deletedIds.includes(info.id))))
+  }, 10000);
+  return () => {
+    clearInterval(deleteAccsInterval);
+  };
 });

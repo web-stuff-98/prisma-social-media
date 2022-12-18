@@ -8,6 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -17,6 +24,9 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
 const __1 = require("../..");
 const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
+const redis_1 = __importDefault(require("../../utils/redis"));
+const aws_1 = __importDefault(require("../../utils/aws"));
+const S3 = new aws_1.default.S3();
 class UsersDAO {
     static getUsers() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -173,6 +183,7 @@ class UsersDAO {
         return __awaiter(this, void 0, void 0, function* () {
             const foundName = yield prisma_1.default.user.findFirst({
                 where: { name: { equals: username.trim(), mode: "insensitive" } },
+                select: { id: true },
             });
             if (foundName)
                 throw new Error("There is a user with that name already");
@@ -187,7 +198,99 @@ class UsersDAO {
                     name: true,
                 },
             });
+            const keyVal = yield redis_1.default.get("deleteAccountsCountdownList");
+            let deleteAccountsCountdownList = [
+                { id: user.id, deleteAt: new Date(Date.now() + 1200000).toISOString() },
+            ];
+            if (keyVal)
+                deleteAccountsCountdownList = [
+                    ...deleteAccountsCountdownList,
+                    ...JSON.parse(keyVal),
+                ];
+            yield redis_1.default.set("deleteAccountsCountdownList", JSON.stringify(deleteAccountsCountdownList));
             return user;
+        });
+    }
+    static deleteUser(id) {
+        var e_1, _a, e_2, _b, e_3, _c;
+        return __awaiter(this, void 0, void 0, function* () {
+            // delete all the users post images
+            const posts = yield prisma_1.default.post.findMany({
+                where: { authorId: id, imagePending: false },
+            });
+            try {
+                for (var posts_1 = __asyncValues(posts), posts_1_1; posts_1_1 = yield posts_1.next(), !posts_1_1.done;) {
+                    const post = posts_1_1.value;
+                    yield new Promise((resolve, reject) => {
+                        S3.deleteObject({ Key: post.imageKey, Bucket: "prisma-socialmedia" }, (err, _) => {
+                            if (err)
+                                reject(err);
+                            resolve();
+                        });
+                    });
+                    yield new Promise((resolve, reject) => {
+                        S3.deleteObject({ Key: `thumb.${post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                            if (err)
+                                reject(err);
+                            resolve();
+                        });
+                    });
+                }
+            }
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (posts_1_1 && !posts_1_1.done && (_a = posts_1.return)) yield _a.call(posts_1);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+            // delete all the users attachments
+            const roomMessages = yield prisma_1.default.roomMessage.findMany({
+                where: { senderId: id, hasAttachment: true },
+            });
+            try {
+                for (var roomMessages_1 = __asyncValues(roomMessages), roomMessages_1_1; roomMessages_1_1 = yield roomMessages_1.next(), !roomMessages_1_1.done;) {
+                    const msg = roomMessages_1_1.value;
+                    yield new Promise((resolve, reject) => {
+                        S3.deleteObject({ Key: msg.attachmentKey, Bucket: "prisma-socialmedia" }, (err, _) => {
+                            if (err)
+                                reject(err);
+                            resolve();
+                        });
+                    });
+                }
+            }
+            catch (e_2_1) { e_2 = { error: e_2_1 }; }
+            finally {
+                try {
+                    if (roomMessages_1_1 && !roomMessages_1_1.done && (_b = roomMessages_1.return)) yield _b.call(roomMessages_1);
+                }
+                finally { if (e_2) throw e_2.error; }
+            }
+            const privateMessages = yield prisma_1.default.roomMessage.findMany({
+                where: { senderId: id, hasAttachment: true },
+            });
+            try {
+                for (var privateMessages_1 = __asyncValues(privateMessages), privateMessages_1_1; privateMessages_1_1 = yield privateMessages_1.next(), !privateMessages_1_1.done;) {
+                    const msg = privateMessages_1_1.value;
+                    yield new Promise((resolve, reject) => {
+                        S3.deleteObject({ Key: msg.attachmentKey, Bucket: "prisma-socialmedia" }, (err, _) => {
+                            if (err)
+                                reject(err);
+                            resolve();
+                        });
+                    });
+                }
+            }
+            catch (e_3_1) { e_3 = { error: e_3_1 }; }
+            finally {
+                try {
+                    if (privateMessages_1_1 && !privateMessages_1_1.done && (_c = privateMessages_1.return)) yield _c.call(privateMessages_1);
+                }
+                finally { if (e_3) throw e_3.error; }
+            }
+            //everything else is deleted automatically via SQL cascade
+            yield prisma_1.default.user.delete({ where: { id } });
         });
     }
 }

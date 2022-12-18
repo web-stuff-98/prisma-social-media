@@ -10,6 +10,7 @@ import busboy from "busboy";
 import imageProcessing from "../../utils/imageProcessing";
 import readableStreamToBlob from "../../utils/readableStreamToBlob";
 import getUserSocket from "../../utils/getUserSocket";
+import { Post } from "@prisma/client";
 
 export default class PostsDAO {
   static async getPosts(uid?: string) {
@@ -55,11 +56,16 @@ export default class PostsDAO {
 
   static async getPage(
     page: number,
-    query: { term?: string; tags?: string, mode?: string, order?:string },
+    query: { term?: string; tags?: string; mode?: string; order?: string },
     uid?: string
   ) {
     const data = await getPage(
-      { tags: query.tags || "", term: query.term || "", mode: query.mode || "", order: query.order || "" },
+      {
+        tags: query.tags || "",
+        term: query.term || "",
+        mode: query.mode || "",
+        order: query.order || "",
+      },
       { page },
       uid
     );
@@ -90,11 +96,14 @@ export default class PostsDAO {
       },
       take: 8,
     });
-    return posts.map((post) => ({...post, tags: post.tags.map((tag) => tag.name)}));
+    return posts.map((post) => ({
+      ...post,
+      tags: post.tags.map((tag) => tag.name),
+    }));
   }
 
   static async deletePostBySlug(slug: string, uid: string) {
-    let post;
+    let post: Post;
     try {
       post = await prisma.post.findUniqueOrThrow({ where: { slug } });
     } catch (error) {
@@ -104,6 +113,17 @@ export default class PostsDAO {
     await prisma.post.delete({
       where: { slug },
     });
+    const S3 = new AWS.S3();
+    if (!post.imagePending)
+      await new Promise<void>((resolve, reject) => {
+        S3.deleteObject(
+          { Key: post.imageKey as string, Bucket: "prisma-socialmedia" },
+          (err, _) => {
+            if (err) reject(err);
+            resolve();
+          }
+        );
+      });
     io.to(`post_card=${slug}`).emit("post_visible_deleted", slug);
   }
 
