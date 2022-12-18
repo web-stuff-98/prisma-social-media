@@ -1,6 +1,6 @@
 module.exports = {
   content: ["./public/**/*.html", "./src/**/*.{js,jsx,ts,tsx}"],
-  darkMode: 'class',
+  darkMode: "class",
   safelist: [
     /* any tailwind classes that you using inside of ${} string interpolation you need to put here,
     or the classes will be purged from tailwind when the static files are built */
@@ -92,10 +92,10 @@ module.exports = {
     "cursor-pointer",
     "rounded",
     "rounded-md",
-"mx-auto",
-"w-fit",
-"h-fit",
-"py-0.5",
+    "mx-auto",
+    "w-fit",
+    "h-fit",
+    "py-0.5",
     "rounded-full",
     "shadow-md",
     "z-30",
@@ -123,7 +123,7 @@ module.exports = {
     "md:items-center",
     "sm:items-start",
     "mt-navheader",
-    "border-1", 
+    "border-1",
     "border-r",
     "border-stone-200",
     "shadow-xl",
@@ -162,7 +162,7 @@ module.exports = {
     "dark:border-stone-800",
     "p-3",
     "rounded-sm",
-    ],
+  ],
   theme: {
     screens: {
       /*when you change any of this, go into the interface context
@@ -170,13 +170,15 @@ module.exports = {
       sm: "512px",
       md: "570px",
       xl: "680px",
+      xxl: "1024px",
+      xxxl: "1280px",
     },
     extend: {
       minHeight: {
         header: "4.25rem",
         nav: "2.25rem",
         navheader: "6.5rem", //this should be nav+header height
-        footer: "5rem"
+        footer: "5rem",
       },
       width: {
         threadGap: "20%",
@@ -192,7 +194,7 @@ module.exports = {
         darkmodeForeground: "#17181a",
         darkmodeForegroundHover: "#12141a",
         darkmodeBackground: "#17181a",
-        darkmodeForegroundContrast: "#18181b"
+        darkmodeForegroundContrast: "#18181b",
       },
       height: {
         postHeight: "14.5em",
@@ -200,14 +202,14 @@ module.exports = {
       },
       maxHeight: {
         asideMaxHeight: "calc(100vh - 8rem)",
-        gap: "calc(100% - 1.5pc)"
+        gap: "calc(100% - 1.5pc)",
       },
       minWidth: {
         postWidth: "15.5em",
       },
       maxWidth: {
         postWidth: "15/5em",
-        gap: "min(calc(100% - 1.5pc), 30pc)"
+        gap: "min(calc(100% - 1.5pc), 30pc)",
       },
     },
   },

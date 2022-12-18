@@ -15,6 +15,8 @@ const breakPoints = {
   sm: 512,
   md: 570,
   xl: 680,
+  xxl: 1024,
+  xxxl: 1280,
 };
 
 const InterfaceContext = createContext<{
