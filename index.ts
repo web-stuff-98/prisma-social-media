@@ -32,6 +32,13 @@ const io = new Server<
 
 export { io };
 
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV !== "development" && !req.secure) {
+    return res.redirect("https://" + req.headers.host + req.url);
+  }
+  next();
+});
+
 app.use(
   cors({
     origin: "http://localhost:3000",

@@ -40,6 +40,12 @@ const io = new socket_io_1.Server(server, {
     },
 });
 exports.io = io;
+app.use((req, res, next) => {
+    if (process.env.NODE_ENV !== "development" && !req.secure) {
+        return res.redirect("https://" + req.headers.host + req.url);
+    }
+    next();
+});
 app.use((0, cors_1.default)({
     origin: "http://localhost:3000",
     credentials: true,

@@ -8,9 +8,11 @@ export default function Home() {
       <p className="text-sm">
         Welcome. This is my new social media portfolio project. I made it with
         express instead of Next this time, because I hadn't used express for a
-        big project in a while. Its main features are group video chat, embedded
-        comments, liking, sharing, image processing, rate limiting... everything
-        updates live through socket events depending on component visibility.
+        big project in a while. Its features are group video chat, embedded
+        comments, liking, sharing, filesharing, progress bars, image processing,
+        et cetera... everything updates live through socket events depending on
+        component visibility. I also wrote a custom rate limiter for protecting
+        logins and preventing spam. It uses JWT httpOnly cookie based logins.
       </p>
       <p>
         To access the user actions dropdown menu click on a users profile
@@ -30,7 +32,7 @@ export default function Home() {
         depend on component visibility and all the images are automatically
         processed to reduce filesize. Thumbnails are lazyloaded and a blur
         placeholder is generated for post cover images. Pagination and search
-        are handled serverside.
+        are handled serverside using query params.
       </p>
       <div className="font-bold leading-4 text-md">
         If you want to test out the video chat you have to use a non chromium
