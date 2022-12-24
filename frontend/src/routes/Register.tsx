@@ -24,6 +24,7 @@ export default function Register() {
         name="username"
         id="username"
         type="text"
+        className="text-center"
         required
       />
       <label htmlFor="password">Password</label>
@@ -32,7 +33,8 @@ export default function Register() {
         onChange={formik.handleChange}
         name="password"
         id="password"
-        type="text"
+        type="password"
+        className="text-center"
         required
       />
       <button type="submit" className="w-full mt-2 py-1">Register</button>

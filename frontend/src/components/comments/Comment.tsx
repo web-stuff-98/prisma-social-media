@@ -146,8 +146,8 @@ This function is from the web dev simplified video. It is supposed to be in the 
   return (
     <>
       <div className="w-full mb-2 flex">
-        <div className="flex flex-col items-start w-full">
-          <div className="mr-4 my-auto flex justify-between items-center w-full">
+        <div className="flex items-start w-full">
+          <div className="my-auto flex justify-between items-center w-full">
             <User
               editDeleteIcons={currentUser && currentUser.id === user.id}
               onDeleteClick={() => onCommentDelete()}
@@ -158,7 +158,26 @@ This function is from the web dev simplified video. It is supposed to be in the 
               user={getUserData(user.id)}
               uid={user.id}
             />
-            <div className="flex flex-col">
+          <div className="w-full flex pl-2 items-center">
+            {isEditing ? (
+              <CommentForm
+                autoFocus
+                initialValue={message}
+                onSubmit={onCommentUpdate}
+                loading={updateCommentFn.loading}
+                error={updateCommentFn.error}
+                placeholder={"Edit comment..."}
+                onClickOutside={() => setIsEditing(false)}
+              />
+            ) : (
+              <p className="flex my-auto leading-4 tracking-tight text-xs p-0 grow items-center">
+                {message}
+                {updatedAt !== createdAt &&
+                  renderEditedAtTimeString(getDateString(new Date(updatedAt)))}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-col">
               <IconBtn
                 onClick={onToggleCommentLike}
                 disabled={toggleCommentLikeFn.loading}
@@ -182,25 +201,6 @@ This function is from the web dev simplified video. It is supposed to be in the 
                 aria-label={replyingTo === id ? "Cancel Reply" : "Reply"}
               />
             </div>
-          </div>
-          <div className="w-full flex items-center">
-            {isEditing ? (
-              <CommentForm
-                autoFocus
-                initialValue={message}
-                onSubmit={onCommentUpdate}
-                loading={updateCommentFn.loading}
-                error={updateCommentFn.error}
-                placeholder={"Edit comment..."}
-                onClickOutside={() => setIsEditing(false)}
-              />
-            ) : (
-              <p className="flex my-auto leading-4 tracking-tight text-xs p-0 grow items-center">
-                {message}
-                {updatedAt !== createdAt &&
-                  renderEditedAtTimeString(getDateString(new Date(updatedAt)))}
-              </p>
-            )}
           </div>
           {deleteCommentFn.error && (
             <div className="error-msg mt-1">{deleteCommentFn.error}</div>
@@ -249,7 +249,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
                 } h-full`}
               />
             </button>
-            <div className="nested-comments">
+            <div>
               {childComments.map((comment) => (
                 <div key={comment.id} className="w-full h-full">
                   <Comment {...comment} />

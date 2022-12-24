@@ -172,8 +172,7 @@ module.exports = {
       sm: "512px",
       md: "570px",
       xl: "680px",
-      xxl: "1024px",
-      xxxl: "1280px",
+      xxl: "768px",
     },
     extend: {
       minHeight: {

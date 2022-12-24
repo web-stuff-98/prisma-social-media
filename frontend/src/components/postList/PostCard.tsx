@@ -76,7 +76,7 @@ export default function PostCard({
                     objectPosition: "center",
                   }}
                   className="cursor-pointer"
-                  src={`https://d2gt89ey9qb5n6.cloudfront.net/thumb.${post.imageKey}`}
+                  src={`https://d2gt89ey9qb5n6.cloudfront.net/${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.imageKey}`}
                 />
               </Link>
             )}

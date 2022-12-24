@@ -141,6 +141,7 @@ router.route("/:id/comments").post(
   }),
   validateBodyMiddleware({
     message: Yup.string().required().max(300),
+    parentId: Yup.string().nullable().notRequired(),
   }),
   PostsController.addComment
 );

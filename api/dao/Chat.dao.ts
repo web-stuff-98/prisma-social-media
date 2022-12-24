@@ -365,7 +365,7 @@ export default class ChatDAO {
             Bucket: "prisma-socialmedia",
             Key: `${
               process.env.NODE_ENV !== "production"
-                ? "dev/"
+                ? "dev."
                 : "" + String(msg.attachmentKey)
             }`,
           },
@@ -403,7 +403,7 @@ export default class ChatDAO {
             Bucket: "prisma-socialmedia",
             Key: `${
               process.env.NODE_ENV !== "production"
-                ? "dev/"
+                ? "dev."
                 : "" + String(msg.attachmentKey)
             }`,
           },
@@ -503,7 +503,7 @@ export default class ChatDAO {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + key}`,
+          Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + key}`,
           Body: stream,
         },
         (e: unknown, file: unknown) => {
@@ -1118,7 +1118,7 @@ export default class ChatDAO {
         s3.deleteObject(
           {
             Bucket: "prisma-socialmedia",
-            Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + String(msg.attachmentKey)}`,
+            Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + String(msg.attachmentKey)}`,
           },
           (err, data) => {
             if (err) reject(err);
@@ -1160,7 +1160,7 @@ export default class ChatDAO {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + key}`,
+          Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + key}`,
           Body: stream,
         },
         (e: unknown, file: unknown) => {

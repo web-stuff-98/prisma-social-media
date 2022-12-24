@@ -114,6 +114,7 @@ router.route("/:id/comments").post(authMiddleware_1.default, (0, limiters_1.simp
     msg: "Max 30 comments every 5 minutes. You must wait BLOCKDURATION to comment again.",
 }), (0, validateBodyMiddleware_1.default)({
     message: Yup.string().required().max(300),
+    parentId: Yup.string().nullable().notRequired(),
 }), Posts_controller_1.default.addComment);
 router.route("/:id/comments/:commentId").put(authMiddleware_1.default, (0, limiters_1.simpleRateLimit)({
     routeName: "editPostComment",

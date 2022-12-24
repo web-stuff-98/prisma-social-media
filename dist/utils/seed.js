@@ -386,7 +386,7 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
             yield new Promise((resolve, reject) => {
                 s3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : ""}thumb.${post.slug}.randomPost`,
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.slug}.randomPost`,
                     Body: thumb,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",
@@ -399,7 +399,7 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
             yield new Promise((resolve, reject) => {
                 s3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + post.slug}.randomPost`,
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + post.slug}.randomPost`,
                     Body: scaled,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",

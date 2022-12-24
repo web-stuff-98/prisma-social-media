@@ -33,7 +33,7 @@ export default function Login() {
         onChange={formik.handleChange}
         name="password"
         id="password"
-        type="text"
+        type="password"
         required
         className="text-center"
       />
