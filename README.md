@@ -4,7 +4,7 @@ This is my porfolio project. It's supposed to be like a cross between Discord an
 
 It uses JWTs stored in secure httpOnly cookies for authentication. New accounts are deleted automatically after 20 minutes along with all their posts and other associated data.
 
-I am a "hobbyist" developer. The most difficult part was getting video chat to work properly, I fixed it eventually by adding timeouts, but I have no idea why it worked.
+I am a "hobbyist" developer. The most difficult part was getting video chat to work properly, I fixed it eventually by adding timeouts, but I have no idea why it worked. I also made a couple of rate limiters for protecting against brute force attacks and preventing spam.
 
 Made using primarily
 - Prisma
