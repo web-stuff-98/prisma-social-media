@@ -209,7 +209,7 @@ export default class UsersDAO {
     for await (const post of posts) {
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + post.imageKey}`, Bucket: "prisma-socialmedia" },
+          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`, Bucket: "prisma-socialmedia" },
           (err, _) => {
             if (err) reject(err);
             resolve();
@@ -218,7 +218,7 @@ export default class UsersDAO {
       });
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.imageKey}`, Bucket: "prisma-socialmedia" },
+          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "")}thumb.${post.imageKey}`, Bucket: "prisma-socialmedia" },
           (err, _) => {
             if (err) reject(err);
             resolve();
@@ -233,7 +233,7 @@ export default class UsersDAO {
     for await (const msg of roomMessages) {
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + msg.attachmentKey}`, Bucket: "prisma-socialmedia" },
+          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + msg.attachmentKey}`, Bucket: "prisma-socialmedia" },
           (err, _) => {
             if (err) reject(err);
             resolve();
@@ -247,7 +247,7 @@ export default class UsersDAO {
     for await (const msg of privateMessages) {
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + msg.attachmentKey}`, Bucket: "prisma-socialmedia" },
+          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + msg.attachmentKey}`, Bucket: "prisma-socialmedia" },
           (err, _) => {
             if (err) reject(err);
             resolve();

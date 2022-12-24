@@ -364,9 +364,9 @@ class ChatDAO {
             if (msg.hasAttachment) {
                 yield new Promise((resolve, reject) => s3.deleteObject({
                     Bucket: "prisma-socialmedia",
-                    Key: `${process.env.NODE_ENV !== "production"
+                    Key: `${(process.env.NODE_ENV !== "production"
                         ? "dev."
-                        : "" + String(msg.attachmentKey)}`,
+                        : "") + String(msg.attachmentKey)}`,
                 }, (err, data) => {
                     if (err)
                         reject(err);
@@ -394,9 +394,9 @@ class ChatDAO {
                     const msg = _c.value;
                     return new Promise((resolve, reject) => s3.deleteObject({
                         Bucket: "prisma-socialmedia",
-                        Key: `${process.env.NODE_ENV !== "production"
+                        Key: `${(process.env.NODE_ENV !== "production"
                             ? "dev."
-                            : "" + String(msg.attachmentKey)}`,
+                            : "") + String(msg.attachmentKey)}`,
                     }, (err, data) => {
                         if (err)
                             reject(err);
@@ -495,7 +495,7 @@ class ChatDAO {
                 const key = `${message.id}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
                 s3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + key}`,
+                    Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + key}`,
                     Body: stream,
                 }, (e, file) => {
                     if (e)
@@ -1077,7 +1077,7 @@ class ChatDAO {
                 const s3 = new aws_1.default.S3();
                 yield new Promise((resolve, reject) => s3.deleteObject({
                     Bucket: "prisma-socialmedia",
-                    Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + String(msg.attachmentKey)}`,
+                    Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + String(msg.attachmentKey)}`,
                 }, (err, data) => {
                     if (err)
                         reject(err);
@@ -1109,7 +1109,7 @@ class ChatDAO {
                 const key = `${message.id}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
                 s3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + key}`,
+                    Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + key}`,
                     Body: stream,
                 }, (e, file) => {
                     if (e)

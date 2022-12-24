@@ -84,7 +84,7 @@ export default function Post() {
             style={{
               backgroundSize: "cover",
               backgroundPosition: "center",
-              backgroundImage: `url(https://d2gt89ey9qb5n6.cloudfront.net/${process.env.NODE_ENV !== "production" ? "dev." : "" + post?.imageKey})`,
+              backgroundImage: `url(https://d2gt89ey9qb5n6.cloudfront.net/${(process.env.NODE_ENV !== "production" ? "dev." : "") + post?.imageKey})`,
               backgroundPositionY: `calc(50% + ${scrollY * 0.5}px)`,
             }}
             className="w-full h-72 flex overflow-hidden text-white flex-col justify-end"

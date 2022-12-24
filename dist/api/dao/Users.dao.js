@@ -222,14 +222,14 @@ class UsersDAO {
                 for (var posts_1 = __asyncValues(posts), posts_1_1; posts_1_1 = yield posts_1.next(), !posts_1_1.done;) {
                     const post = posts_1_1.value;
                     yield new Promise((resolve, reject) => {
-                        S3.deleteObject({ Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
                             if (err)
                                 reject(err);
                             resolve();
                         });
                     });
                     yield new Promise((resolve, reject) => {
-                        S3.deleteObject({ Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "")}thumb.${post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
                             if (err)
                                 reject(err);
                             resolve();
@@ -252,7 +252,7 @@ class UsersDAO {
                 for (var roomMessages_1 = __asyncValues(roomMessages), roomMessages_1_1; roomMessages_1_1 = yield roomMessages_1.next(), !roomMessages_1_1.done;) {
                     const msg = roomMessages_1_1.value;
                     yield new Promise((resolve, reject) => {
-                        S3.deleteObject({ Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + msg.attachmentKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + msg.attachmentKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
                             if (err)
                                 reject(err);
                             resolve();
@@ -274,7 +274,7 @@ class UsersDAO {
                 for (var privateMessages_1 = __asyncValues(privateMessages), privateMessages_1_1; privateMessages_1_1 = yield privateMessages_1.next(), !privateMessages_1_1.done;) {
                     const msg = privateMessages_1_1.value;
                     yield new Promise((resolve, reject) => {
-                        S3.deleteObject({ Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + msg.attachmentKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + msg.attachmentKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
                             if (err)
                                 reject(err);
                             resolve();

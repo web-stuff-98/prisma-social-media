@@ -85,7 +85,7 @@ class PostsDAO {
             });
             if (!post.imagePending)
                 yield new Promise((resolve, reject) => {
-                    S3.deleteObject({ Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                    S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
                         if (err)
                             reject(err);
                         resolve();
@@ -402,7 +402,7 @@ class PostsDAO {
                     yield new Promise((resolve, reject) => {
                         S3.deleteObject({
                             Bucket: "prisma-socialmedia",
-                            Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + post.imageKey}`,
+                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`,
                         }, (e, _) => {
                             if (e)
                                 reject(e);
@@ -435,7 +435,7 @@ class PostsDAO {
                 const key = `thumb.${slug}.${hasExtension ? info.filename.split(".")[0] : info.filename}.jpg`;
                 S3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + key}`,
+                    Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + key}`,
                     Body: thumb,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",
@@ -459,7 +459,7 @@ class PostsDAO {
                 const key = `${slug}.${hasExtension ? info.filename.split(".")[0] : info.filename}.jpg`;
                 S3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + key}`,
+                    Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + key}`,
                     Body: scaled,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",

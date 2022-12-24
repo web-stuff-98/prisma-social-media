@@ -308,7 +308,7 @@ const generatePostImages = async () => {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: `${process.env.NODE_ENV !== "production" ? "dev." : "" + post.slug}.randomPost`,
+          Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.slug}.randomPost`,
           Body: scaled,
           ContentType: "image/jpeg",
           ContentEncoding: "base64",

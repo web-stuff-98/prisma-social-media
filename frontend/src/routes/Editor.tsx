@@ -230,7 +230,7 @@ export default function Editor() {
             <>
               <img
                 className="shadow rounded mb-2 mx-auto"
-                src={`https://d2gt89ey9qb5n6.cloudfront.net/${process.env.NODE_ENV !== "production" ? "dev." : "" + imageKey}`}
+                src={`https://d2gt89ey9qb5n6.cloudfront.net/${(process.env.NODE_ENV !== "production" ? "dev." : "") + imageKey}`}
               />
             </>
           )}

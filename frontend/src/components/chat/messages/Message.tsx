@@ -161,7 +161,7 @@ export default function Message({
         )}
         {hasAttachment && attachmentType === "Image" && (
           <img
-            src={`https://d2gt89ey9qb5n6.cloudfront.net/${process.env.NODE_ENV !== "production" ? "dev." : "" + attachmentKey}`}
+            src={`https://d2gt89ey9qb5n6.cloudfront.net/${(process.env.NODE_ENV !== "production" ? "dev." : "") + attachmentKey}`}
             className={"drop-shadow rounded-md mx-auto w-fit h-fit"}
           />
         )}
@@ -171,7 +171,7 @@ export default function Message({
               controls
               width={"100%"}
               height={"auto"}
-              url={`https://d2gt89ey9qb5n6.cloudfront.net/${process.env.NODE_ENV !== "production" ? "dev." : "" + attachmentKey}`}
+              url={`https://d2gt89ey9qb5n6.cloudfront.net/${(process.env.NODE_ENV !== "production" ? "dev." : "") + attachmentKey}`}
             />
           </div>
         )}
@@ -197,7 +197,7 @@ export default function Message({
           <a
             aria-label="Download attachment"
             download
-            href={`https://d2gt89ey9qb5n6.cloudfront.net/${process.env.NODE_ENV !== "production" ? "dev." : "" + attachmentKey}`}
+            href={`https://d2gt89ey9qb5n6.cloudfront.net/${(process.env.NODE_ENV !== "production" ? "dev." : "") + attachmentKey}`}
             className={`px-0 ${
               otherUser ? "pr-1" : "pl-1"
             } bg-transparent flex ${
