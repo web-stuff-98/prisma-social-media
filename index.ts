@@ -14,7 +14,7 @@ import { Server } from "socket.io";
 const origin =
   process.env.NODE_ENV === "production"
     ? "https://prisma-social-media-js.herokuapp.com/"
-    : "*";
+    : "http://localhost:3000";
 
 const app: Express = express();
 const server = http.createServer(app);
@@ -25,7 +25,7 @@ const io = new Server<
   SocketData
 >(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin,
     credentials: true,
   },
 });
@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin,
     credentials: true,
   })
 );
