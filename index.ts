@@ -13,7 +13,7 @@ import { Server } from "socket.io";
 
 const origin =
   process.env.NODE_ENV === "production"
-    ? "https://prisma-social-media-js.herokuapp.com/"
+    ? ["https://prisma-social-media-js.herokuapp.com/", "http://prisma-social-media-js.herokuapp.com/"]
     : "http://localhost:3000";
 
 const app: Express = express();
@@ -36,8 +36,8 @@ app.use((req, res, next) => {
   if (process.env.NODE_ENV !== "development" && !req.secure) {
     return res.redirect("https://" + req.headers.host + req.url);
   }
-  next();
-});
+  next()
+})
 
 app.use(
   cors({
