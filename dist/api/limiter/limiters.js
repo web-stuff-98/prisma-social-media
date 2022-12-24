@@ -28,6 +28,9 @@ exports.bruteRateLimit = exports.bruteSuccess = exports.bruteFail = exports.simp
  *                      required can also be configured. Default
  *                      behaviour: 2hrs, 4hrs, 8hrs, 16 hrs, et cet.
  *                      The user gets 3 attempts. Needs testing.
+ *
+ * You can use "BLOCKDURATION" inside the msg (message) parameter to
+ * get the time in hours, minutes seconds.
  */
 const limiterStore_1 = require("./limiterStore");
 const getReqIp_1 = __importDefault(require("../../utils/getReqIp"));
@@ -58,9 +61,7 @@ const checkBlockedByBruteBlock = ({ info, routeName = "", }) => __awaiter(void 0
     /* iterate through all the stored block information to check for active blocks
     matching the routeName */
     if (info.bruteRateLimitData) {
-        console.log(info.bruteRateLimitData.length);
         while (isBlocked === false && i <= info.bruteRateLimitData.length - 1) {
-            console.log("check");
             const { routeName: checkRouteName, blockDuration, failsRequired, } = info.bruteRateLimitData[i];
             lastAttempt = new Date(info.bruteRateLimitData[i].lastAttempt).getTime();
             attempts = info.bruteRateLimitData[i].attempts;

@@ -1,6 +1,5 @@
 import sharp, { Sharp } from "sharp";
 import isBuffer from "lodash/isBuffer";
-import has from "lodash/has"
 import { Blob } from "buffer";
 //@ts-ignore
 

@@ -15,6 +15,9 @@ import { Request as Req, Response as Res, NextFunction } from "express";
  *                      required can also be configured. Default
  *                      behaviour: 2hrs, 4hrs, 8hrs, 16 hrs, et cet.
  *                      The user gets 3 attempts. Needs testing.
+ * 
+ * You can use "BLOCKDURATION" inside the msg (message) parameter to
+ * get the time in hours, minutes seconds.
  */
 
 import {
@@ -72,9 +75,7 @@ const checkBlockedByBruteBlock = async ({
   /* iterate through all the stored block information to check for active blocks
   matching the routeName */
   if (info.bruteRateLimitData) {
-    console.log(info.bruteRateLimitData!.length);
     while (isBlocked === false && i <= info.bruteRateLimitData!.length - 1) {
-      console.log("check");
       const {
         routeName: checkRouteName,
         blockDuration,

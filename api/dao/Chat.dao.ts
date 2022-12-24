@@ -10,6 +10,8 @@ import { io } from "../..";
 import { PrivateMessage, RoomMessage, Room, User } from "@prisma/client";
 import getUserSocket from "../../utils/getUserSocket";
 
+const s3 = new AWS.S3();
+
 export default class ChatDAO {
   static async searchUser(name: string) {
     /*
@@ -357,12 +359,15 @@ export default class ChatDAO {
     }
     if (msg.senderId !== uid) throw new Error("Unauthorized");
     if (msg.hasAttachment) {
-      const s3 = new AWS.S3();
       await new Promise<void>((resolve, reject) =>
         s3.deleteObject(
           {
             Bucket: "prisma-socialmedia",
-            Key: String(msg.attachmentKey),
+            Key: `${
+              process.env.NODE_ENV !== "production"
+                ? "dev/"
+                : "" + String(msg.attachmentKey)
+            }`,
           },
           (err, data) => {
             if (err) reject(err);
@@ -391,13 +396,16 @@ export default class ChatDAO {
       where: { recipientId, senderId },
       select: { attachmentKey: true },
     });
-    const s3 = new AWS.S3();
     for await (const msg of Array.from(toDelete)) {
       return new Promise<void>((resolve, reject) =>
         s3.deleteObject(
           {
             Bucket: "prisma-socialmedia",
-            Key: String(msg.attachmentKey),
+            Key: `${
+              process.env.NODE_ENV !== "production"
+                ? "dev/"
+                : "" + String(msg.attachmentKey)
+            }`,
           },
           (err, data) => {
             if (err) reject(err);
@@ -477,7 +485,6 @@ export default class ChatDAO {
   ): Promise<{ key: string; type: string }> {
     return new Promise((resolve, reject) => {
       let type: "Image" | "Video" | "File" = "File";
-      const s3 = new AWS.S3();
       let p = 0;
       if (info.mimeType.startsWith("video/mp4")) {
         type = "Video";
@@ -496,7 +503,7 @@ export default class ChatDAO {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: key,
+          Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + key}`,
           Body: stream,
         },
         (e: unknown, file: unknown) => {
@@ -1111,7 +1118,7 @@ export default class ChatDAO {
         s3.deleteObject(
           {
             Bucket: "prisma-socialmedia",
-            Key: String(msg.attachmentKey),
+            Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + String(msg.attachmentKey)}`,
           },
           (err, data) => {
             if (err) reject(err);
@@ -1153,7 +1160,7 @@ export default class ChatDAO {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: key,
+          Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + key}`,
           Body: stream,
         },
         (e: unknown, file: unknown) => {
@@ -1232,14 +1239,16 @@ export default class ChatDAO {
   }
 
   static async conversationOpenVideoChat(uid: string, otherUsersId: string) {
-    console.log("Other users id : " + otherUsersId);
     const callerSocket = await getUserSocket(uid);
     const calledSocket = await getUserSocket(otherUsersId);
     if (!callerSocket) throw new Error("You have no socket connection");
     callerSocket.data.vidChatOpen = true;
     if (!calledSocket)
       throw new Error("The user you tried to call is not online");
-    if (calledSocket.data.vidChatOpen && calledSocket.data.conversationSubjectUid === uid)
+    if (
+      calledSocket.data.vidChatOpen &&
+      calledSocket.data.conversationSubjectUid === uid
+    )
       callerSocket.emit(
         "private_conversation_video_chat_user",
         calledSocket.id

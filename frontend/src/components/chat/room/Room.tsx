@@ -15,7 +15,7 @@ import { useSocket } from "../../../context/SocketContext";
 import MessengerError from "../MessengerError";
 import useUsers from "../../../context/UsersContext";
 import Videos from "../video/Videos";
-import { IUser, useAuth } from "../../../context/AuthContext";
+import { IUser } from "../../../context/AuthContext";
 
 import Peer from "simple-peer";
 import * as process from "process";

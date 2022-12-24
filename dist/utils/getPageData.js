@@ -44,10 +44,6 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
             mode: rawMode || "popular",
         };
     }
-    /*
-    Need to use type any because there is a typescript error caused by mode: "insensitive"
-    for some reason
-    */
     const where = clientQueryInput.tags.length || clientQueryInput.term
         ? Object.assign(Object.assign({ imagePending: false }, (clientQueryInput.tags.length > 0
             ? {
@@ -91,8 +87,6 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
             blur: true,
             _count: { select: { comments: true } },
         },
-        //Annoying typescript error. No actual problem here. It just doesn't like it.
-        //@ts-ignore-error
         orderBy: clientQueryInput.mode === "popular" ? orderByPopular : orderByCreated,
         skip: clientQueryInput.pageOffset,
         take: 10,
@@ -105,19 +99,11 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
         posts: posts.map((post) => {
             let likedByMe = false;
             let sharedByMe = false;
-            //@ts-ignore
             likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
-            //@ts-ignore
             sharedByMe = post.shares.find((share) => share.userId === uid)
                 ? true
                 : false;
-            let out = Object.assign(Object.assign({}, post), { 
-                //@ts-ignore
-                likes: post.likes.length, 
-                //@ts-ignore
-                shares: post.shares.length, 
-                //@ts-ignore
-                tags: post.tags.map((tag) => tag.name), likedByMe,
+            let out = Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
                 sharedByMe });
             out.commentCount = out._count.comments;
             delete out._count;

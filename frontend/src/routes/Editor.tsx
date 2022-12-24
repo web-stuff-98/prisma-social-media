@@ -14,16 +14,15 @@ import { ImSpinner8 } from "react-icons/im";
 import { useSocket } from "../context/SocketContext";
 import ProgressBar from "../components/ProgressBar";
 import { useModal } from "../context/ModalContext";
-import axios from "axios";
 
 export default function Editor() {
   const { slug } = useParams();
-  const navigate = useNavigate();
   const { openModal } = useModal();
+  const navigate = useNavigate();
 
   const [resMsg, setResMsg] = useState({ err: false, pen: false, msg: "" });
 
-  //The slug of the URL, except when uploading the post, not updating it
+  //The slug, truthiness determines if the editor is in an editing state
   const [slugTemp, setSlugTemp] = useState("");
   const formik = useFormik({
     initialValues: {

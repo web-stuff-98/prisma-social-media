@@ -3,7 +3,9 @@ module.exports = {
   darkMode: "class",
   safelist: [
     /* any tailwind classes that you using inside of ${} string interpolation you need to put here,
-    or the classes will be purged from tailwind when the static files are built */
+    or the classes will be purged from tailwind when the static files are built. probably half
+    of these are useless because I was just copy pasting them from classnames without checking if
+    they were static first */
     "w-full",
     "bg-foreground",
     "bg-foregroundHover",

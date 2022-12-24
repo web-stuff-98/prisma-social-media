@@ -1,9 +1,5 @@
 import { Request } from "express";
 
-/**
- * Get client ip from express request
- */
-
 export default (req: Request): string => {
   const ips =
     req.headers["x-forwarded-for"] ||

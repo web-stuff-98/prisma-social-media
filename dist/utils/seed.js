@@ -28,7 +28,6 @@ const aws_1 = __importDefault(require("./aws"));
 const zlib_1 = __importDefault(require("zlib"));
 const s3 = new aws_1.default.S3();
 const lipsum = new lorem_ipsum_1.LoremIpsum();
-// the password for the example users is "Test1234!"
 let generatedUsers = [];
 let generatedPosts = [];
 let generatedRooms = [];
@@ -387,7 +386,7 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
             yield new Promise((resolve, reject) => {
                 s3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: `thumb.${post.slug}.randomPost`,
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : ""}thumb.${post.slug}.randomPost`,
                     Body: thumb,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",
@@ -400,7 +399,7 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
             yield new Promise((resolve, reject) => {
                 s3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: `${post.slug}.randomPost`,
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + post.slug}.randomPost`,
                     Body: scaled,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",

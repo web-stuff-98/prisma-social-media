@@ -1,1 +1,1 @@
-This is done now, I just have to host it
+This is made with create-react-app and express. It could have been made with Next js and serverless but I wanted to use express again, so I decided to make it with express. I spent about 2 months on this, the most difficult part was debugging peer-to peer video chat, since I debug using console log and I used timeouts to fix it, I have no idea why using timeouts fixed it but it did.

@@ -52,7 +52,6 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
     modalType: "Message" | "Confirm",
     modalData: Partial<IModalData>
   ) => {
-    console.log("OPEN MODAL")
     setModalData((old) => ({ ...old, ...modalData }));
     setShowModal(true)
     setModalType(modalType);

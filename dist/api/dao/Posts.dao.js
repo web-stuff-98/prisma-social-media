@@ -21,6 +21,7 @@ const getPageData_1 = __importDefault(require("../../utils/getPageData"));
 const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
 const readableStreamToBlob_1 = __importDefault(require("../../utils/readableStreamToBlob"));
 const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
+const S3 = new aws_1.default.S3();
 class PostsDAO {
     static getPosts(uid) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -82,10 +83,9 @@ class PostsDAO {
             yield prisma_1.default.post.delete({
                 where: { slug },
             });
-            const S3 = new aws_1.default.S3();
             if (!post.imagePending)
                 yield new Promise((resolve, reject) => {
-                    S3.deleteObject({ Key: post.imageKey, Bucket: "prisma-socialmedia" }, (err, _) => {
+                    S3.deleteObject({ Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
                         if (err)
                             reject(err);
                         resolve();
@@ -397,13 +397,12 @@ class PostsDAO {
                 where: { slug },
                 select: { imageKey: true },
             });
-            const s3 = new aws_1.default.S3();
             if (post) {
                 if (post.imageKey) {
                     yield new Promise((resolve, reject) => {
-                        s3.deleteObject({
+                        S3.deleteObject({
                             Bucket: "prisma-socialmedia",
-                            Key: `${post.imageKey}`,
+                            Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + post.imageKey}`,
                         }, (e, _) => {
                             if (e)
                                 reject(e);
@@ -434,9 +433,9 @@ class PostsDAO {
             //upload the thumb first
             yield new Promise((resolve, reject) => {
                 const key = `thumb.${slug}.${hasExtension ? info.filename.split(".")[0] : info.filename}.jpg`;
-                s3.upload({
+                S3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: key,
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + key}`,
                     Body: thumb,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",
@@ -458,9 +457,9 @@ class PostsDAO {
             return new Promise((resolve, reject) => {
                 p = 0;
                 const key = `${slug}.${hasExtension ? info.filename.split(".")[0] : info.filename}.jpg`;
-                s3.upload({
+                S3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: key,
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + key}`,
                     Body: scaled,
                     ContentType: "image/jpeg",
                     ContentEncoding: "base64",

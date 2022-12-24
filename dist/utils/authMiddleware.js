@@ -14,12 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.withUser = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-/**
- * Use auth middleware if you want to protect a route
- *
- * Use withUser if you want to have the users data returned from the cookie on a route,
- * without rejecting them if they aren't logged in
- */
 const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { token } = req.cookies;
     if (!token)

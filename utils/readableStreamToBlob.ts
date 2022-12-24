@@ -1,10 +1,6 @@
 import internal from "stream";
 import { Blob } from "buffer";
 
-/**
- * Progress is in the range of 0 - 1
- */
-
 export default (
   stream: internal.Readable,
   mimeType: string,

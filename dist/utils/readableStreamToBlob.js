@@ -1,9 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const buffer_1 = require("buffer");
-/**
- * Progress is in the range of 0 - 1
- */
 exports.default = (stream, mimeType, useProgress) => new Promise((resolve, reject) => {
     let chunks = [];
     let bytesComplete = 0;

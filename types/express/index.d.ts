@@ -1,5 +1,9 @@
 import * as express from "express";
 
+/*
+  This file is mostly copy pasted so I dont get typescript errors.
+*/
+
 declare global {
   namespace Express {
     // Inject additional properties on express.Request

@@ -28,7 +28,9 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
 const path_1 = __importDefault(require("path"));
 const socket_io_1 = require("socket.io");
-const origin = process.env.NODE_ENV === "production" ? "https://prisma-social-media-js.herokuapp.com/" : "*";
+const origin = process.env.NODE_ENV === "production"
+    ? "https://prisma-social-media-js.herokuapp.com/"
+    : "*";
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
@@ -47,11 +49,6 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
     app.use(express_1.default.static(path_1.default.join(__dirname, "..", "frontend", "build")));
-    //app.get("*", (_, res) => {
-    //  res.sendFile(
-    //    path.join(__dirname, "..", "frontend", "build", "index.html")
-    //  );
-    //});
     //seed();
 }
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -160,6 +157,9 @@ const Users_dao_1 = __importDefault(require("./api/dao/Users.dao"));
 app.use("/api/posts", Posts_route_1.default);
 app.use("/api/users", Users_route_1.default);
 app.use("/api/chat", Chat_route_1.default);
+app.get("*", (_, res) => {
+    res.sendFile(path_1.default.join(__dirname, "..", "frontend", "build", "index.html"));
+});
 server.listen(process.env.PORT || 80, () => {
     console.log(`Server listening on port ${process.env.PORT || 80}`);
     const deleteAccsInterval = setInterval(() => __awaiter(void 0, void 0, void 0, function* () {

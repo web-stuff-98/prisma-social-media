@@ -1,13 +1,6 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
-/**
- * Use auth middleware if you want to protect a route
- *
- * Use withUser if you want to have the users data returned from the cookie on a route,
- * without rejecting them if they aren't logged in
- */
-
 const authMiddleware = async (
   req: Request,
   res: Response,

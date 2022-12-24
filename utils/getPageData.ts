@@ -1,6 +1,6 @@
 import prisma from "./prisma";
 
-import { Post, Prisma } from "@prisma/client";
+import { Post } from "@prisma/client";
 
 type Query = {
   tags: string;
@@ -49,10 +49,6 @@ export default async (
     };
   }
 
-  /*
-  Need to use type any because there is a typescript error caused by mode: "insensitive"
-  for some reason 
-  */
   const where: any =
     clientQueryInput.tags.length || clientQueryInput.term
       ? {
@@ -111,8 +107,6 @@ export default async (
       blur: true,
       _count: { select: { comments: true } },
     },
-    //Annoying typescript error. No actual problem here. It just doesn't like it.
-    //@ts-ignore-error
     orderBy:
       clientQueryInput.mode === "popular" ? orderByPopular : orderByCreated,
     skip: clientQueryInput.pageOffset,
@@ -130,19 +124,14 @@ export default async (
     posts: posts.map((post) => {
       let likedByMe = false;
       let sharedByMe = false;
-      //@ts-ignore
       likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
-      //@ts-ignore
       sharedByMe = post.shares.find((share) => share.userId === uid)
         ? true
         : false;
       let out: any = {
         ...post,
-        //@ts-ignore
         likes: post.likes.length,
-        //@ts-ignore
         shares: post.shares.length,
-        //@ts-ignore
         tags: post.tags.map((tag) => tag.name),
         likedByMe,
         sharedByMe,

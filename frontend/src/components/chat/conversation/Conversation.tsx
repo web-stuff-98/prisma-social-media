@@ -231,7 +231,6 @@ export default function ConversationSection({
       .catch((e) => setErr(`${e}`));
   };
   const handleReceiveVideoCall = useCallback((sid: string) => {
-    console.log("Received call from " + sid)
     const peer = createPeer(sid);
     peerRef.current = {
       peerSID: sid,

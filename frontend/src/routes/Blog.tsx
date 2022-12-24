@@ -12,9 +12,9 @@ export default function Blog() {
   const { pagePosts, getPostData, status } = usePosts();
   const { searchTags } = useFilter();
   const { state: iState } = useInterface();
-  const scrollToTop = useScrollToTop();
-  const postsContainerRef = useRef<HTMLDivElement>(null);
   const { width: scrollWidth } = useScrollbarSize()
+  const postsContainerRef = useRef<HTMLDivElement>(null);
+  const scrollToTop = useScrollToTop();
 
   useEffect(() => {
     scrollToTop();

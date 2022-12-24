@@ -10,8 +10,6 @@ const s3 = new AWS.S3();
 
 const lipsum = new LoremIpsum();
 
-// the password for the example users is "Test1234!"
-
 let generatedUsers: any[] = [];
 let generatedPosts: any[] = [];
 let generatedRooms: any[] = [];
@@ -295,7 +293,7 @@ const generatePostImages = async () => {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: `thumb.${post.slug}.randomPost`,
+          Key: `${process.env.NODE_ENV !== "production" ? "dev/" : ""}thumb.${post.slug}.randomPost`,
           Body: thumb,
           ContentType: "image/jpeg",
           ContentEncoding: "base64",
@@ -310,7 +308,7 @@ const generatePostImages = async () => {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: `${post.slug}.randomPost`,
+          Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + post.slug}.randomPost`,
           Body: scaled,
           ContentType: "image/jpeg",
           ContentEncoding: "base64",

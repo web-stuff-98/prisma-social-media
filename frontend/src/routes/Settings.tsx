@@ -14,8 +14,6 @@ export default function Settings() {
   const { getUserData, cacheUserData } = useUsers();
   const { openModal } = useModal();
 
-  const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: false });
-
   useEffect(() => {
     cacheUserData(String(user?.id));
   }, []);

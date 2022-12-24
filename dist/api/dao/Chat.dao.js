@@ -24,6 +24,7 @@ const mime_types_1 = __importDefault(require("mime-types"));
 const aws_1 = __importDefault(require("../../utils/aws"));
 const __1 = require("../..");
 const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
+const s3 = new aws_1.default.S3();
 class ChatDAO {
     static searchUser(name) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -361,10 +362,11 @@ class ChatDAO {
             if (msg.senderId !== uid)
                 throw new Error("Unauthorized");
             if (msg.hasAttachment) {
-                const s3 = new aws_1.default.S3();
                 yield new Promise((resolve, reject) => s3.deleteObject({
                     Bucket: "prisma-socialmedia",
-                    Key: String(msg.attachmentKey),
+                    Key: `${process.env.NODE_ENV !== "production"
+                        ? "dev/"
+                        : "" + String(msg.attachmentKey)}`,
                 }, (err, data) => {
                     if (err)
                         reject(err);
@@ -387,13 +389,14 @@ class ChatDAO {
                 where: { recipientId, senderId },
                 select: { attachmentKey: true },
             });
-            const s3 = new aws_1.default.S3();
             try {
                 for (var _b = __asyncValues(Array.from(toDelete)), _c; _c = yield _b.next(), !_c.done;) {
                     const msg = _c.value;
                     return new Promise((resolve, reject) => s3.deleteObject({
                         Bucket: "prisma-socialmedia",
-                        Key: String(msg.attachmentKey),
+                        Key: `${process.env.NODE_ENV !== "production"
+                            ? "dev/"
+                            : "" + String(msg.attachmentKey)}`,
                     }, (err, data) => {
                         if (err)
                             reject(err);
@@ -478,7 +481,6 @@ class ChatDAO {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
                 let type = "File";
-                const s3 = new aws_1.default.S3();
                 let p = 0;
                 if (info.mimeType.startsWith("video/mp4")) {
                     type = "Video";
@@ -493,7 +495,7 @@ class ChatDAO {
                 const key = `${message.id}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
                 s3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: key,
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + key}`,
                     Body: stream,
                 }, (e, file) => {
                     if (e)
@@ -1075,7 +1077,7 @@ class ChatDAO {
                 const s3 = new aws_1.default.S3();
                 yield new Promise((resolve, reject) => s3.deleteObject({
                     Bucket: "prisma-socialmedia",
-                    Key: String(msg.attachmentKey),
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + String(msg.attachmentKey)}`,
                 }, (err, data) => {
                     if (err)
                         reject(err);
@@ -1107,7 +1109,7 @@ class ChatDAO {
                 const key = `${message.id}.${hasExtension ? info.filename.split(".")[0] : info.filename}.${ext}`;
                 s3.upload({
                     Bucket: "prisma-socialmedia",
-                    Key: key,
+                    Key: `${process.env.NODE_ENV !== "production" ? "dev/" : "" + key}`,
                     Body: stream,
                 }, (e, file) => {
                     if (e)
@@ -1178,7 +1180,6 @@ class ChatDAO {
     }
     static conversationOpenVideoChat(uid, otherUsersId) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log("Other users id : " + otherUsersId);
             const callerSocket = yield (0, getUserSocket_1.default)(uid);
             const calledSocket = yield (0, getUserSocket_1.default)(otherUsersId);
             if (!callerSocket)
@@ -1186,7 +1187,8 @@ class ChatDAO {
             callerSocket.data.vidChatOpen = true;
             if (!calledSocket)
                 throw new Error("The user you tried to call is not online");
-            if (calledSocket.data.vidChatOpen && calledSocket.data.conversationSubjectUid === uid)
+            if (calledSocket.data.vidChatOpen &&
+                calledSocket.data.conversationSubjectUid === uid)
                 callerSocket.emit("private_conversation_video_chat_user", calledSocket.id);
         });
     }

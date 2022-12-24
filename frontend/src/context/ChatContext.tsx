@@ -39,7 +39,7 @@ export interface IMessage {
   id: string;
   message: string;
   senderId?: string; //if there is no senderId that means its a server message
-  recipientId?: string; //recipientId doesn't actually exist for messages retrieved from getConversations (it might though now I'm not sure)
+  recipientId?: string;
   hasAttachment: boolean;
   attachmentType?: string;
   attachmentKey?: string;
