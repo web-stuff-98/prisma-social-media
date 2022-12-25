@@ -10,23 +10,6 @@ import { IUser, useAuth } from "./AuthContext";
 import { getUser } from "../services/users";
 import { useSocket } from "./SocketContext";
 
-/**
- * This is my fancy user data context store. It is supposed to improve scalability, but it also sets up
- * live updates for User data, so that you can see updates right away for any user on the screen.
- *
- * It works with the User component to automatically get data for User components when they come into view,
- * and remove the data for the user 30 seconds after it disappears from view. That way data for users can be
- * kept in one place and data for Users dont have to be repeatedly sent with every request.
- *
- * Also it works with socket.io and the server to get live updates for Users
- *
- * Use getUserData to retrieve data for the user, it uses useCallback which means that the component using the
- * data will be automatically rerendered if the user data changes.
- *
- * You should use cacheUserData to cache the user data beforehand or the client might see user data
- * loading for a bit and it could look slow.
- */
-
 type DisappearedUser = {
   uid: string;
   disappearedAt: Date;

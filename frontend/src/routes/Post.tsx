@@ -9,7 +9,6 @@ import { usePost } from "../context/PostContext";
 import { usePosts } from "../context/PostsContext";
 import useUsers from "../context/UsersContext";
 import { createComment } from "../services/comments";
-
 import { RiEditBoxFill, RiDeleteBin4Fill } from "react-icons/ri";
 import { useAuth } from "../context/AuthContext";
 import { useModal } from "../context/ModalContext";
@@ -25,7 +24,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 
 export default function Post() {
   const { socket } = useSocket();
-  const { rootComments, createLocalComment } = usePost();
+  const { rootComments, createLocalComment, parentComment, goBack } = usePost();
   const {
     getPostData,
     likePost,
@@ -79,8 +78,9 @@ export default function Post() {
     };
   }, [slug]);
 
-  const getDateString = (date:Date) => dateFormatter.format(date)
-  const renderUpdatedAt = (dateString:string) => `updated ${dateString.split(", ")[0]} at ${dateString.split(", ")[1]}`
+  const getDateString = (date: Date) => dateFormatter.format(date);
+  const renderUpdatedAt = (dateString: string) =>
+    `updated ${dateString.split(", ")[0]} at ${dateString.split(", ")[1]}`;
 
   const { scrollY } = useScrollY();
 
@@ -92,7 +92,10 @@ export default function Post() {
             style={{
               backgroundSize: "cover",
               backgroundPosition: "center",
-              backgroundImage: `url(https://d2gt89ey9qb5n6.cloudfront.net/${(process.env.NODE_ENV !== "production" ? "dev." : "") + post?.imageKey})`,
+              backgroundImage: `url(https://d2gt89ey9qb5n6.cloudfront.net/${
+                (process.env.NODE_ENV !== "production" ? "dev." : "") +
+                post?.imageKey
+              })`,
               backgroundPositionY: `calc(50% + ${scrollY * 0.5}px)`,
             }}
             className="w-full h-72 flex overflow-hidden text-white flex-col justify-end"
@@ -110,7 +113,14 @@ export default function Post() {
                 className="md:text-4xl sm:text-md font-bold grow mr-4"
               >
                 {post?.title}
-                {post.updatedAt && post.updatedAt !== post.createdAt && <><br className="my-0 leading-3 py-0"/><b className="font-normal text-xs my-0">{renderUpdatedAt(getDateString(new Date(post.updatedAt)))}</b></>}
+                {post.updatedAt && post.updatedAt !== post.createdAt && (
+                  <>
+                    <br className="my-0 leading-3 py-0" />
+                    <b className="font-normal text-xs my-0">
+                      {renderUpdatedAt(getDateString(new Date(post.updatedAt)))}
+                    </b>
+                  </>
+                )}
               </h1>
               <div className="my-2 drop-shadow-xl flex flex-col md:justify-end items-end sm:justify-center w-fit">
                 <User
@@ -199,12 +209,21 @@ export default function Post() {
           </div>
           <section className="w-full p-2 mt-6">
             {
-              <div className="mx-auto py-0.5 text-xs text-center">
-                {!post.commentCount
+              <div
+                className={`mx-auto py-0.5 ${
+                  parentComment !== "null"
+                    ? "text-md font-bold"
+                    : "text-xs"
+                } text-center`}
+              >
+                {parentComment !== "null"
+                  ? `Viewing replies to ${rootComments[0].user.id}s comment`
+                  : !post.commentCount
                   ? "No comments"
                   : `${post.commentCount} comment${
                       post.commentCount! > 1 && "s"
                     }`}
+                {parentComment !== "null" && <><br/><button onClick={() => goBack()} aria-label="Back" type="button" className="font-bold italic text-xl">Back</button></>}
               </div>
             }
             {user && (

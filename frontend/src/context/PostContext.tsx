@@ -22,10 +22,11 @@ export interface IPostComment {
   createdAt: string;
   updatedAt: string;
   user: IUser;
+  childIndex?: number;
 }
 
 const Context = createContext<{
-  rootComments: any[];
+  rootComments: IPostComment[];
   getReplies: (parentId: string) => IPostComment[];
   createLocalComment: (comment: IPostComment) => void;
   updateLocalComment: (id: string, message: string) => void;
@@ -33,6 +34,11 @@ const Context = createContext<{
   toggleLocalCommentLike: (id: string, addLike: boolean) => void;
   replyingTo: string;
   setReplyingTo: (to: string) => void;
+  setParentComment: (to: string) => void;
+  parentComment: string;
+  goBack: () => void;
+  openComments: string[];
+  setCommentOpen: (to: boolean, id: string) => void;
 }>({
   rootComments: [],
   getReplies: () => [],
@@ -42,6 +48,11 @@ const Context = createContext<{
   toggleLocalCommentLike: () => {},
   replyingTo: "",
   setReplyingTo: () => {},
+  setParentComment: () => {},
+  parentComment: "null",
+  goBack: () => {},
+  openComments: [],
+  setCommentOpen: () => {},
 });
 
 export const usePost = () => useContext(Context);
@@ -53,14 +64,30 @@ export function PostProvider({ children }: { children: ReactNode }) {
   const { getPostData } = usePosts();
   const { cacheUserData } = useUsers();
 
-  const post = getPostData(String(slug));
-
+  const [parentComment, setParentCommentState] = useState("null");
+  const [prevParentComment, setPrevParentComment] = useState("null");
+  const [commentsInPrevThread, setCommentsInPrevThread] = useState<string[]>(
+    []
+  );
+  const setParentComment = (to: string) => {
+    setPrevParentComment(parentComment);
+    setParentCommentState(to);
+  };
+  const [openComments, setOpenComments] = useState<string[]>([]);
+  const setCommentOpen = (to: boolean, id: string) => {
+    if (!to) setOpenComments((old) => [...old.filter((c) => c !== id)]);
+    else setOpenComments((old) => [...old, id]);
+  };
   const [replyingTo, setReplyingTo] = useState("");
+
+  const post = getPostData(String(slug));
 
   useEffect(() => {
     if (socket) socket.emit("open_post", String(slug));
     return () => {
       if (socket) socket.emit("leave_post", String(slug));
+      setParentComment("null");
+      setReplyingTo("");
     };
   }, [slug]);
 
@@ -85,7 +112,6 @@ export function PostProvider({ children }: { children: ReactNode }) {
         user: {
           id: uid,
           name,
-          
         },
       });
       cacheUserData(uid);
@@ -131,6 +157,11 @@ export function PostProvider({ children }: { children: ReactNode }) {
     });
     return group;
   }, [comments]);
+
+  const goBack = () => {
+    const found = comments.find((c) => c.id === parentComment);
+    setParentComment(found && found.parentId ? found.parentId : "null");
+  };
 
   useEffect(() => {
     if (post?.comments == null) return;
@@ -184,7 +215,7 @@ export function PostProvider({ children }: { children: ReactNode }) {
   return (
     <Context.Provider
       value={{
-        rootComments: commentsByParentId["null"],
+        rootComments: commentsByParentId[parentComment],
         getReplies,
         createLocalComment,
         updateLocalComment,
@@ -192,6 +223,11 @@ export function PostProvider({ children }: { children: ReactNode }) {
         toggleLocalCommentLike,
         replyingTo,
         setReplyingTo,
+        setParentComment,
+        parentComment,
+        goBack,
+        openComments,
+        setCommentOpen,
       }}
     >
       {children}

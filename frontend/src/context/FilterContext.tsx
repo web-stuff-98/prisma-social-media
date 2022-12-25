@@ -3,7 +3,6 @@ import {
   createContext,
   useState,
   useEffect,
-  useCallback,
 } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";

@@ -1,7 +1,6 @@
 import { useFormik } from "formik";
 import { useState, useEffect, ChangeEvent, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import {
   uploadPostData,
   getPost,

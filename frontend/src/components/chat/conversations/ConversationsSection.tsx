@@ -12,9 +12,7 @@ import useUsers from "../../../context/UsersContext";
 export default function ConversationsSection() {
   const { openConversation } = useChat();
   const { getUserData } = useUsers();
-
   const [users, setUsers] = useState<IUser[]>([]);
-
   const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: false });
 
   useEffect(() => {
@@ -62,9 +60,19 @@ export default function ConversationsSection() {
           ))}
         </>
       ) : (
-        <div className="text-center flex items-center text-xs w-full text-center h-full my-auto p-3">
-          You have neither received nor sent any messages. Click on another users profile to send a message. You can find other users on the blog, or you can search for another user by going back and using the search user section. Click on the three bars icon above to head back to the main chat menu.
-        </div>
+        <>
+          {resMsg.err ? (
+            <div className="p2 text-center text-md font-bold">{resMsg.msg}</div>
+          ) : (
+            <div className="text-center flex items-center text-xs w-full text-center h-full my-auto p-3">
+              You have neither received nor sent any messages. Click on another
+              users profile to send a message. You can find other users on the
+              blog, or you can search for another user by going back and using
+              the search user section. Click on the three bars icon above to
+              head back to the main chat menu.
+            </div>
+          )}
+        </>
       )}
     </div>
   );

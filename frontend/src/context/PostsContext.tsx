@@ -108,7 +108,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const [pagePosts, setPagePosts] = useState<string[]>([]);
   const [postsOpen, setPostsOpen] = useState<string[]>([]);
 
-  //Data
   const [postsData, setPostsData] = useState<Partial<IPost>[]>([]);
 
   //Caches full post data (including comments and body)
@@ -121,7 +120,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
       addToPostsData([p]);
     } catch (e) {
       console.warn("Could not cache data for post " + slug);
-      setErr(`${e}`);
+      setError(`${e}`);
     }
   };
 
@@ -167,6 +166,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const handleGetAndSetPage = useMemo(
     () =>
       // the way this is set up is probably not good, should have implemented debouncing earlier on
+      // it works though no problem as far as I can see
       debounce(() => {
         getAndSetPage();
       }, 300),
@@ -178,8 +178,6 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     handleGetAndSetPage();
     setStatus("pending-search");
   }, [searchTags, searchTerm, query.page, sortOrderIndex, sortModeIndex]);
-
-  const [err, setErr] = useState("");
 
   useEffect(() => {
     setStatus("pending");
@@ -210,7 +208,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         return [...newPosts];
       });
     } catch (e) {
-      setErr(`${e}`);
+      setError(`${e}`);
     }
   };
   const sharePost = async (id: string) => {
@@ -227,7 +225,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         return [...newPosts];
       });
     } catch (e) {
-      setErr(`${e}`);
+      setError(`${e}`);
     }
   };
 

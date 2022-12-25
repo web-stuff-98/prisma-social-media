@@ -2,7 +2,7 @@ import { IconBtn } from "../IconBtn";
 import { AiOutlineLike, AiFillLike } from "react-icons/ai";
 import { FaReply } from "react-icons/fa";
 import { IPostComment, usePost } from "../../context/PostContext";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   createComment,
   deleteComment,
@@ -30,10 +30,12 @@ export function Comment({
   updatedAt,
   likeCount,
   likedByMe,
+  childIndex = 0,
 }: IPostComment) {
   const { openModal } = useModal();
   const navigate = useNavigate();
   const { slug } = useParams();
+  const { setParentComment, openComments, setCommentOpen } = usePost();
 
   /*
 This function is from the web dev simplified video. It is supposed to be in the useAsync hook but that was causing infinite rerenders in the original PostContext, so I changed it to the useAync hook from usehooks.com and it worked. But I'll keep this function here anyway because it works here and dont need to change anything aside from the name.
@@ -62,7 +64,12 @@ This function is from the web dev simplified video. It is supposed to be in the 
     return { loading, error, value, execute };
   }
 
-  const [areChildrenHidden, setAreChildrenHidden] = useState(true);
+  const areChildrenHidden = useMemo(() => {
+    if(childIndex > 3) return true
+    return !openComments.includes(id);
+  }, [openComments, childIndex]);
+  const setAreChildrenHidden = (to: boolean) => setCommentOpen(!to, id);
+
   const [isEditing, setIsEditing] = useState(false);
   const {
     getReplies,
@@ -83,7 +90,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
   const childComments = getReplies(id);
 
   const { user: currentUser } = useAuth();
-  const { setReplyingTo, replyingTo } = usePost();
+  const { setReplyingTo, replyingTo, parentComment } = usePost();
   const { getUserData } = useUsers();
 
   const onCommentReply = (message: string) => {
@@ -143,6 +150,13 @@ This function is from the web dev simplified video. It is supposed to be in the 
     </b>
   );
 
+  useEffect(() => {
+    if (parentComment !== "null" && childIndex === 0) {
+      setAreChildrenHidden(false);
+      return;
+    }
+  }, [parentComment]);
+
   return (
     <>
       <div className="w-full mb-2 flex">
@@ -158,26 +172,28 @@ This function is from the web dev simplified video. It is supposed to be in the 
               user={getUserData(user.id)}
               uid={user.id}
             />
-          <div className="w-full flex pl-2 items-center">
-            {isEditing ? (
-              <CommentForm
-                autoFocus
-                initialValue={message}
-                onSubmit={onCommentUpdate}
-                loading={updateCommentFn.loading}
-                error={updateCommentFn.error}
-                placeholder={"Edit comment..."}
-                onClickOutside={() => setIsEditing(false)}
-              />
-            ) : (
-              <p className="flex my-auto leading-4 tracking-tight text-xs p-0 grow items-center">
-                {message}
-                {updatedAt !== createdAt &&
-                  renderEditedAtTimeString(getDateString(new Date(updatedAt)))}
-              </p>
-            )}
-          </div>
-          <div className="flex flex-col">
+            <div className="w-full flex pl-2 items-center">
+              {isEditing ? (
+                <CommentForm
+                  autoFocus
+                  initialValue={message}
+                  onSubmit={onCommentUpdate}
+                  loading={updateCommentFn.loading}
+                  error={updateCommentFn.error}
+                  placeholder={"Edit comment..."}
+                  onClickOutside={() => setIsEditing(false)}
+                />
+              ) : (
+                <p className="flex my-auto leading-4 tracking-tight text-xs p-0 grow items-center">
+                  {message}
+                  {updatedAt !== createdAt &&
+                    renderEditedAtTimeString(
+                      getDateString(new Date(updatedAt))
+                    )}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col">
               <IconBtn
                 onClick={onToggleCommentLike}
                 disabled={toggleCommentLikeFn.loading}
@@ -193,6 +209,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
               </IconBtn>
               <IconBtn
                 onClick={() => {
+                  if (!user) navigate("/login");
                   if (replyingTo !== id) setReplyingTo(id);
                   else setReplyingTo("");
                 }}
@@ -252,16 +269,21 @@ This function is from the web dev simplified video. It is supposed to be in the 
             <div>
               {childComments.map((comment) => (
                 <div key={comment.id} className="w-full h-full">
-                  <Comment {...comment} />
+                  <Comment {...comment} childIndex={childIndex + 1} />
                 </div>
               ))}
             </div>
           </div>
           <button
             className={`btn bg-transparent italic text-black px-0 mb-2 text-xs ${
-              !areChildrenHidden ? "hidden" : ""
+              areChildrenHidden ? "" : "hidden"
             }`}
-            onClick={() => setAreChildrenHidden(false)}
+            onClick={() => {
+              if (childIndex > 3) {
+                setParentComment(id);
+              }
+              setAreChildrenHidden(false);
+            }}
           >
             Show Replies
           </button>

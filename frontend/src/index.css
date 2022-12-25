@@ -30,7 +30,7 @@
         @apply dark:border-white;
     }
 
-    button {
+    button, button[type=submit] {
         @apply px-3;
         @apply rounded;
         @apply bg-rose-500;
