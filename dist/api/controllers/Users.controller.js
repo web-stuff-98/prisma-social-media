@@ -20,8 +20,9 @@ const __1 = require("../..");
 const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
 const limiters_1 = require("../limiter/limiters");
 const getReqIp_1 = __importDefault(require("../../utils/getReqIp"));
+const busboy_1 = __importDefault(require("busboy"));
 class UsersController {
-    static getUsers(req, res) {
+    static getUsers(_, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const users = yield Users_dao_1.default.getUsers();
@@ -46,16 +47,31 @@ class UsersController {
             }
         });
     }
-    static updateUser(req, res) {
-        var _a;
+    static updatePfp(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield Users_dao_1.default.updateUser(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body);
-                res.status(200).end();
-            }
-            catch (e) {
+            let gotFile = false;
+            const bb = (0, busboy_1.default)({
+                headers: req.headers,
+                limits: { files: 1, fields: 0, fileSize: 10000000 },
+            });
+            bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
+                var _a;
+                gotFile = true;
+                yield Users_dao_1.default.updatePfp(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), stream, info);
+                res.writeHead(201, { Connection: "close " });
+                res.end();
+            }));
+            bb.on("finish", () => {
+                if (!gotFile) {
+                    req.unpipe(bb);
+                    res.status(400).json({ msg: "No file!" });
+                }
+            });
+            bb.on("error", (e) => __awaiter(this, void 0, void 0, function* () {
+                req.unpipe(bb);
                 res.status(400).json({ msg: `${e}` });
-            }
+            }));
+            req.pipe(bb);
         });
     }
     static getProfile(req, res) {
@@ -74,12 +90,39 @@ class UsersController {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Users_dao_1.default.updateProfile(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body);
+                yield Users_dao_1.default.updateProfile(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body.bio);
                 res.status(200).end();
             }
             catch (e) {
                 res.status(400).json({ msg: `${e}` });
             }
+        });
+    }
+    static updateProfileImage(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let gotFile = false;
+            const bb = (0, busboy_1.default)({
+                headers: req.headers,
+                limits: { files: 1, fields: 0, fileSize: 10000000 },
+            });
+            bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
+                var _a;
+                gotFile = true;
+                yield Users_dao_1.default.updateProfileImage(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), stream, info);
+                res.writeHead(201, { Connection: "close " });
+                res.end();
+            }));
+            bb.on("finish", () => {
+                if (!gotFile) {
+                    req.unpipe(bb);
+                    res.status(400).json({ msg: "No file!" });
+                }
+            });
+            bb.on("error", (e) => __awaiter(this, void 0, void 0, function* () {
+                req.unpipe(bb);
+                res.status(400).json({ msg: `${e}` });
+            }));
+            req.pipe(bb);
         });
     }
     static register(req, res) {

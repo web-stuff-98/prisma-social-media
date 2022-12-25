@@ -9,9 +9,10 @@ import { io } from "../..";
 import getUserSocket from "../../utils/getUserSocket";
 import { bruteFail, bruteSuccess } from "../limiter/limiters";
 import getReqIp from "../../utils/getReqIp";
+import busboy from "busboy";
 
 export default class UsersController {
-  static async getUsers(req: Req, res: Res) {
+  static async getUsers(_: Req, res: Res) {
     try {
       const users = await UsersDAO.getUsers();
       res.status(200).json(users);
@@ -30,13 +31,29 @@ export default class UsersController {
     }
   }
 
-  static async updateUser(req: Req, res: Res) {
-    try {
-      await UsersDAO.updateUser(String(req.user?.id), req.body);
-      res.status(200).end();
-    } catch (e) {
+  static async updatePfp(req: Req, res: Res) {
+    let gotFile = false;
+    const bb = busboy({
+      headers: req.headers,
+      limits: { files: 1, fields: 0, fileSize: 10000000 },
+    });
+    bb.on("file", async (_, stream, info) => {
+      gotFile = true;
+      await UsersDAO.updatePfp(String(req.user?.id), stream, info);
+      res.writeHead(201, { Connection: "close " });
+      res.end();
+    });
+    bb.on("finish", () => {
+      if (!gotFile) {
+        req.unpipe(bb);
+        res.status(400).json({ msg: "No file!" });
+      }
+    });
+    bb.on("error", async (e: unknown) => {
+      req.unpipe(bb);
       res.status(400).json({ msg: `${e}` });
-    }
+    });
+    req.pipe(bb);
   }
 
   static async getProfile(req: Req, res: Res) {
@@ -50,11 +67,36 @@ export default class UsersController {
 
   static async updateProfile(req: Req, res: Res) {
     try {
-      await UsersDAO.updateProfile(String(req.user?.id), req.body);
+      await UsersDAO.updateProfile(String(req.user?.id), req.body.bio);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
     }
+  }
+
+  static async updateProfileImage(req: Req, res: Res) {
+    let gotFile = false;
+    const bb = busboy({
+      headers: req.headers,
+      limits: { files: 1, fields: 0, fileSize: 10000000 },
+    });
+    bb.on("file", async (_, stream, info) => {
+      gotFile = true;
+      await UsersDAO.updateProfileImage(String(req.user?.id), stream, info);
+      res.writeHead(201, { Connection: "close " });
+      res.end();
+    });
+    bb.on("finish", () => {
+      if (!gotFile) {
+        req.unpipe(bb);
+        res.status(400).json({ msg: "No file!" });
+      }
+    });
+    bb.on("error", async (e: unknown) => {
+      req.unpipe(bb);
+      res.status(400).json({ msg: `${e}` });
+    });
+    req.pipe(bb);
   }
 
   static async register(req: Req, res: Res) {

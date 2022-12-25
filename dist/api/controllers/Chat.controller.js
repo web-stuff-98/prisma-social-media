@@ -154,7 +154,7 @@ class ChatController {
                 limits: { files: 1, fields: 0, fileSize: 500000000 },
             });
             req.pipe(bb);
-            bb.on("file", (name, stream, info) => __awaiter(this, void 0, void 0, function* () {
+            bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
                 let successData = { key: "", type: "" };
                 gotFile = true;
                 try {

@@ -1,20 +1,31 @@
-import { IUser } from "../context/AuthContext";
 import { makeRequest } from "./makeRequest";
 
 const getUser = (uid: string) => makeRequest(`/api/users/${uid}`);
-const updateUser = (data: Partial<IUser>) =>
-  makeRequest(`/api/users`, {
+const updatePfp = (file: File) => {
+  const data = new FormData();
+  data.append("file", file);
+  return makeRequest(`/api/users/pfp`, {
     withCredentials: true,
     method: "POST",
     data,
   });
+};
 const getProfile = (uid: string) =>
   makeRequest(`/api/users/profile/${uid}`, { withCredentials: true });
-const updateProfile = (data: { bio?: string; backgroundBase64: string }) =>
+const updateProfile = (bio?: string) =>
   makeRequest(`/api/users/profile`, {
     method: "PUT",
     withCredentials: true,
+    data: { bio },
+  });
+const updateProfileImage = (file: File) => {
+  const data = new FormData();
+  data.append("file", file);
+  return makeRequest(`/api/users/profile/image`, {
+    withCredentials: true,
+    method: "POST",
     data,
   });
+};
 
-export { getUser, updateUser, getProfile, updateProfile };
+export { getUser, updatePfp, getProfile, updateProfile, updateProfileImage };

@@ -140,7 +140,7 @@ export default class ChatController {
       limits: { files: 1, fields: 0, fileSize: 500000000 },
     });
     req.pipe(bb);
-    bb.on("file", async (name, stream, info) => {
+    bb.on("file", async (_, stream, info) => {
       let successData = { key: "", type: "" };
       gotFile = true;
       try {

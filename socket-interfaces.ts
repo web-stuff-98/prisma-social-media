@@ -115,6 +115,7 @@ export interface ServerToClientEvents {
     id: string;
     name?: string;
     online?: boolean;
+    pfp?: string;
   }) => void;
   user_visible_deleted: (slug: string) => void;
   post_visible_update: (data: Partial<ParsedPost>) => void;

@@ -29,7 +29,7 @@ const http_1 = __importDefault(require("http"));
 const path_1 = __importDefault(require("path"));
 const socket_io_1 = require("socket.io");
 const origin = process.env.NODE_ENV === "production"
-    ? "https://prisma-social-media-js.herokuapp.com/"
+    ? ["https://prisma-social-media-js.herokuapp.com/", "http://prisma-social-media-js.herokuapp.com/"]
     : "http://localhost:3000";
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
@@ -40,12 +40,12 @@ const io = new socket_io_1.Server(server, {
     },
 });
 exports.io = io;
-app.use((req, res, next) => {
-    if (process.env.NODE_ENV !== "development" && !req.secure) {
-        return res.redirect("https://" + req.headers.host + req.url);
-    }
-    next();
-});
+/*app.use((req, res, next) => {
+  if (process.env.NODE_ENV !== "development" && !req.secure) {
+    return res.redirect("https://" + req.headers.host + req.url);
+  }
+  next()
+})*/
 app.use((0, cors_1.default)({
     origin,
     credentials: true,

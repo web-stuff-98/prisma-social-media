@@ -4,7 +4,7 @@ import useUsers from "../context/UsersContext";
 
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { updateUser } from "../services/users";
+import { updatePfp } from "../services/users";
 
 import { RiSettings4Fill } from "react-icons/ri";
 import { useModal } from "../context/ModalContext";
@@ -37,7 +37,7 @@ export default function Settings() {
             pen: true,
             err: false,
           });
-          updateUser({ pfp: `${fr.result}` })
+          updatePfp(file)
             .then(() => {
               openModal("Message", {
                 msg: "Your profile picture has been updated.",

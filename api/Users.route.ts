@@ -13,18 +13,14 @@ YupPassword(Yup);
 const router = express.Router();
 
 router.route("/").get(UsersController.getUsers);
-router.route("/").post(
+router.route("/pfp").post(
   authMiddleware,
   slowDown({
     windowMs: 20000,
     delayAfter: 5,
     delayMs: 2000,
   }),
-  validateBodyMiddleware({
-    name: Yup.string().notRequired().nullable().max(24),
-    pfp: Yup.string().notRequired().nullable().max(100000),
-  }),
-  UsersController.updateUser
+  UsersController.updatePfp
 );
 router.route("/:id").get(
   slowDown({
@@ -45,10 +41,18 @@ router.route("/profile/:uid").get(withUser, UsersController.getProfile);
 router.route("/profile").put(
   authMiddleware,
   validateBodyMiddleware({
-    bio: Yup.string().notRequired().nullable().max(300),
-    backgroundBase64: Yup.string().notRequired().nullable().max(100000),
+    bio: Yup.string().required().max(300),
   }),
   UsersController.updateProfile
+);
+router.route("/profile/image").post(
+  authMiddleware,
+  slowDown({
+    windowMs: 20000,
+    delayAfter: 5,
+    delayMs: 2000,
+  }),
+  UsersController.updateProfileImage
 );
 router.route("/check").post(withUser, UsersController.checkLogin);
 router.route("/login").post(

@@ -5,6 +5,9 @@ import { io } from "../..";
 import getUserSocket from "../../utils/getUserSocket";
 import redisClient from "../../utils/redis";
 import AWS from "../../utils/aws";
+import busboy from "busboy";
+import internal from "stream";
+import readableStreamToBlob from "../../utils/readableStreamToBlob";
 const S3 = new AWS.S3();
 
 export default class UsersDAO {
@@ -33,36 +36,74 @@ export default class UsersDAO {
     }
   }
 
-  static async updateProfile(
-    uid: string,
-    data: { backgroundBase64?: string; bio?: string }
-  ) {
+  static async updateProfile(uid: string, bio: string) {
     let backgroundScaled = "";
-    let updateData = data;
-    if (data.backgroundBase64) {
+    /*if (data.backgroundBase64) {
       backgroundScaled = (await imageProcessing(data.backgroundBase64!, {
         width: 136,
         height: 33,
       })) as string;
       updateData.backgroundBase64 = backgroundScaled;
     }
-    if (updateData.backgroundBase64 === "") delete updateData.backgroundBase64;
+    */
     const profile = await prisma.profile.findUnique({
       where: { userId: uid },
     });
     if (profile)
       await prisma.profile.update({
         where: { userId: uid },
-        data: updateData,
+        data: { bio },
       });
     else
       await prisma.profile.create({
         data: {
           userId: uid,
-          ...updateData,
+          bio,
         },
       });
-    io.to(`profile=${uid}`).emit("profile_update", data);
+    io.to(`profile=${uid}`).emit("profile_update", { bio });
+  }
+
+  static async updateProfileImage(
+    uid: string,
+    stream: internal.Readable,
+    info: busboy.FileInfo
+  ) {
+    if (
+      !info.mimeType.startsWith("image/jpeg") &&
+      !info.mimeType.startsWith("image/jpg") &&
+      !info.mimeType.startsWith("image/png") &&
+      !info.mimeType.startsWith("image/avif") &&
+      !info.mimeType.startsWith("image/heic")
+    ) {
+      throw new Error("Input is not an image, or is of an unsupported format.");
+    }
+    const blob = await readableStreamToBlob(stream, info.mimeType);
+    const scaled = (await imageProcessing(blob, {
+      width: 136,
+      height: 33,
+    })) as string;
+    const matchingProfile = await prisma.profile.findUnique({
+      where: { userId: uid },
+    });
+    if (matchingProfile) {
+      await prisma.profile.update({
+        where: { userId: uid },
+        data: {
+          backgroundBase64: scaled,
+        },
+      });
+    } else {
+      await prisma.profile.create({
+        data: {
+          userId: uid,
+          backgroundBase64: scaled,
+        },
+      });
+    }
+    io.to(`profile=${uid}`).emit("profile_update", {
+      backgroundBase64: scaled,
+    });
   }
 
   static async getUserById(id: string) {
@@ -115,56 +156,44 @@ export default class UsersDAO {
     return out;
   }
 
-  static async updateUser(uid: string, data: { name?: string; pfp?: string }) {
-    if (data.name) {
-      const foundName = await prisma.user.findFirst({
-        where: { name: { equals: data.name.trim(), mode: "insensitive" } },
-      });
-      if (foundName) throw new Error("There is a user with that name already");
-      await prisma.user.update({
-        where: { id: uid },
+  static async updatePfp(
+    uid: string,
+    stream: internal.Readable,
+    info: busboy.FileInfo
+  ) {
+    if (
+      !info.mimeType.startsWith("image/jpeg") &&
+      !info.mimeType.startsWith("image/jpg") &&
+      !info.mimeType.startsWith("image/png") &&
+      !info.mimeType.startsWith("image/avif") &&
+      !info.mimeType.startsWith("image/heic")
+    ) {
+      throw new Error("Input is not an image, or is of an unsupported format.");
+    }
+    const blob = await readableStreamToBlob(stream, info.mimeType);
+    const scaled = (await imageProcessing(blob, {
+      width: 48,
+      height: 48,
+    })) as string;
+    const matchingPfp = await prisma.pfp.findUnique({ where: { userId: uid } });
+    if (matchingPfp) {
+      await prisma.pfp.update({
+        where: { userId: uid },
         data: {
-          name: data.name.trim(),
+          base64: scaled,
+        },
+      });
+    } else {
+      await prisma.pfp.create({
+        data: {
+          userId: uid,
+          base64: scaled,
         },
       });
     }
-    let base64;
-    if (data.pfp) {
-      try {
-        base64 = (await imageProcessing(data.pfp, {
-          width: 48,
-          height: 48,
-        })) as string;
-      } catch (e) {
-        throw new Error(`Error processing image : ${e}`);
-      }
-      const matchingPfp = await prisma.pfp.findUnique({
-        where: { userId: uid },
-      });
-      if (matchingPfp) {
-        await prisma.pfp.update({
-          where: { userId: uid },
-          data: {
-            base64,
-          },
-        });
-      } else {
-        await prisma.pfp.create({
-          data: {
-            userId: uid,
-            base64,
-          },
-        });
-      }
-    }
-    if (data.name) {
-      const socket = await getUserSocket(uid);
-      if (socket) socket.data.user.name = data.name;
-    }
     io.to(`user=${uid}`).emit("user_visible_update", {
       id: uid,
-      ...(data.name ? { name: data.name } : {}),
-      ...(data.pfp ? { pfp: base64 } : {}),
+      pfp: scaled,
     });
   }
 
@@ -209,7 +238,13 @@ export default class UsersDAO {
     for await (const post of posts) {
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`, Bucket: "prisma-socialmedia" },
+          {
+            Key: `${
+              (process.env.NODE_ENV !== "production" ? "dev." : "") +
+              post.imageKey
+            }`,
+            Bucket: "prisma-socialmedia",
+          },
           (err, _) => {
             if (err) reject(err);
             resolve();
@@ -218,7 +253,12 @@ export default class UsersDAO {
       });
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "")}thumb.${post.imageKey}`, Bucket: "prisma-socialmedia" },
+          {
+            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${
+              post.imageKey
+            }`,
+            Bucket: "prisma-socialmedia",
+          },
           (err, _) => {
             if (err) reject(err);
             resolve();
@@ -233,7 +273,13 @@ export default class UsersDAO {
     for await (const msg of roomMessages) {
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + msg.attachmentKey}`, Bucket: "prisma-socialmedia" },
+          {
+            Key: `${
+              (process.env.NODE_ENV !== "production" ? "dev." : "") +
+              msg.attachmentKey
+            }`,
+            Bucket: "prisma-socialmedia",
+          },
           (err, _) => {
             if (err) reject(err);
             resolve();
@@ -247,7 +293,13 @@ export default class UsersDAO {
     for await (const msg of privateMessages) {
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + msg.attachmentKey}`, Bucket: "prisma-socialmedia" },
+          {
+            Key: `${
+              (process.env.NODE_ENV !== "production" ? "dev." : "") +
+              msg.attachmentKey
+            }`,
+            Bucket: "prisma-socialmedia",
+          },
           (err, _) => {
             if (err) reject(err);
             resolve();

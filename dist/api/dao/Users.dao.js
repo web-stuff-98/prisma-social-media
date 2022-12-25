@@ -26,6 +26,7 @@ const __1 = require("../..");
 const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
 const redis_1 = __importDefault(require("../../utils/redis"));
 const aws_1 = __importDefault(require("../../utils/aws"));
+const readableStreamToBlob_1 = __importDefault(require("../../utils/readableStreamToBlob"));
 const S3 = new aws_1.default.S3();
 class UsersDAO {
     static getUsers() {
@@ -54,32 +55,71 @@ class UsersDAO {
             }
         });
     }
-    static updateProfile(uid, data) {
+    static updateProfile(uid, bio) {
         return __awaiter(this, void 0, void 0, function* () {
             let backgroundScaled = "";
-            let updateData = data;
-            if (data.backgroundBase64) {
-                backgroundScaled = (yield (0, imageProcessing_1.default)(data.backgroundBase64, {
-                    width: 136,
-                    height: 33,
-                }));
-                updateData.backgroundBase64 = backgroundScaled;
+            /*if (data.backgroundBase64) {
+              backgroundScaled = (await imageProcessing(data.backgroundBase64!, {
+                width: 136,
+                height: 33,
+              })) as string;
+              updateData.backgroundBase64 = backgroundScaled;
             }
-            if (updateData.backgroundBase64 === "")
-                delete updateData.backgroundBase64;
+            */
             const profile = yield prisma_1.default.profile.findUnique({
                 where: { userId: uid },
             });
             if (profile)
                 yield prisma_1.default.profile.update({
                     where: { userId: uid },
-                    data: updateData,
+                    data: { bio },
                 });
             else
                 yield prisma_1.default.profile.create({
-                    data: Object.assign({ userId: uid }, updateData),
+                    data: {
+                        userId: uid,
+                        bio,
+                    },
                 });
-            __1.io.to(`profile=${uid}`).emit("profile_update", data);
+            __1.io.to(`profile=${uid}`).emit("profile_update", { bio });
+        });
+    }
+    static updateProfileImage(uid, stream, info) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!info.mimeType.startsWith("image/jpeg") &&
+                !info.mimeType.startsWith("image/jpg") &&
+                !info.mimeType.startsWith("image/png") &&
+                !info.mimeType.startsWith("image/avif") &&
+                !info.mimeType.startsWith("image/heic")) {
+                throw new Error("Input is not an image, or is of an unsupported format.");
+            }
+            const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType);
+            const scaled = (yield (0, imageProcessing_1.default)(blob, {
+                width: 136,
+                height: 33,
+            }));
+            const matchingProfile = yield prisma_1.default.profile.findUnique({
+                where: { userId: uid },
+            });
+            if (matchingProfile) {
+                yield prisma_1.default.profile.update({
+                    where: { userId: uid },
+                    data: {
+                        backgroundBase64: scaled,
+                    },
+                });
+            }
+            else {
+                yield prisma_1.default.profile.create({
+                    data: {
+                        userId: uid,
+                        backgroundBase64: scaled,
+                    },
+                });
+            }
+            __1.io.to(`profile=${uid}`).emit("profile_update", {
+                backgroundBase64: scaled,
+            });
         });
     }
     static getUserById(id) {
@@ -125,58 +165,41 @@ class UsersDAO {
             return out;
         });
     }
-    static updateUser(uid, data) {
+    static updatePfp(uid, stream, info) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (data.name) {
-                const foundName = yield prisma_1.default.user.findFirst({
-                    where: { name: { equals: data.name.trim(), mode: "insensitive" } },
-                });
-                if (foundName)
-                    throw new Error("There is a user with that name already");
-                yield prisma_1.default.user.update({
-                    where: { id: uid },
+            if (!info.mimeType.startsWith("image/jpeg") &&
+                !info.mimeType.startsWith("image/jpg") &&
+                !info.mimeType.startsWith("image/png") &&
+                !info.mimeType.startsWith("image/avif") &&
+                !info.mimeType.startsWith("image/heic")) {
+                throw new Error("Input is not an image, or is of an unsupported format.");
+            }
+            const blob = yield (0, readableStreamToBlob_1.default)(stream, info.mimeType);
+            const scaled = (yield (0, imageProcessing_1.default)(blob, {
+                width: 48,
+                height: 48,
+            }));
+            const matchingPfp = yield prisma_1.default.pfp.findUnique({ where: { userId: uid } });
+            if (matchingPfp) {
+                yield prisma_1.default.pfp.update({
+                    where: { userId: uid },
                     data: {
-                        name: data.name.trim(),
+                        base64: scaled,
                     },
                 });
             }
-            let base64;
-            if (data.pfp) {
-                try {
-                    base64 = (yield (0, imageProcessing_1.default)(data.pfp, {
-                        width: 48,
-                        height: 48,
-                    }));
-                }
-                catch (e) {
-                    throw new Error(`Error processing image : ${e}`);
-                }
-                const matchingPfp = yield prisma_1.default.pfp.findUnique({
-                    where: { userId: uid },
+            else {
+                yield prisma_1.default.pfp.create({
+                    data: {
+                        userId: uid,
+                        base64: scaled,
+                    },
                 });
-                if (matchingPfp) {
-                    yield prisma_1.default.pfp.update({
-                        where: { userId: uid },
-                        data: {
-                            base64,
-                        },
-                    });
-                }
-                else {
-                    yield prisma_1.default.pfp.create({
-                        data: {
-                            userId: uid,
-                            base64,
-                        },
-                    });
-                }
             }
-            if (data.name) {
-                const socket = yield (0, getUserSocket_1.default)(uid);
-                if (socket)
-                    socket.data.user.name = data.name;
-            }
-            __1.io.to(`user=${uid}`).emit("user_visible_update", Object.assign(Object.assign({ id: uid }, (data.name ? { name: data.name } : {})), (data.pfp ? { pfp: base64 } : {})));
+            __1.io.to(`user=${uid}`).emit("user_visible_update", {
+                id: uid,
+                pfp: scaled,
+            });
         });
     }
     static createUser(username, password) {
@@ -222,14 +245,21 @@ class UsersDAO {
                 for (var posts_1 = __asyncValues(posts), posts_1_1; posts_1_1 = yield posts_1.next(), !posts_1_1.done;) {
                     const post = posts_1_1.value;
                     yield new Promise((resolve, reject) => {
-                        S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        S3.deleteObject({
+                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
+                                post.imageKey}`,
+                            Bucket: "prisma-socialmedia",
+                        }, (err, _) => {
                             if (err)
                                 reject(err);
                             resolve();
                         });
                     });
                     yield new Promise((resolve, reject) => {
-                        S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "")}thumb.${post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        S3.deleteObject({
+                            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.imageKey}`,
+                            Bucket: "prisma-socialmedia",
+                        }, (err, _) => {
                             if (err)
                                 reject(err);
                             resolve();
@@ -252,7 +282,11 @@ class UsersDAO {
                 for (var roomMessages_1 = __asyncValues(roomMessages), roomMessages_1_1; roomMessages_1_1 = yield roomMessages_1.next(), !roomMessages_1_1.done;) {
                     const msg = roomMessages_1_1.value;
                     yield new Promise((resolve, reject) => {
-                        S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + msg.attachmentKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        S3.deleteObject({
+                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
+                                msg.attachmentKey}`,
+                            Bucket: "prisma-socialmedia",
+                        }, (err, _) => {
                             if (err)
                                 reject(err);
                             resolve();
@@ -274,7 +308,11 @@ class UsersDAO {
                 for (var privateMessages_1 = __asyncValues(privateMessages), privateMessages_1_1; privateMessages_1_1 = yield privateMessages_1.next(), !privateMessages_1_1.done;) {
                     const msg = privateMessages_1_1.value;
                     yield new Promise((resolve, reject) => {
-                        S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + msg.attachmentKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                        S3.deleteObject({
+                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
+                                msg.attachmentKey}`,
+                            Bucket: "prisma-socialmedia",
+                        }, (err, _) => {
                             if (err)
                                 reject(err);
                             resolve();

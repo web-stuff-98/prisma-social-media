@@ -4,7 +4,11 @@ import type { ChangeEvent, FormEvent } from "react";
 import useUsers from "../context/UsersContext";
 import User from "../components/User";
 import { IUser, useAuth } from "../context/AuthContext";
-import { getProfile, updateProfile } from "../services/users";
+import {
+  getProfile,
+  updateProfile,
+  updateProfileImage,
+} from "../services/users";
 import { useSocket } from "../context/SocketContext";
 import { ImSpinner8 } from "react-icons/im";
 
@@ -22,7 +26,8 @@ export default function Profile() {
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
 
   const [bioInput, setBioInput] = useState("");
-  const [backgroundBase64Input, setBackgroundBase64Input] = useState("");
+  const [backgroundImageFile, setBackgroundImageFile] = useState<File>();
+  const backgroundImageFileRef = useRef<File>();
 
   const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: false });
   const [profileData, setProfileData] = useState<ProfileData | undefined>(
@@ -100,10 +105,9 @@ export default function Profile() {
     e.preventDefault();
     try {
       setResMsg({ msg: "", err: false, pen: true });
-      await updateProfile({
-        bio: bioInput,
-        backgroundBase64: backgroundBase64Input,
-      });
+      if (bioInput) await updateProfile(bioInput);
+      if (backgroundImageFileRef.current)
+        await updateProfileImage(backgroundImageFileRef.current);
       setResMsg({ msg: "", err: false, pen: false });
     } catch (e) {
       setResMsg({ msg: `${e}`, err: true, pen: false });
@@ -146,8 +150,8 @@ export default function Profile() {
               const fr = new FileReader();
               const file = e.target.files![0];
               if (!file) return;
-              fr.readAsDataURL(file);
-              fr.onloadend = () => setBackgroundBase64Input(`${fr.result}`);
+              setBackgroundImageFile(file);
+              backgroundImageFileRef.current = file;
             }}
             type="file"
             accept=".jpg,.jpeg,.avif,.png,.heic"
@@ -161,22 +165,22 @@ export default function Profile() {
           >
             Select background image
           </button>
-          <button
-            className="w-full"
-            type="submit"
-            aria-label="Update profile"
-          >
+          <button className="w-full" type="submit" aria-label="Update profile">
             Update profile
           </button>
         </form>
       )}
-      {(backgroundBase64Input ||
+      {(backgroundImageFile ||
         (profileData?.backgroundBase64 &&
           currentUser &&
           currentUser.id === id)) && (
         <img
           className="rounded mt-1 shadow"
-          src={`${backgroundBase64Input || profileData?.backgroundBase64}`}
+          src={`${
+            backgroundImageFile
+              ? URL.createObjectURL(backgroundImageFile)
+              : profileData?.backgroundBase64
+          }`}
         />
       )}
       {!currentUser || (currentUser.id !== id && <p>{profileData?.bio}</p>)}
