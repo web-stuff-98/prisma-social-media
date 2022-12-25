@@ -185,7 +185,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             ? { width: "fit-content", height: "fit-content" }
             : {}),
           right: `calc(${scrollBarWidth}px + 0.125rem)`,
-          bottom: `calc(${scrollBarWidth}px + 0.125rem + ${location.pathname.includes("/blog") ? "4.0rem" : "0rem"})`,
+          bottom: `calc(0.125rem + ${location.pathname.includes("/blog") ? "5.0rem" : "0rem"})`,
         }}
         className={`mx-auto font-rubik dark:text-white relative ${
           chatOpen

@@ -122,7 +122,7 @@ export default function Layout() {
           {location.pathname.includes("/blog") && (
             <footer
               style={{ bottom: "0", width:`calc(100vw - ${width}px)` }}
-              className="fixed flex items-center justify-center bg-neutral-900 dark:bg-zinc-900 border-t border-black dark:border-zinc-800 w-screen min-h-footer"
+              className="fixed z-50 flex items-center justify-center bg-neutral-900 dark:bg-zinc-900 border-t border-black h-footer dark:border-zinc-800 w-screen min-h-footer max-h-footer"
             >
               <BsChevronLeft
                 onClick={() => prevPage()}

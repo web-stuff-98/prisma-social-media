@@ -29,6 +29,7 @@ export interface IPost {
   author: { id: string };
   comments?: IPostComment[];
   createdAt?: string;
+  updatedAt?: string;
   slug: string;
   likedByMe?: boolean;
   sharedByMe?: boolean;

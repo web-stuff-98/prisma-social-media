@@ -18,6 +18,11 @@ import { useScrollY } from "../components/layout/Layout";
 import { useSocket } from "../context/SocketContext";
 import { useInterface } from "../context/InterfaceContext";
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "short",
+  timeStyle: "short",
+});
+
 export default function Post() {
   const { socket } = useSocket();
   const { rootComments, createLocalComment } = usePost();
@@ -74,6 +79,9 @@ export default function Post() {
     };
   }, [slug]);
 
+  const getDateString = (date:Date) => dateFormatter.format(date)
+  const renderUpdatedAt = (dateString:string) => `updated ${dateString.split(", ")[0]} at ${dateString.split(", ")[1]}`
+
   const { scrollY } = useScrollY();
 
   return (
@@ -102,6 +110,7 @@ export default function Post() {
                 className="md:text-4xl sm:text-md font-bold grow mr-4"
               >
                 {post?.title}
+                {post.updatedAt && post.updatedAt !== post.createdAt && <><br className="my-0 leading-3 py-0"/><b className="font-normal text-xs my-0">{renderUpdatedAt(getDateString(new Date(post.updatedAt)))}</b></>}
               </h1>
               <div className="my-2 drop-shadow-xl flex flex-col md:justify-end items-end sm:justify-center w-fit">
                 <User
@@ -186,7 +195,7 @@ export default function Post() {
                   prose-a:font-bold
       max-w-none"
           >
-            <ReactMarkdown>{String(post?.body)}</ReactMarkdown>
+            <ReactMarkdown>{post?.body!}</ReactMarkdown>
           </div>
           <section className="w-full p-2 mt-6">
             {

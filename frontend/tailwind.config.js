@@ -200,10 +200,12 @@ module.exports = {
       height: {
         postHeight: "14.5em",
         postImageHeight: "13.366rem",
+        footer: "5rem",
       },
       maxHeight: {
         asideMaxHeight: "calc(100vh - 8rem)",
         gap: "calc(100% - 1.5pc)",
+        footer: "5rem",
       },
       minWidth: {
         postWidth: "15.5em",

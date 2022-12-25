@@ -75,12 +75,8 @@ export default function Profile() {
             style={{
               ...(profileData?.backgroundBase64
                 ? {
-                    backdropFilter: "blur(1px)",
-                    padding: "0.25rem",
-                    borderRadius: "0.5rem",
-                    textShadow: "1px 2px 2px black",
-                    border: "1px solid rgba(255,255,255,0.333)",
-                    background: "rgba(0,0,0,0.1666)",
+                    textShadow: "1px 2px 3px black",
+                    filter:"drop-shadow(0px 1px 4px black)",
                     color: "white",
                     width: "fit-content",
                     margin: "auto",
@@ -128,6 +124,19 @@ export default function Profile() {
 
   return (
     <div className="p-1 flex flex-col">
+      {(backgroundImageFile ||
+        (profileData?.backgroundBase64 &&
+          currentUser &&
+          currentUser.id === id)) && (
+        <img
+          className="rounded mb-1 shadow"
+          src={`${
+            backgroundImageFile
+              ? URL.createObjectURL(backgroundImageFile)
+              : profileData?.backgroundBase64
+          }`}
+        />
+      )}
       {!currentUser ||
         (id !== currentUser.id && renderWithUserData(getUserData(String(id))))}
       {currentUser && currentUser.id === id && (
@@ -147,7 +156,6 @@ export default function Profile() {
           <input
             ref={backgroundImageInputRef}
             onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              const fr = new FileReader();
               const file = e.target.files![0];
               if (!file) return;
               setBackgroundImageFile(file);
@@ -170,20 +178,7 @@ export default function Profile() {
           </button>
         </form>
       )}
-      {(backgroundImageFile ||
-        (profileData?.backgroundBase64 &&
-          currentUser &&
-          currentUser.id === id)) && (
-        <img
-          className="rounded mt-1 shadow"
-          src={`${
-            backgroundImageFile
-              ? URL.createObjectURL(backgroundImageFile)
-              : profileData?.backgroundBase64
-          }`}
-        />
-      )}
-      {!currentUser || (currentUser.id !== id && <p>{profileData?.bio}</p>)}
+      {!currentUser || (currentUser.id !== id && <p className="text-center">{profileData?.bio}</p>)}
       {resMsg.pen ||
         (resMsg.msg && (
           <div className="drop-shadow">
