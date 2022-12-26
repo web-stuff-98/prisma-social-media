@@ -1,11 +1,12 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
 import type { ReactNode } from "react";
 
-type Breakpoint = "sm" | "md" | "xl";
+type Breakpoint = "sm" | "md" | "xl" | "xxl";
 interface State {
   breakPoint: Breakpoint;
   darkMode: boolean;
   mobileMenuOpen: boolean;
+  maxOpenCommentsInThread: number;
 }
 
 /*
@@ -26,6 +27,7 @@ const InterfaceContext = createContext<{
     breakPoint: "xl",
     darkMode: true,
     mobileMenuOpen: false,
+    maxOpenCommentsInThread: 4
   },
   dispatch: () => {},
 });
@@ -39,6 +41,7 @@ const initialState: State = {
   breakPoint: "xl",
   darkMode: false,
   mobileMenuOpen: false,
+  maxOpenCommentsInThread: 4,
 };
 
 const InterfaceProvider = ({ children }: { children: ReactNode }) => {
@@ -50,7 +53,12 @@ const InterfaceProvider = ({ children }: { children: ReactNode }) => {
       let breakPoint: Breakpoint = "sm";
       if (w >= breakPoints.md) breakPoint = "md";
       if (w >= breakPoints.xl) breakPoint = "xl";
-      dispatch({ breakPoint });
+      if (w >= breakPoints.xxl) breakPoint = "xxl";
+      dispatch({
+        breakPoint,
+        maxOpenCommentsInThread:
+          breakPoint === "sm" ? 1 : breakPoint === "md" ? 2 : 3,
+      });
     };
     const i = setInterval(() => getBreakpoint(), 500);
     const handleDetectDarkmode = (event: MediaQueryListEvent) =>

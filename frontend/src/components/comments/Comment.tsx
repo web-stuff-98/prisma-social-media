@@ -16,6 +16,7 @@ import useUsers from "../../context/UsersContext";
 import { usePosts } from "../../context/PostsContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useModal } from "../../context/ModalContext";
+import { useInterface } from "../../context/InterfaceContext";
 
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: "short",
@@ -31,11 +32,18 @@ export function Comment({
   likeCount,
   likedByMe,
   childIndex = 0,
+  parentId,
 }: IPostComment) {
   const { openModal } = useModal();
   const navigate = useNavigate();
   const { slug } = useParams();
-  const { setParentComment, openComments, setCommentOpen } = usePost();
+  const {
+    state: { maxOpenCommentsInThread },
+  } = useInterface();
+  const { getPostData } = usePosts();
+  const { user: currentUser } = useAuth();
+  const { getUserData } = useUsers();
+  const { setParentComment, openComments, setCommentOpen,setReplyingTo, replyingTo, parentComment  } = usePost();
 
   /*
 This function is from the web dev simplified video. It is supposed to be in the useAsync hook but that was causing infinite rerenders in the original PostContext, so I changed it to the useAync hook from usehooks.com and it worked. But I'll keep this function here anyway because it works here and dont need to change anything aside from the name.
@@ -65,9 +73,9 @@ This function is from the web dev simplified video. It is supposed to be in the 
   }
 
   const areChildrenHidden = useMemo(() => {
-    if(childIndex > 3) return true
+    if (childIndex > maxOpenCommentsInThread) return true;
     return !openComments.includes(id);
-  }, [openComments, childIndex]);
+  }, [openComments, childIndex, maxOpenCommentsInThread]);
   const setAreChildrenHidden = (to: boolean) => setCommentOpen(!to, id);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -79,7 +87,6 @@ This function is from the web dev simplified video. It is supposed to be in the 
     toggleLocalCommentLike,
   } = usePost();
 
-  const { getPostData } = usePosts();
 
   const post = getPostData(String(slug));
 
@@ -88,10 +95,6 @@ This function is from the web dev simplified video. It is supposed to be in the 
   const deleteCommentFn = useAsyncFn(deleteComment);
   const toggleCommentLikeFn = useAsyncFn(toggleCommentLike);
   const childComments = getReplies(id);
-
-  const { user: currentUser } = useAuth();
-  const { setReplyingTo, replyingTo, parentComment } = usePost();
-  const { getUserData } = useUsers();
 
   const onCommentReply = (message: string) => {
     if (!currentUser) {
@@ -151,7 +154,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
   );
 
   useEffect(() => {
-    if (parentComment !== "null" && childIndex === 0) {
+    if (parentComment !== null && childIndex === 0) {
       setAreChildrenHidden(false);
       return;
     }
@@ -159,7 +162,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
 
   return (
     <>
-      <div className="w-full mb-2 flex">
+      <div className={`w-full ${areChildrenHidden ? "" : "mb-2"} flex`}>
         <div className="flex items-start w-full">
           <div className="my-auto flex justify-between items-center w-full">
             <User
@@ -172,7 +175,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
               user={getUserData(user.id)}
               uid={user.id}
             />
-            <div className="w-full flex pl-2 items-center">
+            <div className="w-full flex pl-1 items-center">
               {isEditing ? (
                 <CommentForm
                   autoFocus
@@ -225,16 +228,16 @@ This function is from the web dev simplified video. It is supposed to be in the 
         </div>
       </div>
       {replyingTo === id && currentUser && (
-        <div>
           <CommentForm
             autoFocus
             onSubmit={onCommentReply}
             loading={createCommentFn.loading}
             error={createCommentFn.error}
             placeholder="Reply to comment..."
-            onClickOutside={() => setReplyingTo("")}
+            onClickOutside={() => {
+              if (parentComment !== id) setReplyingTo("");
+            }}
           />
-        </div>
       )}
       {childComments?.length > 0 && (
         <>
@@ -275,11 +278,11 @@ This function is from the web dev simplified video. It is supposed to be in the 
             </div>
           </div>
           <button
-            className={`btn bg-transparent italic text-black px-0 mb-2 text-xs ${
+            className={`btn bg-transparent italic text-black px-0 py-0 mt-0 mb-2 text-xs ${
               areChildrenHidden ? "" : "hidden"
             }`}
             onClick={() => {
-              if (childIndex > 3) {
+              if (childIndex > maxOpenCommentsInThread) {
                 setParentComment(id);
               }
               setAreChildrenHidden(false);

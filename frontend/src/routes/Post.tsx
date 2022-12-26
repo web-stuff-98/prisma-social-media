@@ -10,7 +10,7 @@ import { usePosts } from "../context/PostsContext";
 import useUsers from "../context/UsersContext";
 import { createComment } from "../services/comments";
 import { RiEditBoxFill, RiDeleteBin4Fill } from "react-icons/ri";
-import { useAuth } from "../context/AuthContext";
+import { IUser, useAuth } from "../context/AuthContext";
 import { useModal } from "../context/ModalContext";
 import { deletePost } from "../services/posts";
 import { useScrollY } from "../components/layout/Layout";
@@ -81,6 +81,8 @@ export default function Post() {
   const getDateString = (date: Date) => dateFormatter.format(date);
   const renderUpdatedAt = (dateString: string) =>
     `updated ${dateString.split(", ")[0]} at ${dateString.split(", ")[1]}`;
+
+  const getRootCommentUserName = (rcu?: IUser) => (rcu ? rcu.name : "");
 
   const { scrollY } = useScrollY();
 
@@ -211,22 +213,38 @@ export default function Post() {
             {
               <div
                 className={`mx-auto py-0.5 ${
-                  parentComment !== "null"
-                    ? "text-md font-bold"
-                    : "text-xs"
+                  parentComment !== null ? "text-md font-bold" : "text-xs"
                 } text-center`}
               >
-                {parentComment !== "null"
-                  ? `Viewing replies to ${rootComments[0].user.id}s comment`
+                {parentComment !== null
+                  ? `Viewing replies to ${
+                      user && rootComments[0].user.id === user.id
+                        ? "your"
+                        : getRootCommentUserName(
+                            getUserData(rootComments[0].user.id)
+                          ) + "s"
+                    } comment`
                   : !post.commentCount
                   ? "No comments"
                   : `${post.commentCount} comment${
                       post.commentCount! > 1 && "s"
                     }`}
-                {parentComment !== "null" && <><br/><button onClick={() => goBack()} aria-label="Back" type="button" className="font-bold italic text-xl">Back</button></>}
+                {parentComment !== null && (
+                  <>
+                    <br />
+                    <button
+                      onClick={() => goBack()}
+                      aria-label="Back"
+                      type="button"
+                      className="font-bold italic text-xl"
+                    >
+                      Back
+                    </button>
+                  </>
+                )}
               </div>
             }
-            {user && (
+            {user && !parentComment && (
               <CommentForm
                 placeholder="Add a comment..."
                 loading={false}
