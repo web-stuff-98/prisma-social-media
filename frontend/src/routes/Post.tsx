@@ -218,7 +218,7 @@ export default function Post() {
               >
                 {parentComment !== null
                   ? `Viewing replies to ${
-                      user && rootComments[0].user.id === user.id
+                      user && rootComments[0] && rootComments[0].user.id === user.id
                         ? "your"
                         : getRootCommentUserName(
                             getUserData(rootComments[0].user.id)

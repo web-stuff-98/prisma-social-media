@@ -119,8 +119,9 @@ export function PostProvider({ children }: { children: ReactNode }) {
   );
   const handleCommentDeleted = useCallback((commentId: string, uid: string) => {
     if (uid === user?.id) return;
+    if(parentComment === commentId) goBack()
     deleteLocalComment(commentId);
-  }, []);
+  }, [parentComment]);
   const handleCommentLiked = useCallback((addLike: boolean, uid: string) => {
     if (uid === user?.id) return;
     toggleLocalCommentLike(uid, addLike);
