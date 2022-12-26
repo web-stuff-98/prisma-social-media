@@ -153,7 +153,8 @@ router.route("/room/:roomId/users").get(Chat_controller_1.default.getRoomUsers);
 router.route("/room/:roomId/messages").get(Chat_controller_1.default.getRoomMessages);
 router.route("/room/:roomId").delete(Chat_controller_1.default.deleteRoom);
 router.route("/room/:roomId").patch((0, validateBodyMiddleware_1.default)({
-    name: Yup.string().required(),
+    name: Yup.string().notRequired(),
+    public: Yup.boolean().nullable().notRequired()
 }), Chat_controller_1.default.updateRoom);
 router.route("/room/:roomId/video/join").post(Chat_controller_1.default.roomOpenVideoChat);
 //Chatroom User actions (join/leave/kick/ban)

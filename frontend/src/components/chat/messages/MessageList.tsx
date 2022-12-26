@@ -30,7 +30,7 @@ export default function MessageList({
     <>
       {status === "success" && (
         <div
-          style={{ maxHeight: "20pc" }}
+          style={{ maxHeight: "20pc", minHeight:"20pc" }}
           className="relative overflow-y-scroll flex flex-col gap-2 grow"
         >
           {messages.length > 0 &&

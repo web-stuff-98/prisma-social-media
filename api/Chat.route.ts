@@ -171,7 +171,8 @@ router.route("/room/:roomId/messages").get(ChatController.getRoomMessages);
 router.route("/room/:roomId").delete(ChatController.deleteRoom);
 router.route("/room/:roomId").patch(
   validateBodyMiddleware({
-    name: Yup.string().required(),
+    name: Yup.string().notRequired(),
+    public: Yup.boolean().nullable().notRequired()
   }),
   ChatController.updateRoom
 );
