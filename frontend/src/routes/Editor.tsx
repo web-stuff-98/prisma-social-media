@@ -13,6 +13,10 @@ import { ImSpinner8 } from "react-icons/im";
 import { useSocket } from "../context/SocketContext";
 import ProgressBar from "../components/ProgressBar";
 import { useModal } from "../context/ModalContext";
+import axios from "axios";
+import { LoremIpsum } from "lorem-ipsum";
+
+const lipsum = new LoremIpsum();
 
 export default function Editor() {
   const { slug } = useParams();
@@ -98,6 +102,58 @@ export default function Editor() {
     }
   };
 
+  const randomImage = async () => {
+    try {
+      setResMsg({ msg: "", err: false, pen: true });
+      const res = await axios({
+        method: "GET",
+        url: "https://picsum.photos/1000/800",
+        responseType: "arraybuffer",
+      });
+      const file = new File([res.data], "file");
+      setFile(file);
+      setResMsg({ msg: "", err: false, pen: false });
+    } catch (e) {
+      setResMsg({
+        msg: `Error getting random image : ${e}`,
+        err: true,
+        pen: false,
+      });
+    }
+  };
+
+  const randomBody = async () => {
+    try {
+      setResMsg({ msg: "", err: false, pen: true });
+      const res = await axios({
+        method: "GET",
+        url: "https://jaspervdj.be/lorem-markdownum/markdown.txt",
+      });
+      const title = lipsum.generateParagraphs(1).slice(0, 80);
+      const description = lipsum
+        .generateParagraphs(Math.ceil(Math.random() * 3))
+        .slice(0, 160);
+        const tags = "#" + lipsum
+        .generateParagraphs(1)
+        .replaceAll(".", "")
+        .split(" ")
+        .filter((tag: string) => tag && tag.length > 1)
+        .slice(0, 8)
+        .join("#")
+      formik.setFieldValue("body", res.data);
+      formik.setFieldValue("title", title);
+      formik.setFieldValue("description", description);
+      formik.setFieldValue("tags", tags);
+      setResMsg({ msg: "", err: false, pen: false });
+    } catch (e) {
+      setResMsg({
+        msg: `Error getting random body : ${e}`,
+        err: true,
+        pen: false,
+      });
+    }
+  };
+
   useEffect(() => {
     if (slug) loadIntoEditor();
   }, [slug]);
@@ -174,6 +230,20 @@ export default function Editor() {
             className="hidden"
           />
           <button
+            onClick={() => randomBody()}
+            type="button"
+            aria-label="Random body"
+          >
+            Random body
+          </button>
+          <button
+            onClick={() => randomImage()}
+            type="button"
+            aria-label="Random image"
+          >
+            Random image
+          </button>
+          <button
             type="submit"
             aria-label={slug ? "Update post" : "Create post"}
           >
@@ -229,7 +299,10 @@ export default function Editor() {
             <>
               <img
                 className="shadow rounded mb-2 mx-auto"
-                src={`https://d2gt89ey9qb5n6.cloudfront.net/${(process.env.NODE_ENV !== "production" ? "dev." : "") + imageKey}`}
+                src={`https://d2gt89ey9qb5n6.cloudfront.net/${
+                  (process.env.NODE_ENV !== "production" ? "dev." : "") +
+                  imageKey
+                }`}
               />
             </>
           )}
