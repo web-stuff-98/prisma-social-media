@@ -16,18 +16,6 @@ const Posts_dao_1 = __importDefault(require("../dao/Posts.dao"));
 const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
 const busboy_1 = __importDefault(require("busboy"));
 class PostsController {
-    static getPosts(req, res) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const posts = yield Posts_dao_1.default.getPosts((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
-                res.status(200).json(posts);
-            }
-            catch (e) {
-                res.status(500).json({ msg: "Internal error" });
-            }
-        });
-    }
     static getPage(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
@@ -36,6 +24,18 @@ class PostsController {
                 res.status(200).json(data);
             }
             catch (error) {
+                res.status(500).json({ msg: "Internal error" });
+            }
+        });
+    }
+    static getDataForPosts(req, res) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const data = yield Posts_dao_1.default.getDataForPosts(req.body.shares, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                res.status(200).json(data);
+            }
+            catch (e) {
                 res.status(500).json({ msg: "Internal error" });
             }
         });

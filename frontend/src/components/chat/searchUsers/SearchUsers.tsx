@@ -10,8 +10,11 @@ import useUsers from "../../../context/UsersContext";
 export default function SearchUsers() {
   const { cacheUserData, getUserData } = useUsers();
 
-  const [resMsg, setResMsg] = useState({ msg: "", err: false, pen: false });
-
+  const [resMsg, setResMsg] = useState({
+    msg: "Enter the users full name to find their account.",
+    err: false,
+    pen: false,
+  });
   const [searchInput, setSearchInput] = useState("");
   const [uids, setUids] = useState<string[]>([]);
 
@@ -35,6 +38,9 @@ export default function SearchUsers() {
   return (
     <div className="w-full h-full flex flex-col items-center justify-between">
       <div className="w-full h-full grow flex flex-col items-start p-2 gap-2 justify-start">
+        {uids.length === 0 && (
+          <p className="text-center mx-auto">{resMsg.msg}</p>
+        )}
         {resMsg.pen ? (
           <ImSpinner8 className="text-3xl mx-auto my-auto drop-shadow animate-spin" />
         ) : (

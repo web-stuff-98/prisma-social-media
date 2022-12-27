@@ -11,51 +11,11 @@ import imageProcessing from "../../utils/imageProcessing";
 import readableStreamToBlob from "../../utils/readableStreamToBlob";
 import getUserSocket from "../../utils/getUserSocket";
 import { Post } from "@prisma/client";
+import parsePosts from "../../utils/parsePosts";
 
 const S3 = new AWS.S3();
 
 export default class PostsDAO {
-  static async getPosts(uid?: string) {
-    const posts = await prisma.post.findMany({
-      where: { imagePending: false },
-      select: {
-        _count: { select: { comments: true, likes: true, shares: true } },
-        id: true,
-        slug: true,
-        title: true,
-        createdAt: true,
-        description: true,
-        author: {
-          select: {
-            id: true,
-          },
-        },
-        tags: true,
-        imageKey: true,
-        blur: true,
-        likes: true,
-        shares: true,
-      },
-    });
-    return posts.map((post) => {
-      let likedByMe = false;
-      let sharedByMe = false;
-      likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
-      sharedByMe = post.shares.find((share) => share.userId === uid)
-        ? true
-        : false;
-      return {
-        ...post,
-        likes: post.likes.length,
-        shares: post.shares.length,
-        tags: post.tags.map((tag) => tag.name),
-        likedByMe,
-        sharedByMe,
-        commentCount: post._count.comments || 0,
-      };
-    });
-  }
-
   static async getPage(
     page: number,
     query: { term?: string; tags?: string; mode?: string; order?: string },
@@ -74,6 +34,31 @@ export default class PostsDAO {
     return data;
   }
 
+  static async getDataForPosts(slugs: string[], uid?: string) {
+    const data = await prisma.post.findMany({
+      where: { slug: { in: slugs } },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        createdAt: true,
+        description: true,
+        author: {
+          select: {
+            id: true,
+          },
+        },
+        likes: true,
+        shares: true,
+        tags: true,
+        imageKey: true,
+        blur: true,
+        _count: { select: { comments: true } },
+      },
+    });
+    return parsePosts(data, uid);
+  }
+
   static async deletePostBySlug(slug: string, uid: string) {
     let post: Post;
     try {
@@ -88,7 +73,13 @@ export default class PostsDAO {
     if (!post.imagePending)
       await new Promise<void>((resolve, reject) => {
         S3.deleteObject(
-          { Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`, Bucket: "prisma-socialmedia" },
+          {
+            Key: `${
+              (process.env.NODE_ENV !== "production" ? "dev." : "") +
+              post.imageKey
+            }`,
+            Bucket: "prisma-socialmedia",
+          },
           (err, _) => {
             if (err) reject(err);
             resolve();
@@ -467,7 +458,10 @@ export default class PostsDAO {
           S3.deleteObject(
             {
               Bucket: "prisma-socialmedia",
-              Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`,
+              Key: `${
+                (process.env.NODE_ENV !== "production" ? "dev." : "") +
+                post.imageKey
+              }`,
             },
             (e, _) => {
               if (e) reject(e);

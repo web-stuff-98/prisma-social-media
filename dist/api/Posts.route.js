@@ -54,11 +54,6 @@ const postValidateSchema = {
     })
         .required(),
 };
-router.route("/").get((0, express_slow_down_1.default)({
-    windowMs: 2000,
-    delayAfter: 10,
-    delayMs: 1000,
-}), authMiddleware_1.withUser, Posts_controller_1.default.getPosts);
 router.route("/page/:page").get((0, express_slow_down_1.default)({
     windowMs: 1000,
     delayAfter: 3,
@@ -75,6 +70,13 @@ router.route("/").post(authMiddleware_1.default, (0, express_slow_down_1.default
     delayAfter: 10,
     delayMs: 5000,
 }), (0, validateBodyMiddleware_1.default)(postValidateSchema), Posts_controller_1.default.createPost);
+router.route("/slugs").post(authMiddleware_1.withUser, (0, express_slow_down_1.default)({
+    windowMs: 120000,
+    delayAfter: 10,
+    delayMs: 5000,
+}), (0, validateBodyMiddleware_1.default)({
+    slugs: Yup.array().of(Yup.string()).required(),
+}), Posts_controller_1.default.getDataForPosts);
 router.route("/:slug").put(authMiddleware_1.default, (0, express_slow_down_1.default)({
     windowMs: 120000,
     delayAfter: 10,

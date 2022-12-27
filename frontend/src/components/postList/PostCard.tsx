@@ -25,7 +25,6 @@ export default function PostCard({
   const { openModal } = useModal();
   const { state: iState } = useInterface();
   const { user } = useAuth();
-  const { searchTags, autoAddRemoveSearchTag } = useFilter();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);

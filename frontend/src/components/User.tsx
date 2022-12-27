@@ -78,7 +78,6 @@ export default function User({
   const { user: currentUser } = useAuth();
   const { cacheUserData } = useUsers();
   const { state: iState } = useInterface();
-
   const { userEnteredView, userLeftView } = useUsers();
 
   const containerRef = useRef(null);

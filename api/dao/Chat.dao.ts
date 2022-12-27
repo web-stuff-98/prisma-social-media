@@ -1,10 +1,7 @@
 import prisma from "../../utils/prisma";
-
 import busboy from "busboy";
 import internal from "stream";
-
 import mime from "mime-types";
-
 import AWS from "../../utils/aws";
 import { io } from "../..";
 import { PrivateMessage, RoomMessage, Room, User } from "@prisma/client";
@@ -14,10 +11,6 @@ const s3 = new AWS.S3();
 
 export default class ChatDAO {
   static async searchUser(name: string) {
-    /*
-    You could easily make this function faster, couldn't be bothered to figure out the proper way of doing it at the time
-    It also returns the user making the search, which it maybe shouldn't do
-    */
     const inQ = await prisma.user
       .findMany({
         where: {
@@ -29,30 +22,7 @@ export default class ChatDAO {
         select: { id: true },
       })
       .then((res) => res.map((u) => u.id));
-    const startsWithQ = await prisma.user
-      .findMany({
-        where: {
-          name: {
-            startsWith: name,
-            mode: "insensitive",
-          },
-        },
-        select: { id: true },
-      })
-      .then((res) => res.map((u) => u.id));
-    const endsWithQ = await prisma.user
-      .findMany({
-        where: {
-          name: {
-            startsWith: name,
-            mode: "insensitive",
-          },
-        },
-        select: { id: true },
-      })
-      .then((res) => res.map((u) => u.id));
-    const a = inQ.concat(startsWithQ).concat(endsWithQ);
-    return a.filter((item, pos) => a.indexOf(item) == pos);
+    return inQ;
   }
 
   //Conversations(priate messaging)

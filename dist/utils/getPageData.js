@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const prisma_1 = __importDefault(require("./prisma"));
+const parsePosts_1 = __importDefault(require("./parsePosts"));
 exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, function* () {
     let clientQueryInput = {
         pageOffset: 0,
@@ -96,19 +97,7 @@ exports.default = (query, params, uid) => __awaiter(void 0, void 0, void 0, func
         select: { id: true },
     });
     return {
-        posts: posts.map((post) => {
-            let likedByMe = false;
-            let sharedByMe = false;
-            likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
-            sharedByMe = post.shares.find((share) => share.userId === uid)
-                ? true
-                : false;
-            let out = Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
-                sharedByMe });
-            out.commentCount = out._count.comments;
-            delete out._count;
-            return out;
-        }),
+        posts: (0, parsePosts_1.default)(posts, uid),
         pageCount: posts.length,
         fullCount: feedQ_count.length,
         maxPage: Math.ceil(feedQ_count.length / 20),

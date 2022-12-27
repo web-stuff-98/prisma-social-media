@@ -39,15 +39,6 @@ const postValidateSchema = {
     .required(),
 };
 
-router.route("/").get(
-  slowDown({
-    windowMs: 2000,
-    delayAfter: 10,
-    delayMs: 1000,
-  }),
-  withUser,
-  PostsController.getPosts
-);
 router.route("/page/:page").get(
   slowDown({
     windowMs: 1000,
@@ -73,6 +64,18 @@ router.route("/").post(
   }),
   validateBodyMiddleware(postValidateSchema),
   PostsController.createPost
+);
+router.route("/slugs").post(
+  withUser,
+  slowDown({
+    windowMs: 120000,
+    delayAfter: 10,
+    delayMs: 5000,
+  }),
+  validateBodyMiddleware({
+    slugs: Yup.array().of(Yup.string()).required(),
+  }),
+  PostsController.getDataForPosts
 );
 router.route("/:slug").put(
   authMiddleware,

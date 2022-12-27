@@ -99,6 +99,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const openRoomEditor = (roomId: string) => {
     setEditRoomId(roomId);
     setChatSection("EditRoom");
+    setTopText("Room editor")
   };
 
   const {

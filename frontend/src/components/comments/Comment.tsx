@@ -248,7 +248,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
             <button
               style={{
                 position: "absolute",
-                left: "calc(1rem - 1px)",
+                left: "calc(0.866rem - 1px)",
                 height: "100%",
                 width: "10px",
               }}
@@ -288,7 +288,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
               setAreChildrenHidden(false);
             }}
           >
-            Show Replies
+            Show Replies ({childComments.length})
           </button>
         </>
       )}

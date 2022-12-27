@@ -213,7 +213,7 @@ export default function Post() {
             {
               <div
                 className={`mx-auto py-0.5 ${
-                  parentComment !== null ? "text-md font-bold" : "text-xs"
+                  parentComment !== null ? "text-md font-bold" : "text-sm"
                 } text-center`}
               >
                 {parentComment !== null

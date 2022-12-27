@@ -11,6 +11,8 @@ import {
 } from "../services/users";
 import { useSocket } from "../context/SocketContext";
 import { ImSpinner8 } from "react-icons/im";
+import { IPost, usePosts } from "../context/PostsContext";
+import PostCardShare from "../components/postList/PostCardShare";
 
 type ProfileData = {
   backgroundBase64: string;
@@ -22,6 +24,7 @@ export default function Profile() {
   const { cacheUserData, getUserData } = useUsers();
   const { user: currentUser } = useAuth();
   const { socket } = useSocket();
+  const { sharesPosts, setSharesPosts, getPostData } = usePosts();
 
   const backgroundImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,10 +43,11 @@ export default function Profile() {
     if (socket && id !== currentUser!.id) socket?.emit("open_profile", id);
     setResMsg({ msg: "", err: false, pen: true });
     getProfile(id)
-      .then((profileData) => {
+      .then(({ profileData, shares }) => {
         setResMsg({ msg: "", err: false, pen: false });
         setProfileData(profileData);
         setBioInput(profileData.bio);
+        setSharesPosts(shares);
       })
       .catch((e) => {
         const msg = `${e}`;
@@ -76,7 +80,7 @@ export default function Profile() {
               ...(profileData?.backgroundBase64
                 ? {
                     textShadow: "1px 2px 3px black",
-                    filter:"drop-shadow(0px 1px 4px black)",
+                    filter: "drop-shadow(0px 1px 4px black)",
                     color: "white",
                     width: "fit-content",
                     margin: "auto",
@@ -137,6 +141,19 @@ export default function Profile() {
           }`}
         />
       )}
+      {sharesPosts && (
+        <>
+          <h3 className="text-center text-md">Shares</h3>
+          <div
+            style={{ maxHeight: "20rem" }}
+            className="overflow-y-auto flex flex-col mb-2"
+          >
+            {sharesPosts.map((p) => (
+              <PostCardShare slug={p} />
+            ))}
+          </div>
+        </>
+      )}
       {!currentUser ||
         (id !== currentUser.id && renderWithUserData(getUserData(String(id))))}
       {currentUser && currentUser.id === id && (
@@ -178,7 +195,10 @@ export default function Profile() {
           </button>
         </form>
       )}
-      {!currentUser || (currentUser.id !== id && <p className="text-center">{profileData?.bio}</p>)}
+      {!currentUser ||
+        (currentUser.id !== id && (
+          <p className="text-center">{profileData?.bio}</p>
+        ))}
       {resMsg.pen ||
         (resMsg.msg && (
           <div className="drop-shadow">

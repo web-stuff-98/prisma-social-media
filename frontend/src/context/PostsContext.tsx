@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import {
+  getDataForPosts,
   getPage,
   getPost,
   toggleLike,
@@ -58,6 +59,7 @@ const PostsContext = createContext<{
 
   // slug arrays
   pagePosts: string[];
+  sharesPosts: string[];
   postsOpen: string[];
 
   cachePostData: (slug: string, force?: boolean) => void;
@@ -74,11 +76,14 @@ const PostsContext = createContext<{
 
   postEnteredView: (slug: string) => void;
   postLeftView: (slug: string) => void;
+
+  setSharesPosts: (to: string[]) => void;
 }>({
   error: "",
   status: "idle",
 
   pagePosts: [],
+  sharesPosts: [],
   postsOpen: [],
 
   cachePostData: () => {},
@@ -95,19 +100,28 @@ const PostsContext = createContext<{
 
   postEnteredView: () => {},
   postLeftView: () => {},
+
+  setSharesPosts: () => {},
 });
 
 export const PostsProvider = ({ children }: { children: ReactNode }) => {
   const { socket } = useSocket();
   const { cacheUserData } = useUsers();
-  const { setPageCount, setFullCount, setMaxPage, searchTags, searchTerm, sortModeIndex, sortOrderIndex } =
-    useFilter();
+  const {
+    setPageCount,
+    setFullCount,
+    setMaxPage,
+    searchTags,
+    searchTerm,
+    sortModeIndex,
+    sortOrderIndex,
+  } = useFilter();
   const query = useParams();
 
   //Slugs only
   const [pagePosts, setPagePosts] = useState<string[]>([]);
   const [postsOpen, setPostsOpen] = useState<string[]>([]);
-
+  const [sharesPosts, setSharesPostsState] = useState<string[]>([]);
   const [postsData, setPostsData] = useState<Partial<IPost>[]>([]);
 
   //Caches full post data (including comments and body)
@@ -137,10 +151,24 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
     ]);
   };
 
+  const setSharesPosts = (slugs: string[]) => {
+    setSharesPostsState(slugs);
+    getDataForPosts(slugs)
+      .then((data:IPost[]) => {
+        addToPostsData(data)})
+      .catch((e) => {
+        setError(`${e}`);
+        setStatus("error");
+      });
+  };
+
   const getAndSetPage = () => {
-    const queryPortion:string = (window.location.href.split("/blog/")[1] || "").split("?")[1] || ""
+    const queryPortion: string =
+      (window.location.href.split("/blog/")[1] || "").split("?")[1] || "";
     getPage(
-      `${query.page ? Number(query.page) : 1}${queryPortion ? `?${queryPortion}` : ""}`
+      `${query.page ? Number(query.page) : 1}${
+        queryPortion ? `?${queryPortion}` : ""
+      }`
     )
       .then(
         (data: {
@@ -150,7 +178,7 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
           fullCount: number;
         }) => {
           addToPostsData(data.posts);
-          setPagePosts((p) => [...data.posts.map((p) => p.slug)]);
+          setPagePosts((_) => [...data.posts.map((p) => p.slug)]);
           setStatus("success");
           setMaxPage(data.maxPage);
           setPageCount(data.pageCount);
@@ -391,6 +419,8 @@ export const PostsProvider = ({ children }: { children: ReactNode }) => {
         error,
         status,
         pagePosts,
+        sharesPosts,
+        setSharesPosts,
         postsOpen,
         visiblePosts,
         disappearedPosts,

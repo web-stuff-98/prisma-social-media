@@ -133,13 +133,15 @@ export default function Editor() {
       const description = lipsum
         .generateParagraphs(Math.ceil(Math.random() * 3))
         .slice(0, 160);
-        const tags = "#" + lipsum
-        .generateParagraphs(1)
-        .replaceAll(".", "")
-        .split(" ")
-        .filter((tag: string) => tag && tag.length > 1)
-        .slice(0, 8)
-        .join("#")
+      const tags =
+        "#" +
+        lipsum
+          .generateParagraphs(1)
+          .replaceAll(".", "")
+          .split(" ")
+          .filter((tag: string) => tag && tag.length > 1)
+          .slice(0, 8)
+          .join("#");
       formik.setFieldValue("body", res.data);
       formik.setFieldValue("title", title);
       formik.setFieldValue("description", description);

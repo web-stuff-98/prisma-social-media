@@ -2,14 +2,18 @@ import { IPost } from "../context/PostsContext";
 import { makeRequest } from "./makeRequest";
 
 const getPosts = () => makeRequest("/api/posts", { withCredentials: true });
-const getPage = async (queryAndPagePortion:string) => {
-  return await makeRequest(
-    `/api/posts/page/${queryAndPagePortion}`,
-    { withCredentials: true }
-  );
+const getPage = async (queryAndPagePortion: string) => {
+  return await makeRequest(`/api/posts/page/${queryAndPagePortion}`, {
+    withCredentials: true,
+  });
 };
 const getPost = (slug: string) =>
   makeRequest(`/api/posts/${slug}`, { withCredentials: true });
+const getDataForPosts = (slugs: string[]) =>  makeRequest(`/api/posts/slugs`, {
+    withCredentials: true,
+    method: "POST",
+    data: { slugs },
+  });
 const deletePost = (slug: string) =>
   makeRequest(`/api/posts/${slug}`, {
     method: "DELETE",
@@ -65,4 +69,5 @@ export {
   uploadCoverImage,
   deletePost,
   updateCoverImage,
+  getDataForPosts,
 };

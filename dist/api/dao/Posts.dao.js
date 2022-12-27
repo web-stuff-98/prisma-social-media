@@ -21,14 +21,25 @@ const getPageData_1 = __importDefault(require("../../utils/getPageData"));
 const imageProcessing_1 = __importDefault(require("../../utils/imageProcessing"));
 const readableStreamToBlob_1 = __importDefault(require("../../utils/readableStreamToBlob"));
 const getUserSocket_1 = __importDefault(require("../../utils/getUserSocket"));
+const parsePosts_1 = __importDefault(require("../../utils/parsePosts"));
 const S3 = new aws_1.default.S3();
 class PostsDAO {
-    static getPosts(uid) {
+    static getPage(page, query, uid) {
         return __awaiter(this, void 0, void 0, function* () {
-            const posts = yield prisma_1.default.post.findMany({
-                where: { imagePending: false },
+            const data = yield (0, getPageData_1.default)({
+                tags: query.tags || "",
+                term: query.term || "",
+                mode: query.mode || "",
+                order: query.order || "",
+            }, { page }, uid);
+            return data;
+        });
+    }
+    static getDataForPosts(slugs, uid) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = yield prisma_1.default.post.findMany({
+                where: { slug: { in: slugs } },
                 select: {
-                    _count: { select: { comments: true, likes: true, shares: true } },
                     id: true,
                     slug: true,
                     title: true,
@@ -39,34 +50,15 @@ class PostsDAO {
                             id: true,
                         },
                     },
+                    likes: true,
+                    shares: true,
                     tags: true,
                     imageKey: true,
                     blur: true,
-                    likes: true,
-                    shares: true,
+                    _count: { select: { comments: true } },
                 },
             });
-            return posts.map((post) => {
-                let likedByMe = false;
-                let sharedByMe = false;
-                likedByMe = post.likes.find((like) => like.userId === uid) ? true : false;
-                sharedByMe = post.shares.find((share) => share.userId === uid)
-                    ? true
-                    : false;
-                return Object.assign(Object.assign({}, post), { likes: post.likes.length, shares: post.shares.length, tags: post.tags.map((tag) => tag.name), likedByMe,
-                    sharedByMe, commentCount: post._count.comments || 0 });
-            });
-        });
-    }
-    static getPage(page, query, uid) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const data = yield (0, getPageData_1.default)({
-                tags: query.tags || "",
-                term: query.term || "",
-                mode: query.mode || "",
-                order: query.order || "",
-            }, { page }, uid);
-            return data;
+            return (0, parsePosts_1.default)(data, uid);
         });
     }
     static deletePostBySlug(slug, uid) {
@@ -85,7 +77,11 @@ class PostsDAO {
             });
             if (!post.imagePending)
                 yield new Promise((resolve, reject) => {
-                    S3.deleteObject({ Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`, Bucket: "prisma-socialmedia" }, (err, _) => {
+                    S3.deleteObject({
+                        Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
+                            post.imageKey}`,
+                        Bucket: "prisma-socialmedia",
+                    }, (err, _) => {
                         if (err)
                             reject(err);
                         resolve();
@@ -402,7 +398,8 @@ class PostsDAO {
                     yield new Promise((resolve, reject) => {
                         S3.deleteObject({
                             Bucket: "prisma-socialmedia",
-                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.imageKey}`,
+                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
+                                post.imageKey}`,
                         }, (e, _) => {
                             if (e)
                                 reject(e);

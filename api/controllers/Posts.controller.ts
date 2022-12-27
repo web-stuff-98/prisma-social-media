@@ -5,15 +5,6 @@ import getUserSocket from "../../utils/getUserSocket";
 import busboy from "busboy";
 
 export default class PostsController {
-  static async getPosts(req: Req, res: Res) {
-    try {
-      const posts = await PostsDAO.getPosts(req.user?.id);
-      res.status(200).json(posts);
-    } catch (e) {
-      res.status(500).json({ msg: "Internal error" });
-    }
-  }
-
   static async getPage(req: Req, res: Res) {
     try {
       const data = await PostsDAO.getPage(
@@ -26,7 +17,19 @@ export default class PostsController {
       res.status(500).json({ msg: "Internal error" });
     }
   }
-  
+
+  static async getDataForPosts(req: Req, res: Res) {
+    try {
+      const data = await PostsDAO.getDataForPosts(
+        req.body.shares,
+        String(req.user?.id)
+      );
+      res.status(200).json(data);
+    } catch (e) {
+      res.status(500).json({ msg: "Internal error" });
+    }
+  }
+
   static async getPostById(req: Req, res: Res) {
     try {
       const post = await PostsDAO.getPostById(req.params.id, req.user?.id);

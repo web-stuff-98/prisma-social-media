@@ -28,10 +28,6 @@ const s3 = new aws_1.default.S3();
 class ChatDAO {
     static searchUser(name) {
         return __awaiter(this, void 0, void 0, function* () {
-            /*
-            You could easily make this function faster, couldn't be bothered to figure out the proper way of doing it at the time
-            It also returns the user making the search, which it maybe shouldn't do
-            */
             const inQ = yield prisma_1.default.user
                 .findMany({
                 where: {
@@ -43,30 +39,7 @@ class ChatDAO {
                 select: { id: true },
             })
                 .then((res) => res.map((u) => u.id));
-            const startsWithQ = yield prisma_1.default.user
-                .findMany({
-                where: {
-                    name: {
-                        startsWith: name,
-                        mode: "insensitive",
-                    },
-                },
-                select: { id: true },
-            })
-                .then((res) => res.map((u) => u.id));
-            const endsWithQ = yield prisma_1.default.user
-                .findMany({
-                where: {
-                    name: {
-                        startsWith: name,
-                        mode: "insensitive",
-                    },
-                },
-                select: { id: true },
-            })
-                .then((res) => res.map((u) => u.id));
-            const a = inQ.concat(startsWithQ).concat(endsWithQ);
-            return a.filter((item, pos) => a.indexOf(item) == pos);
+            return inQ;
         });
     }
     //Conversations(priate messaging)

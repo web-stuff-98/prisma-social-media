@@ -26,7 +26,11 @@ export default class UsersDAO {
       const profile = await prisma.profile.findUniqueOrThrow({
         where: { userId: uid },
       });
-      return profile;
+      const shares = await prisma.post.findMany({
+        where: { shares: { some: { userId: uid } } },
+        select: { slug: true },
+      });
+      return { profileData: profile, shares: shares.map((s) => s.slug) };
     } catch (e) {
       throw new Error(
         currentUserId && currentUserId === uid
@@ -37,15 +41,6 @@ export default class UsersDAO {
   }
 
   static async updateProfile(uid: string, bio: string) {
-    let backgroundScaled = "";
-    /*if (data.backgroundBase64) {
-      backgroundScaled = (await imageProcessing(data.backgroundBase64!, {
-        width: 136,
-        height: 33,
-      })) as string;
-      updateData.backgroundBase64 = backgroundScaled;
-    }
-    */
     const profile = await prisma.profile.findUnique({
       where: { userId: uid },
     });
