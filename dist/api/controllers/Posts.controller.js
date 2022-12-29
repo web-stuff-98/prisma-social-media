@@ -220,12 +220,18 @@ class PostsController {
             });
             bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
                 var _b;
-                gotFile = true;
-                const socket = yield (0, getUserSocket_1.default)((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);
-                const { key, blur } = yield Posts_dao_1.default.uploadCoverImage(stream, info, Number(req.params.bytes), req.params.slug, socket.id);
-                yield Posts_dao_1.default.coverImageComplete(req.params.slug, blur, key);
-                res.writeHead(201, { Connection: "close" });
-                res.end();
+                try {
+                    gotFile = true;
+                    const socket = yield (0, getUserSocket_1.default)((_b = req.user) === null || _b === void 0 ? void 0 : _b.id);
+                    const { key, blur } = yield Posts_dao_1.default.uploadCoverImage(stream, info, Number(req.params.bytes), req.params.slug, socket.id);
+                    yield Posts_dao_1.default.coverImageComplete(req.params.slug, blur, key);
+                    res.writeHead(201, { Connection: "close" });
+                    res.end();
+                }
+                catch (error) {
+                    req.unpipe(bb);
+                    return res.status(500).json({ msg: "Internal error" });
+                }
             }));
             bb.on("finish", () => {
                 if (!gotFile) {

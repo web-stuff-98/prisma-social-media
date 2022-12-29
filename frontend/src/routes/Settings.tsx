@@ -8,6 +8,7 @@ import { updatePfp } from "../services/users";
 
 import { RiSettings4Fill } from "react-icons/ri";
 import { useModal } from "../context/ModalContext";
+import ProtectedRoute from "./ProtectedRoute";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -60,31 +61,33 @@ export default function Settings() {
 
   const hiddenPfpInput = useRef<HTMLInputElement>(null);
   return (
-    <div style={{ maxWidth: "15pc" }} className="w-full flex flex-col">
-      <div className="flex gap-2 items-center justify-center text-center">
-        <RiSettings4Fill className="text-3xl" />
-        <h1 className="text-center py-2 font-extrabold">Settings</h1>
-      </div>
-      <input
-        type="file"
-        className="hidden"
-        onChange={handlePfpInput}
-        ref={hiddenPfpInput}
-      />
-      {user && (
-        <User
-          pfpCursor={true}
-          overridePfpOnClick={() => hiddenPfpInput.current?.click()}
-          overridePfpBase64={base64}
-          uid={String(user?.id)}
-          user={getUserData(String(user?.id))}
+    <ProtectedRoute user={user}>
+      <div style={{ maxWidth: "15pc" }} className="w-full flex flex-col">
+        <div className="flex gap-2 items-center justify-center text-center">
+          <RiSettings4Fill className="text-3xl" />
+          <h1 className="text-center py-2 font-extrabold">Settings</h1>
+        </div>
+        <input
+          type="file"
+          className="hidden"
+          onChange={handlePfpInput}
+          ref={hiddenPfpInput}
         />
-      )}
-      <p className="text-center text-xs leading-3 mt-1 p-2">
-        Click on your profile picture to select a new one, it will be updated as
-        soon as you have confirmed the selection. There is a file size limit of
-        around 4mb.
-      </p>
-    </div>
+        {user && (
+          <User
+            pfpCursor={true}
+            overridePfpOnClick={() => hiddenPfpInput.current?.click()}
+            overridePfpBase64={base64}
+            uid={String(user?.id)}
+            user={getUserData(String(user?.id))}
+          />
+        )}
+        <p className="text-center text-xs leading-3 mt-1 p-2">
+          Click on your profile picture to select a new one, it will be updated
+          as soon as you have confirmed the selection. There is a file size
+          limit of around 4mb.
+        </p>
+      </div>
+    </ProtectedRoute>
   );
 }

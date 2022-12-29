@@ -203,18 +203,23 @@ export default class PostsController {
       limits: { files: 1, fields: 0, fileSize: 10000000 },
     });
     bb.on("file", async (_, stream, info) => {
-      gotFile = true;
-      const socket = await getUserSocket(req.user?.id!);
-      const { key, blur } = await PostsDAO.uploadCoverImage(
-        stream,
-        info,
-        Number(req.params.bytes),
-        req.params.slug,
-        socket!.id
-      );
-      await PostsDAO.coverImageComplete(req.params.slug, blur, key);
-      res.writeHead(201, { Connection: "close" });
-      res.end();
+      try {
+        gotFile = true;
+        const socket = await getUserSocket(req.user?.id!);
+        const { key, blur } = await PostsDAO.uploadCoverImage(
+          stream,
+          info,
+          Number(req.params.bytes),
+          req.params.slug,
+          socket!.id
+        );
+        await PostsDAO.coverImageComplete(req.params.slug, blur, key);
+        res.writeHead(201, { Connection: "close" });
+        res.end();
+      } catch (error) {
+        req.unpipe(bb)
+        return res.status(500).json({ msg: "Internal error" });
+      }
     });
     bb.on("finish", () => {
       if (!gotFile) {

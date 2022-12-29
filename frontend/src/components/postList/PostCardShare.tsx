@@ -40,11 +40,11 @@ export default function PostCardShare({ slug }: { slug: string }) {
         />
         <div
           style={{ backdropFilter: "blur(4px)" }}
-          className="absolute rounded z-40 w-full h-full drop-shadow flex flex-col items-center justify-center text-center"
+          className="absolute rounded p-2 z-40 w-full h-full drop-shadow flex flex-col items-center justify-center text-center"
         >
           <h3
             style={{ textShadow: "0px 2px 3px black" }}
-            className="text-sm text-white font-bold"
+            className="text-xs leading-3 text-white font-bold"
           >
             {post.title} by {renderAuthorName(getUserData(post.author?.id!))}
           </h3>
@@ -56,7 +56,7 @@ export default function PostCardShare({ slug }: { slug: string }) {
   };
 
   return (
-    <div className="relative w-full h-10" ref={containerRef}>
+    <div className="relative w-full" style={{height:"4rem", minHeight:"4rem"}} ref={containerRef}>
       {render(getPostData(slug))}
     </div>
   );

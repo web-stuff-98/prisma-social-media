@@ -12,6 +12,7 @@ import Post from "./routes/Post";
 import Editor from "./routes/Editor";
 import Settings from "./routes/Settings";
 import Profile from "./routes/Profile";
+import NotFound from "./routes/NotFound";
 
 const container = document.getElementById("root");
 const root = createRoot(container!);
@@ -35,7 +36,7 @@ root.render(
         />
         <Route path="editor/:slug" element={<Editor />} />
         <Route path="editor" element={<Editor />} />
-        <Route path="*" element={<h1>Not found</h1>} />
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   </BrowserRouter>

@@ -43,7 +43,15 @@ export function Comment({
   const { getPostData } = usePosts();
   const { user: currentUser } = useAuth();
   const { getUserData } = useUsers();
-  const { setParentComment, openComments, setCommentOpen,setReplyingTo, replyingTo, parentComment  } = usePost();
+  const {
+    setParentComment,
+    openComments,
+    setCommentOpen,
+    setReplyingTo,
+    replyingTo,
+    parentComment,
+    getRepliesCount,
+  } = usePost();
 
   /*
 This function is from the web dev simplified video. It is supposed to be in the useAsync hook but that was causing infinite rerenders in the original PostContext, so I changed it to the useAync hook from usehooks.com and it worked. But I'll keep this function here anyway because it works here and dont need to change anything aside from the name.
@@ -86,7 +94,6 @@ This function is from the web dev simplified video. It is supposed to be in the 
     deleteLocalComment,
     toggleLocalCommentLike,
   } = usePost();
-
 
   const post = getPostData(String(slug));
 
@@ -228,16 +235,16 @@ This function is from the web dev simplified video. It is supposed to be in the 
         </div>
       </div>
       {replyingTo === id && currentUser && (
-          <CommentForm
-            autoFocus
-            onSubmit={onCommentReply}
-            loading={createCommentFn.loading}
-            error={createCommentFn.error}
-            placeholder="Reply to comment..."
-            onClickOutside={() => {
-              if (parentComment !== id) setReplyingTo("");
-            }}
-          />
+        <CommentForm
+          autoFocus
+          onSubmit={onCommentReply}
+          loading={createCommentFn.loading}
+          error={createCommentFn.error}
+          placeholder="Reply to comment..."
+          onClickOutside={() => {
+            if (parentComment !== id) setReplyingTo("");
+          }}
+        />
       )}
       {childComments?.length > 0 && (
         <>
@@ -288,7 +295,7 @@ This function is from the web dev simplified video. It is supposed to be in the 
               setAreChildrenHidden(false);
             }}
           >
-            Show Replies ({childComments.length})
+            Show Replies ({getRepliesCount(id)})
           </button>
         </>
       )}

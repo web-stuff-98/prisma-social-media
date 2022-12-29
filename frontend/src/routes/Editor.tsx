@@ -15,11 +15,14 @@ import ProgressBar from "../components/ProgressBar";
 import { useModal } from "../context/ModalContext";
 import axios from "axios";
 import { LoremIpsum } from "lorem-ipsum";
+import ProtectedRoute from "./ProtectedRoute";
+import { useAuth } from "../context/AuthContext";
 
 const lipsum = new LoremIpsum();
 
 export default function Editor() {
   const { slug } = useParams();
+  const { user } = useAuth();
   const { openModal } = useModal();
   const navigate = useNavigate();
 
@@ -110,7 +113,7 @@ export default function Editor() {
         url: "https://picsum.photos/1000/800",
         responseType: "arraybuffer",
       });
-      const file = new File([res.data], "file");
+      const file = new File([res.data], "file", { type: "image/jpeg" });
       setFile(file);
       setResMsg({ msg: "", err: false, pen: false });
     } catch (e) {
@@ -170,7 +173,7 @@ export default function Editor() {
   };
 
   return (
-    <>
+    <ProtectedRoute user={user}>
       {!resMsg.pen ? (
         <form
           onSubmit={formik.handleSubmit}
@@ -321,6 +324,6 @@ export default function Editor() {
           <p className="text-center text-lg font-bold">{resMsg.msg}</p>
         </div>
       )}
-    </>
+    </ProtectedRoute>
   );
 }

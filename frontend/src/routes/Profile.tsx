@@ -145,8 +145,8 @@ export default function Profile() {
         <>
           <h3 className="text-center text-md">Shares</h3>
           <div
-            style={{ maxHeight: "20rem" }}
-            className="overflow-y-auto flex flex-col mb-2"
+            style={{ maxHeight: "15rem", height: "15rem" }}
+            className="overflow-y-auto flex flex-col mb-2 gap-2"
           >
             {sharesPosts.map((p) => (
               <PostCardShare slug={p} />
@@ -154,8 +154,8 @@ export default function Profile() {
           </div>
         </>
       )}
-      {!currentUser ||
-        (id !== currentUser.id && renderWithUserData(getUserData(String(id))))}
+      {(!currentUser || id !== currentUser.id) &&
+        renderWithUserData(getUserData(String(id)))}
       {currentUser && currentUser.id === id && (
         <form
           onSubmit={handleSubmit}
@@ -195,10 +195,9 @@ export default function Profile() {
           </button>
         </form>
       )}
-      {!currentUser ||
-        (currentUser.id !== id && (
-          <p className="text-center">{profileData?.bio}</p>
-        ))}
+      {(!currentUser || currentUser.id !== id) && (
+        <p className="text-center">{profileData?.bio}</p>
+      )}
       {resMsg.pen ||
         (resMsg.msg && (
           <div className="drop-shadow">

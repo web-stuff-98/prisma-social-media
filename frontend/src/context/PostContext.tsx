@@ -39,6 +39,7 @@ const Context = createContext<{
   goBack: () => void;
   openComments: string[];
   setCommentOpen: (to: boolean, id: string) => void;
+  getRepliesCount: (parentId:string) => number
 }>({
   rootComments: [],
   getReplies: () => [],
@@ -53,6 +54,7 @@ const Context = createContext<{
   goBack: () => {},
   openComments: [],
   setCommentOpen: () => {},
+  getRepliesCount: () => 0
 });
 
 export const usePost = () => useContext(Context);
@@ -117,11 +119,14 @@ export function PostProvider({ children }: { children: ReactNode }) {
     },
     []
   );
-  const handleCommentDeleted = useCallback((commentId: string, uid: string) => {
-    if (uid === user?.id) return;
-    if(parentComment === commentId) goBack()
-    deleteLocalComment(commentId);
-  }, [parentComment]);
+  const handleCommentDeleted = useCallback(
+    (commentId: string, uid: string) => {
+      if (uid === user?.id) return;
+      if (parentComment === commentId) goBack();
+      deleteLocalComment(commentId);
+    },
+    [parentComment]
+  );
   const handleCommentLiked = useCallback((addLike: boolean, uid: string) => {
     if (uid === user?.id) return;
     toggleLocalCommentLike(uid, addLike);
@@ -153,7 +158,9 @@ export function PostProvider({ children }: { children: ReactNode }) {
 
   const goBack = () => {
     const found = comments.find((c) => c.id === parentComment);
-    setParentComment((found && found.parentId ? found.parentId : null) as string | null);
+    setParentComment(
+      (found && found.parentId ? found.parentId : null) as string | null
+    );
   };
 
   useEffect(() => {
@@ -163,6 +170,15 @@ export function PostProvider({ children }: { children: ReactNode }) {
 
   const getReplies = (parentId: string): IPostComment[] =>
     commentsByParentId[parentId as keyof typeof commentsByParentId];
+
+  const getRepliesCount = (parentId: string) => {
+    const cmts = getReplies(parentId) || [];
+    let count = cmts.length;
+    cmts.forEach((cmt) => {
+      count += getRepliesCount(cmt.id);
+    });
+    return count;
+  };
 
   const createLocalComment = (comment: IPostComment) =>
     setComments((prevComments) => [comment, ...prevComments]);
@@ -221,6 +237,7 @@ export function PostProvider({ children }: { children: ReactNode }) {
         goBack,
         openComments,
         setCommentOpen,
+        getRepliesCount
       }}
     >
       {children}

@@ -57,9 +57,15 @@ class UsersController {
             bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 gotFile = true;
-                yield Users_dao_1.default.updatePfp(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), stream, info);
-                res.writeHead(201, { Connection: "close " });
-                res.end();
+                try {
+                    yield Users_dao_1.default.updatePfp(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), stream, info);
+                    res.writeHead(201, { Connection: "close " });
+                    res.end();
+                }
+                catch (error) {
+                    req.unpipe(bb);
+                    return res.status(500).json({ msg: "Internal error" });
+                }
             }));
             bb.on("finish", () => {
                 if (!gotFile) {
@@ -108,9 +114,15 @@ class UsersController {
             bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
                 var _a;
                 gotFile = true;
-                yield Users_dao_1.default.updateProfileImage(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), stream, info);
-                res.writeHead(201, { Connection: "close " });
-                res.end();
+                try {
+                    yield Users_dao_1.default.updateProfileImage(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), stream, info);
+                    res.writeHead(201, { Connection: "close " });
+                    res.end();
+                }
+                catch (e) {
+                    req.unpipe(bb);
+                    return res.status(500).json({ msg: "Internal error" });
+                }
             }));
             bb.on("finish", () => {
                 if (!gotFile) {

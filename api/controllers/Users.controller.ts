@@ -39,9 +39,14 @@ export default class UsersController {
     });
     bb.on("file", async (_, stream, info) => {
       gotFile = true;
-      await UsersDAO.updatePfp(String(req.user?.id), stream, info);
-      res.writeHead(201, { Connection: "close " });
-      res.end();
+      try {
+        await UsersDAO.updatePfp(String(req.user?.id), stream, info);
+        res.writeHead(201, { Connection: "close " });
+        res.end();
+      } catch (error) {
+        req.unpipe(bb);
+        return res.status(500).json({ msg: "Internal error" });
+      }
     });
     bb.on("finish", () => {
       if (!gotFile) {
@@ -82,9 +87,14 @@ export default class UsersController {
     });
     bb.on("file", async (_, stream, info) => {
       gotFile = true;
-      await UsersDAO.updateProfileImage(String(req.user?.id), stream, info);
-      res.writeHead(201, { Connection: "close " });
-      res.end();
+      try {
+        await UsersDAO.updateProfileImage(String(req.user?.id), stream, info);
+        res.writeHead(201, { Connection: "close " });
+        res.end();
+      } catch (e) {
+        req.unpipe(bb);
+        return res.status(500).json({ msg: "Internal error" });
+      }
     });
     bb.on("finish", () => {
       if (!gotFile) {
