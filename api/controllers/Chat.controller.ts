@@ -20,7 +20,7 @@ export default class ChatController {
         req.body.message,
         req.body.hasAttachment,
         req.body.recipientId,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(201).end();
     } catch (e) {
@@ -33,7 +33,7 @@ export default class ChatController {
       await ChatDAO.updatePrivateMessage(
         req.body.messageId,
         req.body.message,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(200).end();
     } catch (e) {
@@ -45,7 +45,7 @@ export default class ChatController {
     try {
       await ChatDAO.deletePrivateMessage(
         req.body.messageId,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(200).end();
     } catch (e) {
@@ -57,7 +57,7 @@ export default class ChatController {
     try {
       await ChatDAO.inviteUser(
         req.body.recipientId,
-        String(req.user?.id),
+        req.user.id,
         req.body.roomName
       );
       res.status(200).end();
@@ -69,7 +69,7 @@ export default class ChatController {
   static async acceptInvite(req: Req, res: Res) {
     try {
       await ChatDAO.acceptInvite(
-        String(req.user?.id),
+        req.user.id,
         req.body.senderId,
         req.body.roomName
       ),
@@ -82,7 +82,7 @@ export default class ChatController {
   static async declineInvite(req: Req, res: Res) {
     try {
       await ChatDAO.declineInvite(
-        String(req.user?.id),
+        req.user.id,
         req.body.senderId,
         req.body.roomName
       ),
@@ -94,7 +94,7 @@ export default class ChatController {
 
   static async getConversations(req: Req, res: Res) {
     try {
-      const users = await ChatDAO.getConversations(String(req.user?.id));
+      const users = await ChatDAO.getConversations(req.user.id);
       res.status(200).json(users).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -105,7 +105,7 @@ export default class ChatController {
     try {
       const messages = await ChatDAO.getConversation(
         req.params.uid,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(200).json(messages).end();
     } catch (e) {
@@ -115,7 +115,7 @@ export default class ChatController {
 
   static async deleteConversation(req: Req, res: Res) {
     try {
-      await ChatDAO.deleteConversation(String(req.user?.id), req.params.uid);
+      await ChatDAO.deleteConversation(req.user.id, req.params.uid);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -214,7 +214,7 @@ export default class ChatController {
   static async conversationOpenVideoChat(req: Req, res: Res) {
     try {
       await ChatDAO.conversationOpenVideoChat(
-        String(req.user?.id),
+        req.user.id,
         req.params.uid
       );
       res.status(200).end();
@@ -263,7 +263,7 @@ export default class ChatController {
             .end();
         }
       }
-      const room = await ChatDAO.createRoom(name, String(req.user?.id));
+      const room = await ChatDAO.createRoom(name, req.user.id);
       res.status(201).json(room);
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -297,7 +297,7 @@ export default class ChatController {
 
   static async deleteRoom(req: Req, res: Res) {
     try {
-      await ChatDAO.deleteRoom(req.params.roomId, String(req.user?.id));
+      await ChatDAO.deleteRoom(req.params.roomId, req.user.id);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -306,7 +306,7 @@ export default class ChatController {
 
   static async joinRoom(req: Req, res: Res) {
     try {
-      await ChatDAO.joinRoom(req.params.roomId, String(req.user?.id));
+      await ChatDAO.joinRoom(req.params.roomId, req.user.id);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -315,7 +315,7 @@ export default class ChatController {
 
   static async leaveRoom(req: Req, res: Res) {
     try {
-      await ChatDAO.leaveRoom(req.params.roomId, String(req.user?.id));
+      await ChatDAO.leaveRoom(req.params.roomId, req.user.id);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -327,7 +327,7 @@ export default class ChatController {
       await ChatDAO.banUser(
         req.params.roomId,
         req.params.banUid,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(200).end();
     } catch (e) {
@@ -340,7 +340,7 @@ export default class ChatController {
       await ChatDAO.unbanUser(
         req.params.roomId,
         req.params.unbanUid,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(200).end();
     } catch (e) {
@@ -353,7 +353,7 @@ export default class ChatController {
       await ChatDAO.kickUser(
         req.params.roomId,
         req.params.kickUid,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(200).end();
     } catch (e) {
@@ -366,7 +366,7 @@ export default class ChatController {
       await ChatDAO.sendRoomMessage(
         req.body.message,
         req.body.hasAttachment,
-        String(req.user?.id),
+        req.user.id,
         req.body.roomId
       );
       res.status(201).end();
@@ -380,7 +380,7 @@ export default class ChatController {
       await ChatDAO.updateRoomMessage(
         req.body.messageId,
         req.body.message,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(200).end();
     } catch (e) {
@@ -390,7 +390,7 @@ export default class ChatController {
 
   static async deleteRoomMessage(req: Req, res: Res) {
     try {
-      await ChatDAO.deleteRoomMessage(req.body.messageId, String(req.user?.id));
+      await ChatDAO.deleteRoomMessage(req.body.messageId, req.user.id);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -483,7 +483,7 @@ export default class ChatController {
 
   static async roomOpenVideoChat(req: Req, res: Res) {
     try {
-      await ChatDAO.roomOpenVideoChat(String(req.user?.id), req.params.roomId);
+      await ChatDAO.roomOpenVideoChat(req.user.id, req.params.roomId);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });

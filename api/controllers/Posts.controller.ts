@@ -22,7 +22,7 @@ export default class PostsController {
     try {
       const data = await PostsDAO.getDataForPosts(
         req.body.shares,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(200).json(data);
     } catch (e) {
@@ -53,7 +53,7 @@ export default class PostsController {
 
   static async deletePost(req: Req, res: Res) {
     try {
-      await PostsDAO.deletePostBySlug(req.params.slug, String(req.user?.id));
+      await PostsDAO.deletePostBySlug(req.params.slug, req.user.id);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -67,7 +67,7 @@ export default class PostsController {
         req.body.body,
         req.body.description,
         req.body.tags,
-        String(req.user?.id)
+        req.user.id
       );
       res.status(201).json({ slug: post.slug }).end();
     } catch (e) {
@@ -83,7 +83,7 @@ export default class PostsController {
         req.body.body,
         req.body.description,
         req.body.tags,
-        String(req.user?.id),
+        req.user.id,
         req.params.slug
       );
       res.status(201).json(post).end();
@@ -97,10 +97,10 @@ export default class PostsController {
     try {
       const cmt = await PostsDAO.addComment(
         req.body.message,
-        String(req.user?.id),
+        req.user.id,
         req.params.id,
         req.body.parentId,
-        String(req.user?.name)
+        req.user.name
       );
       return res.status(201).json(cmt).end();
     } catch (e) {
@@ -114,7 +114,7 @@ export default class PostsController {
       const cmt = await PostsDAO.updateComment(
         req.body.message,
         req.params.commentId,
-        String(req.user?.id)
+        req.user.id
       );
       if (!cmt) {
         return res.status(403).json({ msg: "Unauthorized" }).end();
@@ -129,7 +129,7 @@ export default class PostsController {
     try {
       const cmt = await PostsDAO.deleteComment(
         req.params.commentId,
-        String(req.user?.id)
+        req.user.id
       );
       if (!cmt) {
         return res.status(403).json({ msg: "Unauthorized" }).end();
@@ -145,7 +145,7 @@ export default class PostsController {
     try {
       const like = await PostsDAO.toggleCommentLike(
         req.params.commentId,
-        String(req.user?.id)
+        req.user.id
       );
       return res.status(200).json(like).end();
     } catch (e) {
@@ -158,7 +158,7 @@ export default class PostsController {
     try {
       const like = await PostsDAO.togglePostLike(
         req.params.id,
-        String(req.user?.id)
+        req.user.id
       );
       return res.status(200).json(like).end();
     } catch (e) {
@@ -171,7 +171,7 @@ export default class PostsController {
     try {
       const share = await PostsDAO.togglePostShare(
         req.params.id,
-        String(req.user?.id)
+        req.user.id
       );
       return res.status(200).json(share).end();
     } catch (e) {

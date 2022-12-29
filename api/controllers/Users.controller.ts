@@ -40,7 +40,7 @@ export default class UsersController {
     bb.on("file", async (_, stream, info) => {
       gotFile = true;
       try {
-        await UsersDAO.updatePfp(String(req.user?.id), stream, info);
+        await UsersDAO.updatePfp(req.user.id, stream, info);
         res.writeHead(201, { Connection: "close " });
         res.end();
       } catch (error) {
@@ -72,7 +72,7 @@ export default class UsersController {
 
   static async updateProfile(req: Req, res: Res) {
     try {
-      await UsersDAO.updateProfile(String(req.user?.id), req.body.bio);
+      await UsersDAO.updateProfile(req.user.id, req.body.bio);
       res.status(200).end();
     } catch (e) {
       res.status(400).json({ msg: `${e}` });
@@ -88,7 +88,7 @@ export default class UsersController {
     bb.on("file", async (_, stream, info) => {
       gotFile = true;
       try {
-        await UsersDAO.updateProfileImage(String(req.user?.id), stream, info);
+        await UsersDAO.updateProfileImage(req.user.id, stream, info);
         res.writeHead(201, { Connection: "close " });
         res.end();
       } catch (e) {
@@ -166,7 +166,7 @@ export default class UsersController {
       return res.status(403).json({ msg: "Incorrect credentials" });
     }
     await bruteSuccess(ip, "login");
-    req.user = user;
+    req.user = user as { name: string; id: string };
     res.cookie(
       "token",
       jwt.sign(
@@ -189,21 +189,18 @@ export default class UsersController {
   }
 
   static async logout(req: Req, res: Res) {
-    if (req.user) {
-      const socket = await getUserSocket(req.user.id);
-      if (socket) {
-        socket.data.user = {
-          id: "",
-          name: "",
-          room: undefined,
-        };
-      }
-      io.to(`user=${req.user?.id}`).emit("user_visible_update", {
-        id: req.user.id,
-        online: false,
-      });
+    const socket = await getUserSocket(req.user.id);
+    if (socket) {
+      socket.data.user = {
+        id: "",
+        name: "",
+        room: undefined,
+      };
     }
-    delete req.user;
+    io.to(`user=${req.user?.id}`).emit("user_visible_update", {
+      id: req.user.id,
+      online: false,
+    });
     res.status(200).clearCookie("token", { path: "/", maxAge: 0 }).end();
   }
 

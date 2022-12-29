@@ -14,7 +14,7 @@ declare global {
        * [Declaration merging](https://www.typescriptlang.org/docs/handbook/declaration-merging.html) can be used to add your own properties.
        */
       secret?: string;
-      user?: { id: string; name: string };
+      user: { id: string; name: string };
     }
   }
 }
