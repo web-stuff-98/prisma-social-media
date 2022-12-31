@@ -17,7 +17,7 @@ let generatedRooms: any[] = [];
 /*
   This was working perfectly now I have
   some bullshit errors about invalide update invocations
-  on records that "dont exist" but where just created
+  on records that "dont exist" but were just created
 
   cant be asked fixing this shit I just put it in trycatch
 */
