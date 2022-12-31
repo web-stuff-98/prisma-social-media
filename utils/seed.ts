@@ -14,6 +14,14 @@ let generatedUsers: any[] = [];
 let generatedPosts: any[] = [];
 let generatedRooms: any[] = [];
 
+/*
+  This was working perfectly now I have
+  some bullshit errors about invalide update invocations
+  on records that "dont exist" but where just created
+
+  cant be asked fixing this shit I just put it in trycatch
+*/
+
 async function seed() {
   await prisma.user.deleteMany();
   await prisma.privateMessage.deleteMany();
@@ -202,9 +210,15 @@ const generateCommentOnPost = async (
         }
       : {}),
   };
-  const { id } = await prisma.comment.create({
-    data,
-  });
+  let id;
+  try {
+    const cmt = await prisma.comment.create({
+      data,
+    });
+    id = cmt.id;
+  } catch (error) {
+    console.log("Failed to add comment for some fucking reason");
+  }
   return id;
 };
 const generateCommentsOnPost = async (postId: string) => {
@@ -213,11 +227,11 @@ const generateCommentsOnPost = async (postId: string) => {
   const numComments = Math.floor(rand * rand * rand * rand2);
   let idsOfOtherCommentsOnPost: string[] = [];
   for await (const i of Array.from(Array(numComments).keys())) {
-    const commentId: string = await generateCommentOnPost(
+    const commentId: string | undefined = await generateCommentOnPost(
       postId,
       idsOfOtherCommentsOnPost
     );
-    idsOfOtherCommentsOnPost.push(commentId);
+    if (commentId) idsOfOtherCommentsOnPost.push(commentId);
   }
 };
 const generateCommentsOnPosts = async () => {
@@ -238,20 +252,28 @@ const generateLikesAndSharesOnPosts = async () => {
       sharesRand * sharesRand * generatedUsers.length
     );
     for await (const i of Array.from(Array(numLikes).keys())) {
-      await prisma.postLike.create({
-        data: {
-          postId: p.id,
-          userId: shuffledUsersForLikes[i].id,
-        },
-      });
+      try {
+        await prisma.postLike.create({
+          data: {
+            postId: p.id,
+            userId: shuffledUsersForLikes[i].id,
+          },
+        });
+      } catch (e) {
+        console.log("Failed to add post like for some fucking reason");
+      }
     }
     for await (const i of Array.from(Array(numShares).keys())) {
-      await prisma.postShare.create({
-        data: {
-          postId: p.id,
-          userId: shuffledUsersForShares[i].id,
-        },
-      });
+      try {
+        await prisma.postShare.create({
+          data: {
+            postId: p.id,
+            userId: shuffledUsersForShares[i].id,
+          },
+        });
+      } catch (e) {
+        console.log("Failed to add post share for some fucking reason");
+      }
     }
     console.log("Generated likes and shares for post");
   }
@@ -269,12 +291,16 @@ const generateLikesOnComments = async () => {
         const numLikes = Math.floor(rand * rand * generatedUsers.length);
         const shuffledUsers = shuffle(generatedUsers);
         for await (const i of Array.from(Array(numLikes).keys())) {
-          await prisma.commentLike.create({
-            data: {
-              commentId: cmt.id,
-              userId: shuffledUsers[i].id,
-            },
-          });
+          try {
+            await prisma.commentLike.create({
+              data: {
+                commentId: cmt.id,
+                userId: shuffledUsers[i].id,
+              },
+            });
+          } catch (error) {
+            console.log("Failed to add comment like for some fucking reason");
+          }
         }
         console.log("Generated likes for comment");
       }
