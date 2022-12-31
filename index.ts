@@ -13,7 +13,10 @@ import { Server } from "socket.io";
 
 const origin =
   process.env.NODE_ENV === "production"
-    ? ["https://prisma-social-media-js.herokuapp.com/", "http://prisma-social-media-js.herokuapp.com/"]
+    ? [
+        "https://prisma-social-media-js.herokuapp.com/",
+        "http://prisma-social-media-js.herokuapp.com/",
+      ]
     : "http://localhost:3000";
 
 const app: Express = express();
@@ -201,6 +204,7 @@ import {
 import getUserSocket from "./utils/getUserSocket";
 import redisClient from "./utils/redis";
 import UsersDAO from "./api/dao/Users.dao";
+import prisma from "./utils/prisma";
 
 app.use("/api/posts", Posts);
 app.use("/api/users", Users);
@@ -234,8 +238,20 @@ server.listen(process.env.PORT || 80, () => {
         )
       )
     );
-  }, 10000);
+  }, 100000);
+
+  const deleteOldMessagesInterval = setInterval(async () => {
+    const twentyMinutesAgo = new Date(Date.now() - 1200000);
+    await prisma.roomMessage.deleteMany({
+      where: { createdAt: { lt: twentyMinutesAgo } },
+    });
+    await prisma.privateMessage.deleteMany({
+      where: { createdAt: { lt: twentyMinutesAgo } },
+    });
+  }, 100000);
+
   return () => {
     clearInterval(deleteAccsInterval);
+    clearInterval(deleteOldMessagesInterval);
   };
 });

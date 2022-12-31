@@ -29,7 +29,10 @@ const http_1 = __importDefault(require("http"));
 const path_1 = __importDefault(require("path"));
 const socket_io_1 = require("socket.io");
 const origin = process.env.NODE_ENV === "production"
-    ? ["https://prisma-social-media-js.herokuapp.com/", "http://prisma-social-media-js.herokuapp.com/"]
+    ? [
+        "https://prisma-social-media-js.herokuapp.com/",
+        "http://prisma-social-media-js.herokuapp.com/",
+    ]
     : "http://localhost:3000";
 const app = (0, express_1.default)();
 const server = http_1.default.createServer(app);
@@ -159,6 +162,7 @@ const Chat_route_1 = __importDefault(require("./api/Chat.route"));
 const getUserSocket_1 = __importDefault(require("./utils/getUserSocket"));
 const redis_1 = __importDefault(require("./utils/redis"));
 const Users_dao_1 = __importDefault(require("./api/dao/Users.dao"));
+const prisma_1 = __importDefault(require("./utils/prisma"));
 app.use("/api/posts", Posts_route_1.default);
 app.use("/api/users", Users_route_1.default);
 app.use("/api/chat", Chat_route_1.default);
@@ -192,8 +196,18 @@ server.listen(process.env.PORT || 80, () => {
             finally { if (e_1) throw e_1.error; }
         }
         yield redis_1.default.set("deleteAccountsCountdownList", JSON.stringify(deleteAccountsCountdownList.filter((info) => !deletedIds.includes(info.id))));
-    }), 10000);
+    }), 100000);
+    const deleteOldMessagesInterval = setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
+        const twentyMinutesAgo = new Date(Date.now() - 1200000);
+        yield prisma_1.default.roomMessage.deleteMany({
+            where: { createdAt: { lt: twentyMinutesAgo } },
+        });
+        yield prisma_1.default.privateMessage.deleteMany({
+            where: { createdAt: { lt: twentyMinutesAgo } },
+        });
+    }), 100000);
     return () => {
         clearInterval(deleteAccsInterval);
+        clearInterval(deleteOldMessagesInterval);
     };
 });
