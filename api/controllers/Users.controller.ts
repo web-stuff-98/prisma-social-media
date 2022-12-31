@@ -170,7 +170,7 @@ export default class UsersController {
     res.cookie(
       "token",
       jwt.sign(
-        JSON.stringify({ id: String(user?.id), name: user?.name }),
+        JSON.stringify({ id: String(user?.id) }),
         String(process.env.JWT_SECRET)
       ),
       {
@@ -189,6 +189,15 @@ export default class UsersController {
   }
 
   static async logout(req: Req, res: Res) {
+    //Messy bugfix... cba with this project anymore, been working on it too long
+    if (!Object.keys(req).includes("user")) {
+      res.status(200).clearCookie("token", { path: "/", maxAge: 0 }).end();
+      return;
+    }
+    if (!Object.keys(req.user).includes("id")) {
+      res.status(200).clearCookie("token", { path: "/", maxAge: 0 }).end();
+      return;
+    }
     const socket = await getUserSocket(req.user.id);
     if (socket) {
       socket.data.user = {

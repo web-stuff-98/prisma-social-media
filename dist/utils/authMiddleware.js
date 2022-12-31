@@ -20,10 +20,8 @@ const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         return res.status(403).end();
     try {
         const decodedToken = jsonwebtoken_1.default.verify(token, String(process.env.JWT_SECRET));
-        if (!req.user) {
-            const verifiedData = JSON.parse(JSON.stringify(decodedToken));
-            req.user = verifiedData;
-        }
+        const verifiedData = JSON.parse(JSON.stringify(decodedToken));
+        req.user = verifiedData;
     }
     catch (error) {
         return res.status(403).json({ msg: "Unauthorized" }).end();
@@ -34,10 +32,8 @@ const withUser = (req, _, next) => {
     const { token } = req.cookies;
     if (token) {
         const decodedToken = jsonwebtoken_1.default.verify(token, String(process.env.JWT_SECRET));
-        if (!req.user) {
-            const verifiedData = JSON.parse(JSON.stringify(decodedToken));
-            req.user = verifiedData;
-        }
+        const verifiedData = JSON.parse(JSON.stringify(decodedToken));
+        req.user = verifiedData;
     }
     next();
 };

@@ -55,10 +55,9 @@ class UsersController {
                 limits: { files: 1, fields: 0, fileSize: 10000000 },
             });
             bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
                 gotFile = true;
                 try {
-                    yield Users_dao_1.default.updatePfp(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), stream, info);
+                    yield Users_dao_1.default.updatePfp(req.user.id, stream, info);
                     res.writeHead(201, { Connection: "close " });
                     res.end();
                 }
@@ -93,10 +92,9 @@ class UsersController {
         });
     }
     static updateProfile(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Users_dao_1.default.updateProfile(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body.bio);
+                yield Users_dao_1.default.updateProfile(req.user.id, req.body.bio);
                 res.status(200).end();
             }
             catch (e) {
@@ -112,10 +110,9 @@ class UsersController {
                 limits: { files: 1, fields: 0, fileSize: 10000000 },
             });
             bb.on("file", (_, stream, info) => __awaiter(this, void 0, void 0, function* () {
-                var _a;
                 gotFile = true;
                 try {
-                    yield Users_dao_1.default.updateProfileImage(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), stream, info);
+                    yield Users_dao_1.default.updateProfileImage(req.user.id, stream, info);
                     res.writeHead(201, { Connection: "close " });
                     res.end();
                 }
@@ -193,7 +190,7 @@ class UsersController {
             }
             yield (0, limiters_1.bruteSuccess)(ip, "login");
             req.user = user;
-            res.cookie("token", jsonwebtoken_1.default.sign(JSON.stringify({ id: String(user === null || user === void 0 ? void 0 : user.id), name: user === null || user === void 0 ? void 0 : user.name }), String(process.env.JWT_SECRET)), {
+            res.cookie("token", jsonwebtoken_1.default.sign(JSON.stringify({ id: String(user === null || user === void 0 ? void 0 : user.id) }), String(process.env.JWT_SECRET)), {
                 secure: process.env.NODE_ENV === "production",
                 httpOnly: true,
                 sameSite: "strict",
@@ -210,21 +207,27 @@ class UsersController {
     static logout(req, res) {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
-            if (req.user) {
-                const socket = yield (0, getUserSocket_1.default)(req.user.id);
-                if (socket) {
-                    socket.data.user = {
-                        id: "",
-                        name: "",
-                        room: undefined,
-                    };
-                }
-                __1.io.to(`user=${(_a = req.user) === null || _a === void 0 ? void 0 : _a.id}`).emit("user_visible_update", {
-                    id: req.user.id,
-                    online: false,
-                });
+            //Messy bugfix... cba with this project anymore, been working on it too long
+            if (!Object.keys(req).includes("user")) {
+                res.status(200).clearCookie("token", { path: "/", maxAge: 0 }).end();
+                return;
             }
-            delete req.user;
+            if (!Object.keys(req.user).includes("id")) {
+                res.status(200).clearCookie("token", { path: "/", maxAge: 0 }).end();
+                return;
+            }
+            const socket = yield (0, getUserSocket_1.default)(req.user.id);
+            if (socket) {
+                socket.data.user = {
+                    id: "",
+                    name: "",
+                    room: undefined,
+                };
+            }
+            __1.io.to(`user=${(_a = req.user) === null || _a === void 0 ? void 0 : _a.id}`).emit("user_visible_update", {
+                id: req.user.id,
+                online: false,
+            });
             res.status(200).clearCookie("token", { path: "/", maxAge: 0 }).end();
         });
     }

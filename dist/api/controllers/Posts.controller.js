@@ -29,10 +29,9 @@ class PostsController {
         });
     }
     static getDataForPosts(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const data = yield Posts_dao_1.default.getDataForPosts(req.body.shares, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const data = yield Posts_dao_1.default.getDataForPosts(req.body.shares, req.user.id);
                 res.status(200).json(data);
             }
             catch (e) {
@@ -72,10 +71,9 @@ class PostsController {
         });
     }
     static deletePost(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Posts_dao_1.default.deletePostBySlug(req.params.slug, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Posts_dao_1.default.deletePostBySlug(req.params.slug, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -84,10 +82,9 @@ class PostsController {
         });
     }
     static createPost(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const post = yield Posts_dao_1.default.createPost(req.body.title, req.body.body, req.body.description, req.body.tags, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const post = yield Posts_dao_1.default.createPost(req.body.title, req.body.body, req.body.description, req.body.tags, req.user.id);
                 res.status(201).json({ slug: post.slug }).end();
             }
             catch (e) {
@@ -97,10 +94,9 @@ class PostsController {
         });
     }
     static updatePost(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const post = yield Posts_dao_1.default.updatePost(req.body.title, req.body.body, req.body.description, req.body.tags, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.slug);
+                const post = yield Posts_dao_1.default.updatePost(req.body.title, req.body.body, req.body.description, req.body.tags, req.user.id, req.params.slug);
                 res.status(201).json(post).end();
             }
             catch (e) {
@@ -110,10 +106,9 @@ class PostsController {
         });
     }
     static addComment(req, res) {
-        var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const cmt = yield Posts_dao_1.default.addComment(req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.id, req.body.parentId, String((_b = req.user) === null || _b === void 0 ? void 0 : _b.name));
+                const cmt = yield Posts_dao_1.default.addComment(req.body.message, req.user.id, req.params.id, req.body.parentId, req.user.name);
                 return res.status(201).json(cmt).end();
             }
             catch (e) {
@@ -123,10 +118,9 @@ class PostsController {
         });
     }
     static updateComment(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const cmt = yield Posts_dao_1.default.updateComment(req.body.message, req.params.commentId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const cmt = yield Posts_dao_1.default.updateComment(req.body.message, req.params.commentId, req.user.id);
                 if (!cmt) {
                     return res.status(403).json({ msg: "Unauthorized" }).end();
                 }
@@ -138,10 +132,9 @@ class PostsController {
         });
     }
     static deleteComment(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const cmt = yield Posts_dao_1.default.deleteComment(req.params.commentId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const cmt = yield Posts_dao_1.default.deleteComment(req.params.commentId, req.user.id);
                 if (!cmt) {
                     return res.status(403).json({ msg: "Unauthorized" }).end();
                 }
@@ -154,10 +147,9 @@ class PostsController {
         });
     }
     static toggleCommentLike(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const like = yield Posts_dao_1.default.toggleCommentLike(req.params.commentId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const like = yield Posts_dao_1.default.toggleCommentLike(req.params.commentId, req.user.id);
                 return res.status(200).json(like).end();
             }
             catch (e) {
@@ -167,10 +159,9 @@ class PostsController {
         });
     }
     static togglePostLike(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const like = yield Posts_dao_1.default.togglePostLike(req.params.id, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const like = yield Posts_dao_1.default.togglePostLike(req.params.id, req.user.id);
                 return res.status(200).json(like).end();
             }
             catch (e) {
@@ -180,10 +171,9 @@ class PostsController {
         });
     }
     static togglePostShare(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const share = yield Posts_dao_1.default.togglePostShare(req.params.id, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const share = yield Posts_dao_1.default.togglePostShare(req.params.id, req.user.id);
                 return res.status(200).json(share).end();
             }
             catch (e) {

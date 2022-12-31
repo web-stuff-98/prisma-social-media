@@ -27,10 +27,9 @@ class ChatController {
         });
     }
     static sendPrivateMessage(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.sendPrivateMessage(req.body.message, req.body.hasAttachment, req.body.recipientId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.sendPrivateMessage(req.body.message, req.body.hasAttachment, req.body.recipientId, req.user.id);
                 res.status(201).end();
             }
             catch (e) {
@@ -39,10 +38,9 @@ class ChatController {
         });
     }
     static updatePrivateMessage(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.updatePrivateMessage(req.body.messageId, req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.updatePrivateMessage(req.body.messageId, req.body.message, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -51,10 +49,9 @@ class ChatController {
         });
     }
     static deletePrivateMessage(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.deletePrivateMessage(req.body.messageId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.deletePrivateMessage(req.body.messageId, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -63,10 +60,9 @@ class ChatController {
         });
     }
     static sendInvite(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.inviteUser(req.body.recipientId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body.roomName);
+                yield Chat_dao_1.default.inviteUser(req.body.recipientId, req.user.id, req.body.roomName);
                 res.status(200).end();
             }
             catch (e) {
@@ -75,10 +71,9 @@ class ChatController {
         });
     }
     static acceptInvite(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.acceptInvite(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body.senderId, req.body.roomName),
+                yield Chat_dao_1.default.acceptInvite(req.user.id, req.body.senderId, req.body.roomName),
                     res.status(200).end();
             }
             catch (e) {
@@ -87,10 +82,9 @@ class ChatController {
         });
     }
     static declineInvite(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.declineInvite(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body.senderId, req.body.roomName),
+                yield Chat_dao_1.default.declineInvite(req.user.id, req.body.senderId, req.body.roomName),
                     res.status(200).end();
             }
             catch (e) {
@@ -99,10 +93,9 @@ class ChatController {
         });
     }
     static getConversations(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const users = yield Chat_dao_1.default.getConversations(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const users = yield Chat_dao_1.default.getConversations(req.user.id);
                 res.status(200).json(users).end();
             }
             catch (e) {
@@ -111,10 +104,9 @@ class ChatController {
         });
     }
     static getConversation(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const messages = yield Chat_dao_1.default.getConversation(req.params.uid, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                const messages = yield Chat_dao_1.default.getConversation(req.params.uid, req.user.id);
                 res.status(200).json(messages).end();
             }
             catch (e) {
@@ -123,10 +115,9 @@ class ChatController {
         });
     }
     static deleteConversation(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.deleteConversation(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.uid);
+                yield Chat_dao_1.default.deleteConversation(req.user.id, req.params.uid);
                 res.status(200).end();
             }
             catch (e) {
@@ -202,10 +193,9 @@ class ChatController {
         });
     }
     static conversationOpenVideoChat(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.conversationOpenVideoChat(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.uid);
+                yield Chat_dao_1.default.conversationOpenVideoChat(req.user.id, req.params.uid);
                 res.status(200).end();
             }
             catch (e) {
@@ -248,7 +238,7 @@ class ChatController {
         });
     }
     static createRoom(req, res) {
-        var _a, _b;
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { name } = req.body;
@@ -261,7 +251,7 @@ class ChatController {
                             .end();
                     }
                 }
-                const room = yield Chat_dao_1.default.createRoom(name, String((_b = req.user) === null || _b === void 0 ? void 0 : _b.id));
+                const room = yield Chat_dao_1.default.createRoom(name, req.user.id);
                 res.status(201).json(room);
             }
             catch (e) {
@@ -294,10 +284,9 @@ class ChatController {
         });
     }
     static deleteRoom(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.deleteRoom(req.params.roomId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.deleteRoom(req.params.roomId, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -306,10 +295,9 @@ class ChatController {
         });
     }
     static joinRoom(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.joinRoom(req.params.roomId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.joinRoom(req.params.roomId, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -318,10 +306,9 @@ class ChatController {
         });
     }
     static leaveRoom(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.leaveRoom(req.params.roomId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.leaveRoom(req.params.roomId, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -330,10 +317,9 @@ class ChatController {
         });
     }
     static banUser(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.banUser(req.params.roomId, req.params.banUid, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.banUser(req.params.roomId, req.params.banUid, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -342,10 +328,9 @@ class ChatController {
         });
     }
     static unbanUser(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.unbanUser(req.params.roomId, req.params.unbanUid, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.unbanUser(req.params.roomId, req.params.unbanUid, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -354,10 +339,9 @@ class ChatController {
         });
     }
     static kickUser(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.kickUser(req.params.roomId, req.params.kickUid, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.kickUser(req.params.roomId, req.params.kickUid, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -366,10 +350,9 @@ class ChatController {
         });
     }
     static sendRoomMessage(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.sendRoomMessage(req.body.message, req.body.hasAttachment, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.body.roomId);
+                yield Chat_dao_1.default.sendRoomMessage(req.body.message, req.body.hasAttachment, req.user.id, req.body.roomId);
                 res.status(201).end();
             }
             catch (e) {
@@ -378,10 +361,9 @@ class ChatController {
         });
     }
     static updateRoomMessage(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.updateRoomMessage(req.body.messageId, req.body.message, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.updateRoomMessage(req.body.messageId, req.body.message, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -390,10 +372,9 @@ class ChatController {
         });
     }
     static deleteRoomMessage(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.deleteRoomMessage(req.body.messageId, String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id));
+                yield Chat_dao_1.default.deleteRoomMessage(req.body.messageId, req.user.id);
                 res.status(200).end();
             }
             catch (e) {
@@ -479,10 +460,9 @@ class ChatController {
         });
     }
     static roomOpenVideoChat(req, res) {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield Chat_dao_1.default.roomOpenVideoChat(String((_a = req.user) === null || _a === void 0 ? void 0 : _a.id), req.params.roomId);
+                yield Chat_dao_1.default.roomOpenVideoChat(req.user.id, req.params.roomId);
                 res.status(200).end();
             }
             catch (e) {
