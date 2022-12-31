@@ -54,6 +54,7 @@ exports.io = io;
 let generatedPostIds;
 let generatedUserIds;
 let generatedRoomIds;
+let seedGeneratedAt;
 app.use((0, cors_1.default)({
     origin,
     credentials: true,
@@ -67,6 +68,7 @@ if (process.env.NODE_ENV === "production") {
         generatedPostIds = generatedPosts;
         generatedUserIds = generatedUsers;
         generatedRoomIds = generatedRooms;
+        seedGeneratedAt = new Date();
     });
 }
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -324,6 +326,9 @@ server.listen(process.env.PORT || 80, () => {
             }
             finally { if (e_4) throw e_4.error; }
         }
+        yield prisma_1.default.comment.deleteMany({
+            where: { createdAt: { lt: twentyMinutesAgo, gt: seedGeneratedAt } },
+        });
     }), 100000);
     return () => {
         clearInterval(deleteOldAccsInterval);

@@ -47,6 +47,7 @@ export { io };
 let generatedPostIds: string[];
 let generatedUserIds: string[];
 let generatedRoomIds: string[];
+let seedGeneratedAt: Date;
 
 app.use(
   cors({
@@ -63,6 +64,7 @@ if (process.env.NODE_ENV === "production") {
     generatedPostIds = generatedPosts;
     generatedUserIds = generatedUsers;
     generatedRoomIds = generatedRooms;
+    seedGeneratedAt = new Date();
   });
 }
 
@@ -354,6 +356,9 @@ server.listen(process.env.PORT || 80, () => {
         );
       });
     }
+    await prisma.comment.deleteMany({
+      where: { createdAt: { lt: twentyMinutesAgo, gt: seedGeneratedAt } },
+    });
   }, 100000);
   return () => {
     clearInterval(deleteOldAccsInterval);
