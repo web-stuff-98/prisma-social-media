@@ -383,8 +383,14 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
     try {
         for (var generatedPosts_4 = __asyncValues(generatedPosts), generatedPosts_4_1; generatedPosts_4_1 = yield generatedPosts_4.next(), !generatedPosts_4_1.done;) {
             const post = generatedPosts_4_1.value;
+            //wait 1s so that the images aren't being downloaded too fast
+            yield new Promise((resolve, _) => {
+                setTimeout(() => {
+                    resolve();
+                }, 1000);
+            });
             const imageRes = yield (0, axios_1.default)({
-                url: "https://picsum.photos/1000/800",
+                url: "https://picsum.photos/1000/500",
                 responseType: "arraybuffer",
             });
             const image = Buffer.from(imageRes.data, "binary");
@@ -431,7 +437,7 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
                 });
             }
             catch (error) {
-                console.log("Failed to add post image... for some reason");
+                console.log("Failed to add post image : ", error);
             }
             console.log("Added random image to post");
         }

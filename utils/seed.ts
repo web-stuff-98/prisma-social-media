@@ -283,8 +283,14 @@ const generateLikesOnComments = async () => {
 
 const generatePostImages = async () => {
   for await (const post of generatedPosts) {
+    //wait 1s so that the images aren't being downloaded too fast
+    await new Promise<void>((resolve, _) => {
+      setTimeout(() => {
+        resolve();
+      }, 1000);
+    });
     const imageRes = await axios({
-      url: "https://picsum.photos/1000/800",
+      url: "https://picsum.photos/1000/500",
       responseType: "arraybuffer",
     });
     const image = Buffer.from(imageRes.data, "binary");
@@ -346,7 +352,7 @@ const generatePostImages = async () => {
         },
       });
     } catch (error) {
-      console.log("Failed to add post image... for some reason");
+      console.log("Failed to add post image : ", error);
     }
     console.log("Added random image to post");
   }
