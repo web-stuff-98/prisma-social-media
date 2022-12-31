@@ -34,6 +34,8 @@ let generatedRooms = [];
 function seed() {
     return __awaiter(this, void 0, void 0, function* () {
         yield prisma_1.default.user.deleteMany();
+        yield prisma_1.default.privateMessage.deleteMany();
+        yield prisma_1.default.roomMessage.deleteMany();
         yield s3.deleteBucket();
         yield generateUsers(50);
         yield generatePosts(1000);
@@ -43,6 +45,11 @@ function seed() {
         yield generateLikesAndSharesOnPosts();
         yield generateLikesOnComments();
         console.log(" --- GENERATED SEED ---");
+        return {
+            generatedPosts: generatedPosts.map((p) => p.id),
+            generatedUsers: generatedUsers.map((u) => u.id),
+            generatedRooms: generatedRooms.map((r) => r.id),
+        };
     });
 }
 exports.default = seed;

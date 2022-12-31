@@ -9,6 +9,8 @@ import cookieParser from "cookie-parser";
 import http from "http";
 import path from "path";
 
+import AWS from "./utils/aws";
+
 import { Server } from "socket.io";
 
 const origin =
@@ -42,6 +44,10 @@ export { io };
   next()
 })*/
 
+let generatedPostIds: string[];
+let generatedUserIds: string[];
+let generatedRoomIds: string[];
+
 app.use(
   cors({
     origin,
@@ -53,7 +59,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
-  //seed();
+  seed().then(({ generatedPosts, generatedUsers, generatedRooms }) => {
+    generatedPostIds = generatedPosts;
+    generatedUserIds = generatedUsers;
+    generatedRoomIds = generatedRooms;
+  });
 }
 
 import jwt from "jsonwebtoken";
@@ -214,10 +224,12 @@ app.get("*", (_, res) => {
   res.sendFile(path.join(__dirname, "..", "frontend", "build", "index.html"));
 });
 
+const s3 = new AWS.S3();
+
 server.listen(process.env.PORT || 80, () => {
   console.log(`Server listening on port ${process.env.PORT || 80}`);
 
-  const deleteAccsInterval = setInterval(async () => {
+  const deleteOldAccsInterval = setInterval(async () => {
     const keyVal = await redisClient.get("deleteAccountsCountdownList");
     let deleteAccountsCountdownList = [];
     if (keyVal) deleteAccountsCountdownList = JSON.parse(keyVal);
@@ -240,18 +252,111 @@ server.listen(process.env.PORT || 80, () => {
     );
   }, 100000);
 
-  const deleteOldMessagesInterval = setInterval(async () => {
+  const deleteOldMessagesRoomsAndPostsInterval = setInterval(async () => {
     const twentyMinutesAgo = new Date(Date.now() - 1200000);
+    const roomMessages = await prisma.roomMessage.findMany({
+      where: { createdAt: { lt: twentyMinutesAgo } },
+    });
+    const privateMessages = await prisma.privateMessage.findMany({
+      where: { createdAt: { lt: twentyMinutesAgo } },
+    });
+    for await (const m of roomMessages) {
+      if (m.hasAttachment)
+        await new Promise<void>((resolve, reject) => {
+          s3.deleteObject(
+            {
+              Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${
+                m.attachmentKey
+              }`,
+              Bucket: "prisma-socialmedia",
+            },
+            (err, _) => {
+              if (err) reject(err);
+              resolve();
+            }
+          );
+        });
+    }
+    for await (const m of privateMessages) {
+      if (m.hasAttachment)
+        await new Promise<void>((resolve, reject) => {
+          s3.deleteObject(
+            {
+              Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${
+                m.attachmentKey
+              }`,
+              Bucket: "prisma-socialmedia",
+            },
+            (err, _) => {
+              if (err) reject(err);
+              resolve();
+            }
+          );
+        });
+    }
     await prisma.roomMessage.deleteMany({
       where: { createdAt: { lt: twentyMinutesAgo } },
     });
     await prisma.privateMessage.deleteMany({
       where: { createdAt: { lt: twentyMinutesAgo } },
     });
+    await prisma.room.deleteMany({
+      where: {
+        createdAt: { lt: twentyMinutesAgo },
+        id: { notIn: generatedRoomIds },
+      },
+    });
+    await prisma.user.deleteMany({
+      where: {
+        createdAt: { lt: twentyMinutesAgo },
+        id: { notIn: generatedUserIds },
+      },
+    });
+    const postsToDelete = await prisma.post.findMany({
+      where: {
+        createdAt: { lt: twentyMinutesAgo },
+        id: { notIn: generatedPostIds },
+      },
+    });
+    await prisma.post.deleteMany({
+      where: {
+        id: { notIn: generatedPostIds },
+        createdAt: { lt: twentyMinutesAgo },
+      },
+    });
+    for await (const p of postsToDelete) {
+      await new Promise<void>((resolve, reject) => {
+        s3.deleteObject(
+          {
+            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${
+              p.imageKey
+            }`,
+            Bucket: "prisma-socialmedia",
+          },
+          (err, _) => {
+            if (err) reject(err);
+            resolve();
+          }
+        );
+      });
+      await new Promise<void>((resolve, reject) => {
+        s3.deleteObject(
+          {
+            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${
+              p.imageKey
+            }`,
+            Bucket: "prisma-socialmedia",
+          },
+          (err, _) => {
+            if (err) reject(err);
+            resolve();
+          }
+        );
+      });
+    }
   }, 100000);
-
   return () => {
-    clearInterval(deleteAccsInterval);
-    clearInterval(deleteOldMessagesInterval);
+    clearInterval(deleteOldAccsInterval);
+    clearInterval(deleteOldMessagesRoomsAndPostsInterval);
   };
 });

@@ -14,8 +14,10 @@ let generatedUsers: any[] = [];
 let generatedPosts: any[] = [];
 let generatedRooms: any[] = [];
 
-export default async function seed() {
+async function seed() {
   await prisma.user.deleteMany();
+  await prisma.privateMessage.deleteMany();
+  await prisma.roomMessage.deleteMany();
   await s3.deleteBucket();
 
   await generateUsers(50);
@@ -27,7 +29,14 @@ export default async function seed() {
   await generateLikesOnComments();
 
   console.log(" --- GENERATED SEED ---");
+
+  return {
+    generatedPosts: generatedPosts.map((p) => p.id),
+    generatedUsers: generatedUsers.map((u) => u.id),
+    generatedRooms: generatedRooms.map((r) => r.id),
+  };
 }
+export default seed;
 
 const generateUser = async (i: number) => {
   const imageRes = await axios({
@@ -293,7 +302,9 @@ const generatePostImages = async () => {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.slug}.randomPost`,
+          Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${
+            post.slug
+          }.randomPost`,
           Body: thumb,
           ContentType: "image/jpeg",
           ContentEncoding: "base64",
@@ -308,7 +319,9 @@ const generatePostImages = async () => {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
-          Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.slug}.randomPost`,
+          Key: `${
+            (process.env.NODE_ENV !== "production" ? "dev." : "") + post.slug
+          }.randomPost`,
           Body: scaled,
           ContentType: "image/jpeg",
           ContentEncoding: "base64",
