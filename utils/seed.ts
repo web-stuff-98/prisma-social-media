@@ -209,8 +209,8 @@ const generateCommentOnPost = async (
 };
 const generateCommentsOnPost = async (postId: string) => {
   const rand = Math.random();
-  const rand2 = Math.random() * 100;
-  const numComments = Math.floor(rand * rand * rand * rand * rand2);
+  const rand2 = Math.random() * 120;
+  const numComments = Math.floor(rand * rand * rand * rand2);
   let idsOfOtherCommentsOnPost: string[] = [];
   for await (const i of Array.from(Array(numComments).keys())) {
     const commentId: string = await generateCommentOnPost(
@@ -336,14 +336,18 @@ const generatePostImages = async () => {
       width: 14,
       height: 10,
     })) as string;
-    await prisma.post.update({
-      where: { id: post.id },
-      data: {
-        imagePending: false,
-        imageKey: `${post.slug}.randomPost`,
-        blur,
-      },
-    });
+    try {
+      await prisma.post.update({
+        where: { id: post.id },
+        data: {
+          imagePending: false,
+          imageKey: `${post.slug}.randomPost`,
+          blur,
+        },
+      });
+    } catch (error) {
+      console.log("Failed to add post image... for some reason");
+    }
     console.log("Added random image to post");
   }
 };

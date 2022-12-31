@@ -377,7 +377,7 @@ export default class ChatDAO {
                 : "") + String(msg.attachmentKey)
             }`,
           },
-          (err, data) => {
+          (err, _) => {
             if (err) reject(err);
             resolve();
           }

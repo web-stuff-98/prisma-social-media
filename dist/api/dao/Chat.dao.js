@@ -370,7 +370,7 @@ class ChatDAO {
                         Key: `${(process.env.NODE_ENV !== "production"
                             ? "dev."
                             : "") + String(msg.attachmentKey)}`,
-                    }, (err, data) => {
+                    }, (err, _) => {
                         if (err)
                             reject(err);
                         resolve();
