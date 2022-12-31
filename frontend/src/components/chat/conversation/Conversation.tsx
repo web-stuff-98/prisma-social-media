@@ -154,7 +154,7 @@ export default function ConversationSection({
   const handleUploadAttachment = useCallback(
     async (id: string) => {
       try {
-        if (!fileRef.current) throw new Error("No file selected");
+        if (!fileRef.current) return;
         await uploadPrivateMessageAttachment(
           id,
           fileRef.current.size,
@@ -249,9 +249,7 @@ export default function ConversationSection({
     },
     []
   );
-  const handleVidChatReceivingReturningSignal = (
-    signal: Peer.SignalData,
-  ) => {
+  const handleVidChatReceivingReturningSignal = (signal: Peer.SignalData) => {
     setTimeout(() => {
       peerRef.current?.peer.signal(signal);
     });
@@ -261,7 +259,7 @@ export default function ConversationSection({
     setPeer(undefined);
     peerRef.current = undefined;
   };
-  const createPeer = (sid:string) => {
+  const createPeer = (sid: string) => {
     if (typeof userStream?.current === "undefined")
       throw new Error("Media stream is undefined");
     const peer = new Peer({
