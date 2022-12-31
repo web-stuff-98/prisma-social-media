@@ -49,12 +49,7 @@ const ICE_Config = {
 };
 
 export default function Room({ roomId }: { roomId: string }) {
-  const {
-    rooms,
-    setTopText,
-    userStream,
-    initVideo,
-  } = useChat();
+  const { rooms, setTopText, userStream, initVideo } = useChat();
   const { socket } = useSocket();
   const { getUserData, cacheUserData, users } = useUsers();
 
@@ -203,11 +198,7 @@ export default function Room({ roomId }: { roomId: string }) {
     (ids: { sid: string; uid: string }[]) => {
       const peers: PeerWithIDs[] = [];
       ids.forEach((ids) => {
-        const peer = createPeer(
-          ids.sid,
-          String(socket?.id),
-          userStream?.current
-        );
+        const peer = createPeer(ids.sid, socket?.id!, userStream?.current);
         peersRef.current.push({
           peerSID: ids.sid,
           peerUID: ids.uid,
@@ -310,7 +301,7 @@ export default function Room({ roomId }: { roomId: string }) {
         handleVidChatReceivingReturningSignal
       );
       socket?.off("room_video_chat_user_left", handleVidChatUserLeft);
-      peersRef.current.forEach((p) => p.peer.destroy())
+      peersRef.current.forEach((p) => p.peer.destroy());
       leaveRoom(roomId);
     };
   }, []);
@@ -318,7 +309,9 @@ export default function Room({ roomId }: { roomId: string }) {
   return (
     <div>
       <>
-        {(isStreaming || peers.length > 0) && <Videos peersData={peers} windowSize="1/4" />}
+        {(isStreaming || peers.length > 0) && (
+          <Videos peersData={peers} windowSize="1/4" />
+        )}
         <MessageList
           roomId={roomId}
           messages={messages}
@@ -338,4 +331,3 @@ export default function Room({ roomId }: { roomId: string }) {
     </div>
   );
 }
-

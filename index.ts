@@ -97,8 +97,7 @@ io.on("connection", async (socket) => {
   socket.on("auth", async () => await socketAuth(socket));
 
   socket.on("room_video_chat_sending_signal", async (payload) => {
-    const otherUserSocket = await getUserSocket(payload.userToSignal);
-    io.to(otherUserSocket?.id!).emit(
+    io.to(payload.userToSignal).emit(
       "room_video_chat_user_joined",
       payload.signal,
       payload.callerSid,

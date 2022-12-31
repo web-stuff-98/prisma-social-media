@@ -146,10 +146,10 @@ export default function Profile() {
           <h3 className="text-center text-md">Shares</h3>
           <div
             style={{ maxHeight: "15rem", height: "15rem" }}
-            className="overflow-y-auto flex flex-col mb-2 gap-2"
+            className="overflow-y-auto flex w-20 flex-col mb-2 gap-2"
           >
             {sharesPosts.map((p) => (
-              <PostCardShare slug={p} />
+              <PostCardShare key={p} slug={p} />
             ))}
           </div>
         </>

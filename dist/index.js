@@ -92,8 +92,7 @@ io.on("connection", (socket) => __awaiter(void 0, void 0, void 0, function* () {
     socket.on("auth", () => __awaiter(void 0, void 0, void 0, function* () { return yield socketAuth(socket); }));
     socket.on("room_video_chat_sending_signal", (payload) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
-        const otherUserSocket = yield (0, getUserSocket_1.default)(payload.userToSignal);
-        io.to(otherUserSocket === null || otherUserSocket === void 0 ? void 0 : otherUserSocket.id).emit("room_video_chat_user_joined", payload.signal, payload.callerSid, String((_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.id));
+        io.to(payload.userToSignal).emit("room_video_chat_user_joined", payload.signal, payload.callerSid, String((_a = socket.data.user) === null || _a === void 0 ? void 0 : _a.id));
     }));
     socket.on("room_video_chat_returning_signal", (payload) => {
         io.to(payload.callerSid).emit("room_video_chat_receiving_returned_signal", payload.signal, socket.id);
