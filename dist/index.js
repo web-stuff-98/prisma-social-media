@@ -22,7 +22,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.io = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const seed_1 = __importDefault(require("./utils/seed"));
 const cors_1 = __importDefault(require("cors"));
 const express_1 = __importDefault(require("express"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
@@ -55,10 +54,28 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
     app.use(express_1.default.static(path_1.default.join(__dirname, "..", "frontend", "build")));
+    ///The seed has already been generated
+    /*seed(
+      process.env.NODE_ENV !== "production" ? 5 : 50,
+      process.env.NODE_ENV !== "production" ? 5 : 1000,
+      process.env.NODE_ENV !== "production" ? 2 : 200
+    ).then(() => {
+      seedGeneratedAt = new Date();
+    });*/
+    /*Because the seed has already been generated, after a new version
+    of the project just add all the existing posts,rooms and users IDs
+    to the protected lists*/
+    prisma_1.default.post
+        .findMany({ where: {}, select: { id: true } })
+        .then((data) => (generatedPosts = data.map((p) => p.id)));
+    prisma_1.default.user
+        .findMany({ where: {}, select: { id: true } })
+        .then((data) => (generatedUsers = data.map((u) => u.id)));
+    prisma_1.default.room
+        .findMany({ where: {}, select: { id: true } })
+        .then((data) => (generatedRooms = data.map((r) => r.id)));
+    seedGeneratedAt = new Date("2023-01-01T10:15:40.975928+00:00");
 }
-(0, seed_1.default)(process.env.NODE_ENV !== "production" ? 5 : 50, process.env.NODE_ENV !== "production" ? 5 : 1000, process.env.NODE_ENV !== "production" ? 2 : 200).then(() => {
-    seedGeneratedAt = new Date();
-});
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const socketAuth = (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const rawCookie = socket.handshake.headers.cookie;

@@ -50,15 +50,30 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
-}
 
-seed(
-  process.env.NODE_ENV !== "production" ? 5 : 50,
-  process.env.NODE_ENV !== "production" ? 5 : 1000,
-  process.env.NODE_ENV !== "production" ? 2 : 200
-).then(() => {
-  seedGeneratedAt = new Date();
-});
+  ///The seed has already been generated
+  /*seed(
+    process.env.NODE_ENV !== "production" ? 5 : 50,
+    process.env.NODE_ENV !== "production" ? 5 : 1000,
+    process.env.NODE_ENV !== "production" ? 2 : 200
+  ).then(() => {
+    seedGeneratedAt = new Date();
+  });*/
+
+  /*Because the seed has already been generated, after a new version
+  of the project just add all the existing posts,rooms and users IDs
+  to the protected lists*/
+  prisma.post
+    .findMany({ where: {}, select: { id: true } })
+    .then((data) => (generatedPosts = data.map((p) => p.id)));
+  prisma.user
+    .findMany({ where: {}, select: { id: true } })
+    .then((data) => (generatedUsers = data.map((u) => u.id)));
+  prisma.room
+    .findMany({ where: {}, select: { id: true } })
+    .then((data) => (generatedRooms = data.map((r) => r.id)));
+  seedGeneratedAt = new Date("2023-01-01T10:15:40.975928+00:00")
+}
 
 import jwt from "jsonwebtoken";
 
