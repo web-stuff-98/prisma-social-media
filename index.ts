@@ -13,6 +13,9 @@ import AWS from "./utils/aws";
 
 import { Server } from "socket.io";
 
+import prisma from "./utils/prisma";
+
+
 const origin =
   process.env.NODE_ENV === "production"
     ? [
@@ -72,7 +75,7 @@ if (process.env.NODE_ENV === "production") {
   prisma.room
     .findMany({ where: {}, select: { id: true } })
     .then((data) => (generatedRooms = data.map((r) => r.id)));
-  seedGeneratedAt = new Date("2023-01-01T10:15:40.975928+00:00")
+  seedGeneratedAt = new Date("2023-01-01T10:15:40.975928+00:00");
 }
 
 import jwt from "jsonwebtoken";
@@ -223,7 +226,6 @@ import {
 import getUserSocket from "./utils/getUserSocket";
 import redisClient from "./utils/redis";
 import UsersDAO from "./api/dao/Users.dao";
-import prisma from "./utils/prisma";
 
 app.use("/api/posts", Posts);
 app.use("/api/users", Users);
