@@ -15,7 +15,6 @@ import { Server } from "socket.io";
 
 import prisma from "./utils/prisma";
 
-
 const origin =
   process.env.NODE_ENV === "production"
     ? [
@@ -68,13 +67,13 @@ if (process.env.NODE_ENV === "production") {
   to the protected lists*/
   prisma.post
     .findMany({ where: {}, select: { id: true } })
-    .then((data) => (generatedPosts = data.map((p) => p.id)));
+    .then((data) => (globalThis.generatedPosts = data.map((p) => p.id)));
   prisma.user
     .findMany({ where: {}, select: { id: true } })
-    .then((data) => (generatedUsers = data.map((u) => u.id)));
+    .then((data) => (globalThis.generatedUsers = data.map((u) => u.id)));
   prisma.room
     .findMany({ where: {}, select: { id: true } })
-    .then((data) => (generatedRooms = data.map((r) => r.id)));
+    .then((data) => (globalThis.generatedRooms = data.map((r) => r.id)));
   seedGeneratedAt = new Date("2023-01-01T10:15:40.975928+00:00");
 }
 
