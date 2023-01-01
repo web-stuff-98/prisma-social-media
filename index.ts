@@ -61,9 +61,9 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
   seed(
-    process.env.NODE_ENV !== "production" ? 5 : 50,
-    process.env.NODE_ENV !== "production" ? 5 : 1000,
-    process.env.NODE_ENV !== "production" ? 2 : 50
+    process.env.NODE_ENV !== "production" ? 5 : 20,
+    process.env.NODE_ENV !== "production" ? 5 : 255,
+    process.env.NODE_ENV !== "production" ? 2 : 200
   ).then(({ generatedPosts, generatedUsers, generatedRooms }) => {
     generatedPostIds = generatedPosts;
     generatedUserIds = generatedUsers;
