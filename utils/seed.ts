@@ -217,7 +217,7 @@ const generateCommentOnPost = async (
     });
     id = cmt.id;
   } catch (error) {
-    console.log("Failed to add comment for some fucking reason");
+    console.log("Failed to add comment for some reason");
   }
   return id;
 };
@@ -260,7 +260,7 @@ const generateLikesAndSharesOnPosts = async () => {
           },
         });
       } catch (e) {
-        console.log("Failed to add post like for some fucking reason");
+        console.log("Failed to add post like for some reason");
       }
     }
     for await (const i of Array.from(Array(numShares).keys())) {
@@ -272,7 +272,7 @@ const generateLikesAndSharesOnPosts = async () => {
           },
         });
       } catch (e) {
-        console.log("Failed to add post share for some fucking reason");
+        console.log("Failed to add post share for some reason");
       }
     }
     console.log("Generated likes and shares for post");
@@ -299,7 +299,7 @@ const generateLikesOnComments = async () => {
               },
             });
           } catch (error) {
-            console.log("Failed to add comment like for some fucking reason");
+            console.log("Failed to add comment like for some reason");
           }
         }
         console.log("Generated likes for comment");
@@ -309,11 +309,11 @@ const generateLikesOnComments = async () => {
 
 const generatePostImages = async () => {
   for await (const post of generatedPosts) {
-    //wait 1s so that the images aren't being downloaded too fast
+    //wait a but so that the images aren't being downloaded too fast
     await new Promise<void>((resolve, _) => {
       setTimeout(() => {
         resolve();
-      }, 1000);
+      }, 250);
     });
     const imageRes = await axios({
       url: "https://picsum.photos/1000/500",
