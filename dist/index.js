@@ -45,15 +45,6 @@ const io = new socket_io_1.Server(server, {
     },
 });
 exports.io = io;
-/*app.use((req, res, next) => {
-  if (process.env.NODE_ENV !== "development" && !req.secure) {
-    return res.redirect("https://" + req.headers.host + req.url);
-  }
-  next()
-})*/
-let generatedPostIds;
-let generatedUserIds;
-let generatedRoomIds;
 let seedGeneratedAt;
 app.use((0, cors_1.default)({
     origin,
@@ -64,13 +55,10 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
     app.use(express_1.default.static(path_1.default.join(__dirname, "..", "frontend", "build")));
-    (0, seed_1.default)(process.env.NODE_ENV !== "production" ? 5 : 20, process.env.NODE_ENV !== "production" ? 5 : 255, process.env.NODE_ENV !== "production" ? 2 : 200).then(({ generatedPosts, generatedUsers, generatedRooms }) => {
-        generatedPostIds = generatedPosts;
-        generatedUserIds = generatedUsers;
-        generatedRoomIds = generatedRooms;
-        seedGeneratedAt = new Date();
-    });
 }
+(0, seed_1.default)(process.env.NODE_ENV !== "production" ? 5 : 20, process.env.NODE_ENV !== "production" ? 5 : 255, process.env.NODE_ENV !== "production" ? 2 : 200).then(() => {
+    seedGeneratedAt = new Date();
+});
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const socketAuth = (socket) => __awaiter(void 0, void 0, void 0, function* () {
     const rawCookie = socket.handshake.headers.cookie;
@@ -294,24 +282,24 @@ server.listen(process.env.PORT || 80, () => {
         yield prisma_1.default.room.deleteMany({
             where: {
                 createdAt: { lt: twentyMinutesAgo },
-                id: { notIn: generatedRoomIds },
+                id: { notIn: globalThis.generatedRooms },
             },
         });
         yield prisma_1.default.user.deleteMany({
             where: {
                 createdAt: { lt: twentyMinutesAgo },
-                id: { notIn: generatedUserIds },
+                id: { notIn: globalThis.generatedUsers },
             },
         });
         const postsToDelete = yield prisma_1.default.post.findMany({
             where: {
                 createdAt: { lt: twentyMinutesAgo },
-                id: { notIn: generatedPostIds },
+                id: { notIn: globalThis.generatedPosts },
             },
         });
         yield prisma_1.default.post.deleteMany({
             where: {
-                id: { notIn: generatedPostIds },
+                id: { notIn: globalThis.generatedPosts },
                 createdAt: { lt: twentyMinutesAgo },
             },
         });

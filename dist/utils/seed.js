@@ -27,9 +27,6 @@ const imageProcessing_1 = __importDefault(require("./imageProcessing"));
 const aws_1 = __importDefault(require("./aws"));
 const s3 = new aws_1.default.S3();
 const lipsum = new lorem_ipsum_1.LoremIpsum();
-let generatedUsers = [];
-let generatedPosts = [];
-let generatedRooms = [];
 /*
   This was working perfectly now I have
   some bullshit errors about invalide update invocations
@@ -43,6 +40,9 @@ function seed(users, posts, rooms) {
         yield prisma_1.default.privateMessage.deleteMany();
         yield prisma_1.default.roomMessage.deleteMany();
         yield s3.deleteBucket();
+        globalThis.generatedPosts = [];
+        globalThis.generatedRooms = [];
+        globalThis.generatedUsers = [];
         yield generateUsers(users);
         yield generatePosts(posts);
         yield generateRooms(rooms);
@@ -51,11 +51,6 @@ function seed(users, posts, rooms) {
         yield generateLikesAndSharesOnPosts();
         yield generateLikesOnComments();
         console.log(" --- GENERATED SEED ---");
-        return {
-            generatedPosts: generatedPosts.map((p) => p.id),
-            generatedUsers: generatedUsers.map((u) => u.id),
-            generatedRooms: generatedRooms.map((r) => r.id),
-        };
     });
 }
 exports.default = seed;
@@ -81,7 +76,7 @@ const generateUser = (i) => __awaiter(void 0, void 0, void 0, function* () {
             userId: u.id,
         },
     });
-    generatedUsers = [u, ...generatedUsers];
+    globalThis.generatedUsers.push(u.id);
 });
 const generateUsers = (num) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, e_1, _b, _c;
@@ -142,7 +137,7 @@ const generatePost = () => __awaiter(void 0, void 0, void 0, function* () {
                 ? randomCreationDate
                 : randomCreationDate +
                     (Date.now() - randomCreationDate) * Math.random()),
-            authorId: generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id,
+            authorId: globalThis.generatedUsers[Math.floor(Math.random() * globalThis.generatedUsers.length)],
             tags: {
                 connectOrCreate: lipsum
                     .generateParagraphs(1)
@@ -160,7 +155,7 @@ const generatePost = () => __awaiter(void 0, void 0, void 0, function* () {
             },
         },
     });
-    generatedPosts = [p, ...generatedPosts];
+    globalThis.generatedPosts.push(p.id);
 });
 const generatePosts = (num) => __awaiter(void 0, void 0, void 0, function* () {
     var _g, e_2, _h, _j;
@@ -187,19 +182,19 @@ const generatePosts = (num) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 const generateRoom = (i) => __awaiter(void 0, void 0, void 0, function* () {
-    const authorId = generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id;
-    const numMembers = Math.floor(Math.random() * generatedUsers.length);
+    const authorId = globalThis.generatedUsers[Math.floor(Math.random() * globalThis.generatedUsers.length)];
+    const numMembers = Math.floor(Math.random() * globalThis.generatedUsers.length);
     let members = [authorId];
     while (i < numMembers) {
         i++;
-        members.push(generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id);
+        members.push(globalThis.generatedUsers[Math.floor(Math.random() * globalThis.generatedUsers.length)]);
     }
     members = [...new Set(members)];
     const numBanned = Math.floor(Math.random() * 5);
     let banned = [];
     while (i < numBanned) {
         i++;
-        banned.push(generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id);
+        banned.push(globalThis.generatedUsers[Math.floor(Math.random() * globalThis.generatedUsers.length)]);
     }
     banned = [...new Set(banned)].filter((bannedUid) => !members.includes(bannedUid));
     const r = yield prisma_1.default.room.create({
@@ -216,7 +211,7 @@ const generateRoom = (i) => __awaiter(void 0, void 0, void 0, function* () {
             banned: { select: { id: true } },
         },
     });
-    generatedRooms = [r, ...generatedRooms];
+    globalThis.generatedRooms.push(r.id);
 });
 const generateRooms = (num) => __awaiter(void 0, void 0, void 0, function* () {
     var _o, e_3, _p, _q;
@@ -246,7 +241,7 @@ const generateCommentOnPost = (postId, idsOfOtherCommentsOnPost = []) => __await
     const rand = Math.random();
     const data = Object.assign({ message: lipsum
             .generateSentences(Math.ceil(Math.max(rand * rand * 3, 1)))
-            .slice(0, 300), userId: generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id, postId }, (idsOfOtherCommentsOnPost.length > 0 && Math.random() < 0.666
+            .slice(0, 300), userId: globalThis.generatedUsers[Math.floor(Math.random() * globalThis.generatedUsers.length)], postId }, (idsOfOtherCommentsOnPost.length > 0 && Math.random() < 0.666
         ? {
             parentId: idsOfOtherCommentsOnPost[Math.floor(Math.random() * idsOfOtherCommentsOnPost.length)],
         }
@@ -295,12 +290,12 @@ const generateCommentsOnPost = (postId) => __awaiter(void 0, void 0, void 0, fun
 const generateCommentsOnPosts = () => __awaiter(void 0, void 0, void 0, function* () {
     var _0, e_5, _1, _2;
     try {
-        for (var _3 = true, generatedPosts_1 = __asyncValues(generatedPosts), generatedPosts_1_1; generatedPosts_1_1 = yield generatedPosts_1.next(), _0 = generatedPosts_1_1.done, !_0;) {
-            _2 = generatedPosts_1_1.value;
+        for (var _3 = true, _4 = __asyncValues(globalThis.generatedPosts), _5; _5 = yield _4.next(), _0 = _5.done, !_0;) {
+            _2 = _5.value;
             _3 = false;
             try {
                 const p = _2;
-                yield generateCommentsOnPost(p.id);
+                yield generateCommentsOnPost(p);
                 console.log("Generated comments for post");
             }
             finally {
@@ -311,36 +306,36 @@ const generateCommentsOnPosts = () => __awaiter(void 0, void 0, void 0, function
     catch (e_5_1) { e_5 = { error: e_5_1 }; }
     finally {
         try {
-            if (!_3 && !_0 && (_1 = generatedPosts_1.return)) yield _1.call(generatedPosts_1);
+            if (!_3 && !_0 && (_1 = _4.return)) yield _1.call(_4);
         }
         finally { if (e_5) throw e_5.error; }
     }
 });
 const generateLikesAndSharesOnPosts = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _4, e_6, _5, _6, _7, e_7, _8, _9, _10, e_8, _11, _12;
+    var _6, e_6, _7, _8, _9, e_7, _10, _11, _12, e_8, _13, _14;
     try {
-        for (var _13 = true, generatedPosts_2 = __asyncValues(generatedPosts), generatedPosts_2_1; generatedPosts_2_1 = yield generatedPosts_2.next(), _4 = generatedPosts_2_1.done, !_4;) {
-            _6 = generatedPosts_2_1.value;
-            _13 = false;
+        for (var _15 = true, _16 = __asyncValues(globalThis.generatedPosts), _17; _17 = yield _16.next(), _6 = _17.done, !_6;) {
+            _8 = _17.value;
+            _15 = false;
             try {
-                const p = _6;
+                const p = _8;
                 const likesRand = Math.random();
                 const sharesRand = Math.random();
-                const shuffledUsersForLikes = shuffle(generatedUsers);
-                const shuffledUsersForShares = shuffle(generatedUsers);
-                const numLikes = Math.floor(likesRand * likesRand * generatedUsers.length);
-                const numShares = Math.floor(sharesRand * sharesRand * generatedUsers.length);
+                const shuffledUsersForLikes = shuffle(globalThis.generatedUsers);
+                const shuffledUsersForShares = shuffle(globalThis.generatedUsers);
+                const numLikes = Math.floor(likesRand * likesRand * globalThis.generatedUsers.length);
+                const numShares = Math.floor(sharesRand * sharesRand * globalThis.generatedUsers.length);
                 try {
-                    for (var _14 = true, _15 = (e_7 = void 0, __asyncValues(Array.from(Array(numLikes).keys()))), _16; _16 = yield _15.next(), _7 = _16.done, !_7;) {
-                        _9 = _16.value;
-                        _14 = false;
+                    for (var _18 = true, _19 = (e_7 = void 0, __asyncValues(Array.from(Array(numLikes).keys()))), _20; _20 = yield _19.next(), _9 = _20.done, !_9;) {
+                        _11 = _20.value;
+                        _18 = false;
                         try {
-                            const i = _9;
+                            const i = _11;
                             try {
                                 yield prisma_1.default.postLike.create({
                                     data: {
-                                        postId: p.id,
-                                        userId: shuffledUsersForLikes[i].id,
+                                        postId: p,
+                                        userId: shuffledUsersForLikes[i],
                                     },
                                 });
                             }
@@ -349,28 +344,28 @@ const generateLikesAndSharesOnPosts = () => __awaiter(void 0, void 0, void 0, fu
                             }
                         }
                         finally {
-                            _14 = true;
+                            _18 = true;
                         }
                     }
                 }
                 catch (e_7_1) { e_7 = { error: e_7_1 }; }
                 finally {
                     try {
-                        if (!_14 && !_7 && (_8 = _15.return)) yield _8.call(_15);
+                        if (!_18 && !_9 && (_10 = _19.return)) yield _10.call(_19);
                     }
                     finally { if (e_7) throw e_7.error; }
                 }
                 try {
-                    for (var _17 = true, _18 = (e_8 = void 0, __asyncValues(Array.from(Array(numShares).keys()))), _19; _19 = yield _18.next(), _10 = _19.done, !_10;) {
-                        _12 = _19.value;
-                        _17 = false;
+                    for (var _21 = true, _22 = (e_8 = void 0, __asyncValues(Array.from(Array(numShares).keys()))), _23; _23 = yield _22.next(), _12 = _23.done, !_12;) {
+                        _14 = _23.value;
+                        _21 = false;
                         try {
-                            const i = _12;
+                            const i = _14;
                             try {
                                 yield prisma_1.default.postShare.create({
                                     data: {
-                                        postId: p.id,
-                                        userId: shuffledUsersForShares[i].id,
+                                        postId: p,
+                                        userId: shuffledUsersForShares[i],
                                     },
                                 });
                             }
@@ -379,65 +374,65 @@ const generateLikesAndSharesOnPosts = () => __awaiter(void 0, void 0, void 0, fu
                             }
                         }
                         finally {
-                            _17 = true;
+                            _21 = true;
                         }
                     }
                 }
                 catch (e_8_1) { e_8 = { error: e_8_1 }; }
                 finally {
                     try {
-                        if (!_17 && !_10 && (_11 = _18.return)) yield _11.call(_18);
+                        if (!_21 && !_12 && (_13 = _22.return)) yield _13.call(_22);
                     }
                     finally { if (e_8) throw e_8.error; }
                 }
                 console.log("Generated likes and shares for post");
             }
             finally {
-                _13 = true;
+                _15 = true;
             }
         }
     }
     catch (e_6_1) { e_6 = { error: e_6_1 }; }
     finally {
         try {
-            if (!_13 && !_4 && (_5 = generatedPosts_2.return)) yield _5.call(generatedPosts_2);
+            if (!_15 && !_6 && (_7 = _16.return)) yield _7.call(_16);
         }
         finally { if (e_6) throw e_6.error; }
     }
 });
 const generateLikesOnComments = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _20, e_9, _21, _22, _23, e_10, _24, _25, _26, e_11, _27, _28;
+    var _24, e_9, _25, _26, _27, e_10, _28, _29, _30, e_11, _31, _32;
     try {
-        for (var _29 = true, generatedPosts_3 = __asyncValues(generatedPosts), generatedPosts_3_1; generatedPosts_3_1 = yield generatedPosts_3.next(), _20 = generatedPosts_3_1.done, !_20;) {
-            _22 = generatedPosts_3_1.value;
-            _29 = false;
+        for (var _33 = true, _34 = __asyncValues(globalThis.generatedPosts), _35; _35 = yield _34.next(), _24 = _35.done, !_24;) {
+            _26 = _35.value;
+            _33 = false;
             try {
-                const p = _22;
+                const p = _26;
                 const post = yield prisma_1.default.post.findFirst({
-                    where: { id: p.id },
+                    where: { id: p },
                     select: { comments: { select: { id: true } } },
                 });
                 if (post && post.comments)
                     try {
-                        for (var _30 = true, _31 = (e_10 = void 0, __asyncValues(post.comments)), _32; _32 = yield _31.next(), _23 = _32.done, !_23;) {
-                            _25 = _32.value;
-                            _30 = false;
+                        for (var _36 = true, _37 = (e_10 = void 0, __asyncValues(post.comments)), _38; _38 = yield _37.next(), _27 = _38.done, !_27;) {
+                            _29 = _38.value;
+                            _36 = false;
                             try {
-                                const cmt = _25;
+                                const cmt = _29;
                                 const rand = Math.random();
-                                const numLikes = Math.floor(rand * rand * generatedUsers.length);
-                                const shuffledUsers = shuffle(generatedUsers);
+                                const numLikes = Math.floor(rand * rand * globalThis.generatedUsers.length);
+                                const shuffledUsers = shuffle(globalThis.generatedUsers);
                                 try {
-                                    for (var _33 = true, _34 = (e_11 = void 0, __asyncValues(Array.from(Array(numLikes).keys()))), _35; _35 = yield _34.next(), _26 = _35.done, !_26;) {
-                                        _28 = _35.value;
-                                        _33 = false;
+                                    for (var _39 = true, _40 = (e_11 = void 0, __asyncValues(Array.from(Array(numLikes).keys()))), _41; _41 = yield _40.next(), _30 = _41.done, !_30;) {
+                                        _32 = _41.value;
+                                        _39 = false;
                                         try {
-                                            const i = _28;
+                                            const i = _32;
                                             try {
                                                 yield prisma_1.default.commentLike.create({
                                                     data: {
                                                         commentId: cmt.id,
-                                                        userId: shuffledUsers[i].id,
+                                                        userId: shuffledUsers[i],
                                                     },
                                                 });
                                             }
@@ -446,53 +441,53 @@ const generateLikesOnComments = () => __awaiter(void 0, void 0, void 0, function
                                             }
                                         }
                                         finally {
-                                            _33 = true;
+                                            _39 = true;
                                         }
                                     }
                                 }
                                 catch (e_11_1) { e_11 = { error: e_11_1 }; }
                                 finally {
                                     try {
-                                        if (!_33 && !_26 && (_27 = _34.return)) yield _27.call(_34);
+                                        if (!_39 && !_30 && (_31 = _40.return)) yield _31.call(_40);
                                     }
                                     finally { if (e_11) throw e_11.error; }
                                 }
                                 console.log("Generated likes for comment");
                             }
                             finally {
-                                _30 = true;
+                                _36 = true;
                             }
                         }
                     }
                     catch (e_10_1) { e_10 = { error: e_10_1 }; }
                     finally {
                         try {
-                            if (!_30 && !_23 && (_24 = _31.return)) yield _24.call(_31);
+                            if (!_36 && !_27 && (_28 = _37.return)) yield _28.call(_37);
                         }
                         finally { if (e_10) throw e_10.error; }
                     }
             }
             finally {
-                _29 = true;
+                _33 = true;
             }
         }
     }
     catch (e_9_1) { e_9 = { error: e_9_1 }; }
     finally {
         try {
-            if (!_29 && !_20 && (_21 = generatedPosts_3.return)) yield _21.call(generatedPosts_3);
+            if (!_33 && !_24 && (_25 = _34.return)) yield _25.call(_34);
         }
         finally { if (e_9) throw e_9.error; }
     }
 });
 const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () {
-    var _36, e_12, _37, _38;
+    var _42, e_12, _43, _44;
     try {
-        for (var _39 = true, generatedPosts_4 = __asyncValues(generatedPosts), generatedPosts_4_1; generatedPosts_4_1 = yield generatedPosts_4.next(), _36 = generatedPosts_4_1.done, !_36;) {
-            _38 = generatedPosts_4_1.value;
-            _39 = false;
+        for (var _45 = true, _46 = __asyncValues(globalThis.generatedPosts), _47; _47 = yield _46.next(), _42 = _47.done, !_42;) {
+            _44 = _47.value;
+            _45 = false;
             try {
-                const post = _38;
+                const post = _44;
                 //wait a but so that the images aren't being downloaded too fast
                 yield new Promise((resolve, _) => {
                     setTimeout(() => {
@@ -506,23 +501,30 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
                 const image = Buffer.from(imageRes.data, "binary");
                 const scaled = (yield (0, imageProcessing_1.default)(image, { width: 768, height: 500 }, true));
                 const thumb = (yield (0, imageProcessing_1.default)(image, { width: 300, height: 300 }, true));
+                let slug;
                 yield new Promise((resolve, reject) => {
-                    s3.upload({
-                        Bucket: "prisma-socialmedia",
-                        Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.slug}.randomPost`,
-                        Body: thumb,
-                        ContentType: "image/jpeg",
-                        ContentEncoding: "base64",
-                    }, (e, _) => {
-                        if (e)
-                            reject(e);
-                        resolve();
-                    });
+                    prisma_1.default.post
+                        .findUnique({ where: { id: post }, select: { slug: true } })
+                        .then((data) => {
+                        slug = data === null || data === void 0 ? void 0 : data.slug;
+                        s3.upload({
+                            Bucket: "prisma-socialmedia",
+                            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${slug}.randomPost`,
+                            Body: thumb,
+                            ContentType: "image/jpeg",
+                            ContentEncoding: "base64",
+                        }, (e, _) => {
+                            if (e)
+                                reject(e);
+                            resolve();
+                        });
+                    })
+                        .catch((e) => reject(e));
                 });
                 yield new Promise((resolve, reject) => {
                     s3.upload({
                         Bucket: "prisma-socialmedia",
-                        Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + post.slug}.randomPost`,
+                        Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") + slug}.randomPost`,
                         Body: scaled,
                         ContentType: "image/jpeg",
                         ContentEncoding: "base64",
@@ -532,34 +534,39 @@ const generatePostImages = () => __awaiter(void 0, void 0, void 0, function* () 
                         resolve();
                     });
                 });
-                const blur = (yield (0, imageProcessing_1.default)(image, {
-                    width: 14,
-                    height: 10,
-                }));
-                try {
-                    yield prisma_1.default.post.update({
-                        where: { id: post.id },
-                        data: {
-                            imagePending: false,
-                            imageKey: `${post.slug}.randomPost`,
-                            blur,
-                        },
+                yield new Promise((resolve, reject) => {
+                    (0, imageProcessing_1.default)(image, {
+                        width: 14,
+                        height: 10,
+                    })
+                        .then((blur) => {
+                        prisma_1.default.post
+                            .update({
+                            where: { id: post },
+                            data: {
+                                imagePending: false,
+                                imageKey: `${slug}.randomPost`,
+                                blur: blur,
+                            },
+                        })
+                            .then(() => resolve())
+                            .catch((e) => reject(e));
+                    })
+                        .catch((e) => {
+                        reject(e);
                     });
-                }
-                catch (error) {
-                    console.log("Failed to add post image : ", error);
-                }
+                });
                 console.log("Added random image to post");
             }
             finally {
-                _39 = true;
+                _45 = true;
             }
         }
     }
     catch (e_12_1) { e_12 = { error: e_12_1 }; }
     finally {
         try {
-            if (!_39 && !_36 && (_37 = generatedPosts_4.return)) yield _37.call(generatedPosts_4);
+            if (!_45 && !_42 && (_43 = _46.return)) yield _43.call(_46);
         }
         finally { if (e_12) throw e_12.error; }
     }

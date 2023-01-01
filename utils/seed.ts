@@ -4,15 +4,10 @@ import crypto from "crypto";
 import axios from "axios";
 import imageProcessing from "./imageProcessing";
 import AWS from "./aws";
-import zlib from "zlib";
 
 const s3 = new AWS.S3();
 
 const lipsum = new LoremIpsum();
-
-let generatedUsers: any[] = [];
-let generatedPosts: any[] = [];
-let generatedRooms: any[] = [];
 
 /*
   This was working perfectly now I have
@@ -28,6 +23,10 @@ async function seed(users: number, posts: number, rooms: number) {
   await prisma.roomMessage.deleteMany();
   await s3.deleteBucket();
 
+  globalThis.generatedPosts = [];
+  globalThis.generatedRooms = [];
+  globalThis.generatedUsers = [];
+
   await generateUsers(users);
   await generatePosts(posts);
   await generateRooms(rooms);
@@ -37,12 +36,6 @@ async function seed(users: number, posts: number, rooms: number) {
   await generateLikesOnComments();
 
   console.log(" --- GENERATED SEED ---");
-
-  return {
-    generatedPosts: generatedPosts.map((p) => p.id),
-    generatedUsers: generatedUsers.map((u) => u.id),
-    generatedRooms: generatedRooms.map((r) => r.id),
-  };
 }
 export default seed;
 
@@ -68,7 +61,7 @@ const generateUser = async (i: number) => {
       userId: u.id,
     },
   });
-  generatedUsers = [u, ...generatedUsers];
+  globalThis.generatedUsers.push(u.id);
 };
 const generateUsers = async (num: number) => {
   for await (const i of Array.from(Array(num).keys())) {
@@ -118,7 +111,9 @@ const generatePost = async () => {
             (Date.now() - randomCreationDate) * Math.random()
       ),
       authorId:
-        generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id,
+        globalThis.generatedUsers[
+          Math.floor(Math.random() * globalThis.generatedUsers.length)
+        ],
       tags: {
         connectOrCreate: lipsum
           .generateParagraphs(1)
@@ -136,7 +131,7 @@ const generatePost = async () => {
       },
     },
   });
-  generatedPosts = [p, ...generatedPosts];
+  globalThis.generatedPosts.push(p.id);
 };
 const generatePosts = async (num: number) => {
   for await (const i of Array.from(Array(num).keys())) {
@@ -147,13 +142,19 @@ const generatePosts = async (num: number) => {
 
 const generateRoom = async (i: number) => {
   const authorId =
-    generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id;
-  const numMembers = Math.floor(Math.random() * generatedUsers.length);
+    globalThis.generatedUsers[
+      Math.floor(Math.random() * globalThis.generatedUsers.length)
+    ];
+  const numMembers = Math.floor(
+    Math.random() * globalThis.generatedUsers.length
+  );
   let members = [authorId];
   while (i < numMembers) {
     i++;
     members.push(
-      generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id
+      globalThis.generatedUsers[
+        Math.floor(Math.random() * globalThis.generatedUsers.length)
+      ]
     );
   }
   members = [...new Set(members)];
@@ -162,7 +163,9 @@ const generateRoom = async (i: number) => {
   while (i < numBanned) {
     i++;
     banned.push(
-      generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id
+      globalThis.generatedUsers[
+        Math.floor(Math.random() * globalThis.generatedUsers.length)
+      ]
     );
   }
   banned = [...new Set(banned)].filter(
@@ -182,7 +185,7 @@ const generateRoom = async (i: number) => {
       banned: { select: { id: true } },
     },
   });
-  generatedRooms = [r, ...generatedRooms];
+  globalThis.generatedRooms.push(r.id);
 };
 const generateRooms = async (num: number) => {
   for await (const i of Array.from(Array(num).keys())) {
@@ -201,7 +204,9 @@ const generateCommentOnPost = async (
       .generateSentences(Math.ceil(Math.max(rand * rand * 3, 1)))
       .slice(0, 300),
     userId:
-      generatedUsers[Math.floor(Math.random() * generatedUsers.length)].id,
+      globalThis.generatedUsers[
+        Math.floor(Math.random() * globalThis.generatedUsers.length)
+      ],
     postId,
     ...(idsOfOtherCommentsOnPost.length > 0 && Math.random() < 0.666
       ? {
@@ -237,28 +242,30 @@ const generateCommentsOnPost = async (postId: string) => {
   }
 };
 const generateCommentsOnPosts = async () => {
-  for await (const p of generatedPosts) {
-    await generateCommentsOnPost(p.id);
+  for await (const p of globalThis.generatedPosts) {
+    await generateCommentsOnPost(p);
     console.log("Generated comments for post");
   }
 };
 
 const generateLikesAndSharesOnPosts = async () => {
-  for await (const p of generatedPosts) {
+  for await (const p of globalThis.generatedPosts) {
     const likesRand = Math.random();
     const sharesRand = Math.random();
-    const shuffledUsersForLikes = shuffle(generatedUsers);
-    const shuffledUsersForShares = shuffle(generatedUsers);
-    const numLikes = Math.floor(likesRand * likesRand * generatedUsers.length);
+    const shuffledUsersForLikes = shuffle(globalThis.generatedUsers);
+    const shuffledUsersForShares = shuffle(globalThis.generatedUsers);
+    const numLikes = Math.floor(
+      likesRand * likesRand * globalThis.generatedUsers.length
+    );
     const numShares = Math.floor(
-      sharesRand * sharesRand * generatedUsers.length
+      sharesRand * sharesRand * globalThis.generatedUsers.length
     );
     for await (const i of Array.from(Array(numLikes).keys())) {
       try {
         await prisma.postLike.create({
           data: {
-            postId: p.id,
-            userId: shuffledUsersForLikes[i].id,
+            postId: p,
+            userId: shuffledUsersForLikes[i],
           },
         });
       } catch (e) {
@@ -269,8 +276,8 @@ const generateLikesAndSharesOnPosts = async () => {
       try {
         await prisma.postShare.create({
           data: {
-            postId: p.id,
-            userId: shuffledUsersForShares[i].id,
+            postId: p,
+            userId: shuffledUsersForShares[i],
           },
         });
       } catch (e) {
@@ -282,22 +289,24 @@ const generateLikesAndSharesOnPosts = async () => {
 };
 
 const generateLikesOnComments = async () => {
-  for await (const p of generatedPosts) {
+  for await (const p of globalThis.generatedPosts) {
     const post = await prisma.post.findFirst({
-      where: { id: p.id },
+      where: { id: p },
       select: { comments: { select: { id: true } } },
     });
     if (post && post.comments)
       for await (const cmt of post.comments) {
         const rand = Math.random();
-        const numLikes = Math.floor(rand * rand * generatedUsers.length);
-        const shuffledUsers = shuffle(generatedUsers);
+        const numLikes = Math.floor(
+          rand * rand * globalThis.generatedUsers.length
+        );
+        const shuffledUsers = shuffle(globalThis.generatedUsers);
         for await (const i of Array.from(Array(numLikes).keys())) {
           try {
             await prisma.commentLike.create({
               data: {
                 commentId: cmt.id,
-                userId: shuffledUsers[i].id,
+                userId: shuffledUsers[i],
               },
             });
           } catch (error) {
@@ -310,7 +319,7 @@ const generateLikesOnComments = async () => {
 };
 
 const generatePostImages = async () => {
-  for await (const post of generatedPosts) {
+  for await (const post of globalThis.generatedPosts) {
     //wait a but so that the images aren't being downloaded too fast
     await new Promise<void>((resolve, _) => {
       setTimeout(() => {
@@ -332,29 +341,36 @@ const generatePostImages = async () => {
       { width: 300, height: 300 },
       true
     )) as string;
+    let slug: string;
     await new Promise<void>((resolve, reject) => {
-      s3.upload(
-        {
-          Bucket: "prisma-socialmedia",
-          Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${
-            post.slug
-          }.randomPost`,
-          Body: thumb,
-          ContentType: "image/jpeg",
-          ContentEncoding: "base64",
-        },
-        (e, _) => {
-          if (e) reject(e);
-          resolve();
-        }
-      );
+      prisma.post
+        .findUnique({ where: { id: post }, select: { slug: true } })
+        .then((data) => {
+          slug = data?.slug!;
+          s3.upload(
+            {
+              Bucket: "prisma-socialmedia",
+              Key: `${
+                process.env.NODE_ENV !== "production" ? "dev." : ""
+              }thumb.${slug}.randomPost`,
+              Body: thumb,
+              ContentType: "image/jpeg",
+              ContentEncoding: "base64",
+            },
+            (e, _) => {
+              if (e) reject(e);
+              resolve();
+            }
+          );
+        })
+        .catch((e) => reject(e));
     });
     await new Promise<void>((resolve, reject) => {
       s3.upload(
         {
           Bucket: "prisma-socialmedia",
           Key: `${
-            (process.env.NODE_ENV !== "production" ? "dev." : "") + post.slug
+            (process.env.NODE_ENV !== "production" ? "dev." : "") + slug
           }.randomPost`,
           Body: scaled,
           ContentType: "image/jpeg",
@@ -366,22 +382,28 @@ const generatePostImages = async () => {
         }
       );
     });
-    const blur = (await imageProcessing(image, {
-      width: 14,
-      height: 10,
-    })) as string;
-    try {
-      await prisma.post.update({
-        where: { id: post.id },
-        data: {
-          imagePending: false,
-          imageKey: `${post.slug}.randomPost`,
-          blur,
-        },
-      });
-    } catch (error) {
-      console.log("Failed to add post image : ", error);
-    }
+    await new Promise<void>((resolve, reject) => {
+      imageProcessing(image, {
+        width: 14,
+        height: 10,
+      })
+        .then((blur) => {
+          prisma.post
+            .update({
+              where: { id: post },
+              data: {
+                imagePending: false,
+                imageKey: `${slug}.randomPost`,
+                blur: blur as string,
+              },
+            })
+            .then(() => resolve())
+            .catch((e) => reject(e));
+        })
+        .catch((e) => {
+          reject(e);
+        });
+    });
     console.log("Added random image to post");
   }
 };

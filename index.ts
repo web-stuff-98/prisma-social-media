@@ -37,16 +37,6 @@ const io = new Server<
 
 export { io };
 
-/*app.use((req, res, next) => {
-  if (process.env.NODE_ENV !== "development" && !req.secure) {
-    return res.redirect("https://" + req.headers.host + req.url);
-  }
-  next()
-})*/
-
-let generatedPostIds: string[];
-let generatedUserIds: string[];
-let generatedRoomIds: string[];
 let seedGeneratedAt: Date;
 
 app.use(
@@ -60,17 +50,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
-  seed(
-    process.env.NODE_ENV !== "production" ? 5 : 20,
-    process.env.NODE_ENV !== "production" ? 5 : 255,
-    process.env.NODE_ENV !== "production" ? 2 : 200
-  ).then(({ generatedPosts, generatedUsers, generatedRooms }) => {
-    generatedPostIds = generatedPosts;
-    generatedUserIds = generatedUsers;
-    generatedRoomIds = generatedRooms;
-    seedGeneratedAt = new Date();
-  });
 }
+
+seed(
+  process.env.NODE_ENV !== "production" ? 5 : 20,
+  process.env.NODE_ENV !== "production" ? 5 : 255,
+  process.env.NODE_ENV !== "production" ? 2 : 200
+).then(() => {
+  seedGeneratedAt = new Date();
+});
 
 import jwt from "jsonwebtoken";
 
@@ -309,24 +297,24 @@ server.listen(process.env.PORT || 80, () => {
     await prisma.room.deleteMany({
       where: {
         createdAt: { lt: twentyMinutesAgo },
-        id: { notIn: generatedRoomIds },
+        id: { notIn: globalThis.generatedRooms },
       },
     });
     await prisma.user.deleteMany({
       where: {
         createdAt: { lt: twentyMinutesAgo },
-        id: { notIn: generatedUserIds },
+        id: { notIn: globalThis.generatedUsers },
       },
     });
     const postsToDelete = await prisma.post.findMany({
       where: {
         createdAt: { lt: twentyMinutesAgo },
-        id: { notIn: generatedPostIds },
+        id: { notIn: globalThis.generatedPosts },
       },
     });
     await prisma.post.deleteMany({
       where: {
-        id: { notIn: generatedPostIds },
+        id: { notIn: globalThis.generatedPosts },
         createdAt: { lt: twentyMinutesAgo },
       },
     });
