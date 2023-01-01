@@ -354,7 +354,7 @@ class ChatDAO {
         });
     }
     static deleteConversation(senderId, recipientId) {
-        var e_1, _a;
+        var _a, e_1, _b, _c;
         return __awaiter(this, void 0, void 0, function* () {
             __1.io.to(`inbox=${recipientId}`).emit("private_conversation_deleted", senderId);
             __1.io.to(`inbox=${senderId}`).emit("private_conversation_deleted", recipientId);
@@ -363,24 +363,31 @@ class ChatDAO {
                 select: { attachmentKey: true },
             });
             try {
-                for (var _b = __asyncValues(Array.from(toDelete)), _c; _c = yield _b.next(), !_c.done;) {
-                    const msg = _c.value;
-                    return new Promise((resolve, reject) => s3.deleteObject({
-                        Bucket: "prisma-socialmedia",
-                        Key: `${(process.env.NODE_ENV !== "production"
-                            ? "dev."
-                            : "") + String(msg.attachmentKey)}`,
-                    }, (err, _) => {
-                        if (err)
-                            reject(err);
-                        resolve();
-                    }));
+                for (var _d = true, _e = __asyncValues(Array.from(toDelete)), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
+                    _c = _f.value;
+                    _d = false;
+                    try {
+                        const msg = _c;
+                        return new Promise((resolve, reject) => s3.deleteObject({
+                            Bucket: "prisma-socialmedia",
+                            Key: `${(process.env.NODE_ENV !== "production"
+                                ? "dev."
+                                : "") + String(msg.attachmentKey)}`,
+                        }, (err, _) => {
+                            if (err)
+                                reject(err);
+                            resolve();
+                        }));
+                    }
+                    finally {
+                        _d = true;
+                    }
                 }
             }
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (_c && !_c.done && (_a = _b.return)) yield _a.call(_b);
+                    if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
                 }
                 finally { if (e_1) throw e_1.error; }
             }

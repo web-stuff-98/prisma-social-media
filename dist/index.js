@@ -64,7 +64,7 @@ app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === "production") {
     app.use(express_1.default.static(path_1.default.join(__dirname, "..", "frontend", "build")));
-    (0, seed_1.default)().then(({ generatedPosts, generatedUsers, generatedRooms }) => {
+    (0, seed_1.default)(process.env.NODE_ENV !== "production" ? 5 : 50, process.env.NODE_ENV !== "production" ? 5 : 1000, process.env.NODE_ENV !== "production" ? 2 : 50).then(({ generatedPosts, generatedUsers, generatedRooms }) => {
         generatedPostIds = generatedPosts;
         generatedUserIds = generatedUsers;
         generatedRoomIds = generatedRooms;
@@ -184,33 +184,40 @@ const s3 = new aws_1.default.S3();
 server.listen(process.env.PORT || 80, () => {
     console.log(`Server listening on port ${process.env.PORT || 80}`);
     const deleteOldAccsInterval = setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
-        var e_1, _a;
+        var _a, e_1, _b, _c;
         const keyVal = yield redis_1.default.get("deleteAccountsCountdownList");
         let deleteAccountsCountdownList = [];
         if (keyVal)
             deleteAccountsCountdownList = JSON.parse(keyVal);
         let deletedIds = [];
         try {
-            for (var deleteAccountsCountdownList_1 = __asyncValues(deleteAccountsCountdownList), deleteAccountsCountdownList_1_1; deleteAccountsCountdownList_1_1 = yield deleteAccountsCountdownList_1.next(), !deleteAccountsCountdownList_1_1.done;) {
-                const info = deleteAccountsCountdownList_1_1.value;
-                const deleteAt = new Date(info.deleteAt).getTime();
-                if (Date.now() >= deleteAt) {
-                    yield Users_dao_1.default.deleteUser(info.id);
-                    deletedIds += info.id;
+            for (var _d = true, deleteAccountsCountdownList_1 = __asyncValues(deleteAccountsCountdownList), deleteAccountsCountdownList_1_1; deleteAccountsCountdownList_1_1 = yield deleteAccountsCountdownList_1.next(), _a = deleteAccountsCountdownList_1_1.done, !_a;) {
+                _c = deleteAccountsCountdownList_1_1.value;
+                _d = false;
+                try {
+                    const info = _c;
+                    const deleteAt = new Date(info.deleteAt).getTime();
+                    if (Date.now() >= deleteAt) {
+                        yield Users_dao_1.default.deleteUser(info.id);
+                        deletedIds += info.id;
+                    }
+                }
+                finally {
+                    _d = true;
                 }
             }
         }
         catch (e_1_1) { e_1 = { error: e_1_1 }; }
         finally {
             try {
-                if (deleteAccountsCountdownList_1_1 && !deleteAccountsCountdownList_1_1.done && (_a = deleteAccountsCountdownList_1.return)) yield _a.call(deleteAccountsCountdownList_1);
+                if (!_d && !_a && (_b = deleteAccountsCountdownList_1.return)) yield _b.call(deleteAccountsCountdownList_1);
             }
             finally { if (e_1) throw e_1.error; }
         }
         yield redis_1.default.set("deleteAccountsCountdownList", JSON.stringify(deleteAccountsCountdownList.filter((info) => !deletedIds.includes(info.id))));
     }), 100000);
     const deleteOldMessagesRoomsAndPostsInterval = setInterval(() => __awaiter(void 0, void 0, void 0, function* () {
-        var e_2, _b, e_3, _c, e_4, _d;
+        var _e, e_2, _f, _g, _h, e_3, _j, _k, _l, e_4, _m, _o;
         const twentyMinutesAgo = new Date(Date.now() - 1200000);
         const roomMessages = yield prisma_1.default.roomMessage.findMany({
             where: { createdAt: { lt: twentyMinutesAgo } },
@@ -219,48 +226,62 @@ server.listen(process.env.PORT || 80, () => {
             where: { createdAt: { lt: twentyMinutesAgo } },
         });
         try {
-            for (var roomMessages_1 = __asyncValues(roomMessages), roomMessages_1_1; roomMessages_1_1 = yield roomMessages_1.next(), !roomMessages_1_1.done;) {
-                const m = roomMessages_1_1.value;
-                if (m.hasAttachment)
-                    yield new Promise((resolve, reject) => {
-                        s3.deleteObject({
-                            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${m.attachmentKey}`,
-                            Bucket: "prisma-socialmedia",
-                        }, (err, _) => {
-                            if (err)
-                                reject(err);
-                            resolve();
+            for (var _p = true, roomMessages_1 = __asyncValues(roomMessages), roomMessages_1_1; roomMessages_1_1 = yield roomMessages_1.next(), _e = roomMessages_1_1.done, !_e;) {
+                _g = roomMessages_1_1.value;
+                _p = false;
+                try {
+                    const m = _g;
+                    if (m.hasAttachment)
+                        yield new Promise((resolve, reject) => {
+                            s3.deleteObject({
+                                Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${m.attachmentKey}`,
+                                Bucket: "prisma-socialmedia",
+                            }, (err, _) => {
+                                if (err)
+                                    reject(err);
+                                resolve();
+                            });
                         });
-                    });
+                }
+                finally {
+                    _p = true;
+                }
             }
         }
         catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
-                if (roomMessages_1_1 && !roomMessages_1_1.done && (_b = roomMessages_1.return)) yield _b.call(roomMessages_1);
+                if (!_p && !_e && (_f = roomMessages_1.return)) yield _f.call(roomMessages_1);
             }
             finally { if (e_2) throw e_2.error; }
         }
         try {
-            for (var privateMessages_1 = __asyncValues(privateMessages), privateMessages_1_1; privateMessages_1_1 = yield privateMessages_1.next(), !privateMessages_1_1.done;) {
-                const m = privateMessages_1_1.value;
-                if (m.hasAttachment)
-                    yield new Promise((resolve, reject) => {
-                        s3.deleteObject({
-                            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${m.attachmentKey}`,
-                            Bucket: "prisma-socialmedia",
-                        }, (err, _) => {
-                            if (err)
-                                reject(err);
-                            resolve();
+            for (var _q = true, privateMessages_1 = __asyncValues(privateMessages), privateMessages_1_1; privateMessages_1_1 = yield privateMessages_1.next(), _h = privateMessages_1_1.done, !_h;) {
+                _k = privateMessages_1_1.value;
+                _q = false;
+                try {
+                    const m = _k;
+                    if (m.hasAttachment)
+                        yield new Promise((resolve, reject) => {
+                            s3.deleteObject({
+                                Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${m.attachmentKey}`,
+                                Bucket: "prisma-socialmedia",
+                            }, (err, _) => {
+                                if (err)
+                                    reject(err);
+                                resolve();
+                            });
                         });
-                    });
+                }
+                finally {
+                    _q = true;
+                }
             }
         }
         catch (e_3_1) { e_3 = { error: e_3_1 }; }
         finally {
             try {
-                if (privateMessages_1_1 && !privateMessages_1_1.done && (_c = privateMessages_1.return)) yield _c.call(privateMessages_1);
+                if (!_q && !_h && (_j = privateMessages_1.return)) yield _j.call(privateMessages_1);
             }
             finally { if (e_3) throw e_3.error; }
         }
@@ -295,34 +316,41 @@ server.listen(process.env.PORT || 80, () => {
             },
         });
         try {
-            for (var postsToDelete_1 = __asyncValues(postsToDelete), postsToDelete_1_1; postsToDelete_1_1 = yield postsToDelete_1.next(), !postsToDelete_1_1.done;) {
-                const p = postsToDelete_1_1.value;
-                yield new Promise((resolve, reject) => {
-                    s3.deleteObject({
-                        Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${p.imageKey}`,
-                        Bucket: "prisma-socialmedia",
-                    }, (err, _) => {
-                        if (err)
-                            reject(err);
-                        resolve();
+            for (var _r = true, postsToDelete_1 = __asyncValues(postsToDelete), postsToDelete_1_1; postsToDelete_1_1 = yield postsToDelete_1.next(), _l = postsToDelete_1_1.done, !_l;) {
+                _o = postsToDelete_1_1.value;
+                _r = false;
+                try {
+                    const p = _o;
+                    yield new Promise((resolve, reject) => {
+                        s3.deleteObject({
+                            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}${p.imageKey}`,
+                            Bucket: "prisma-socialmedia",
+                        }, (err, _) => {
+                            if (err)
+                                reject(err);
+                            resolve();
+                        });
                     });
-                });
-                yield new Promise((resolve, reject) => {
-                    s3.deleteObject({
-                        Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${p.imageKey}`,
-                        Bucket: "prisma-socialmedia",
-                    }, (err, _) => {
-                        if (err)
-                            reject(err);
-                        resolve();
+                    yield new Promise((resolve, reject) => {
+                        s3.deleteObject({
+                            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${p.imageKey}`,
+                            Bucket: "prisma-socialmedia",
+                        }, (err, _) => {
+                            if (err)
+                                reject(err);
+                            resolve();
+                        });
                     });
-                });
+                }
+                finally {
+                    _r = true;
+                }
             }
         }
         catch (e_4_1) { e_4 = { error: e_4_1 }; }
         finally {
             try {
-                if (postsToDelete_1_1 && !postsToDelete_1_1.done && (_d = postsToDelete_1.return)) yield _d.call(postsToDelete_1);
+                if (!_r && !_l && (_m = postsToDelete_1.return)) yield _m.call(postsToDelete_1);
             }
             finally { if (e_4) throw e_4.error; }
         }

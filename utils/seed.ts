@@ -22,15 +22,15 @@ let generatedRooms: any[] = [];
   cant be asked fixing this shit I just put it in trycatch
 */
 
-async function seed() {
+async function seed(users: number, posts: number, rooms: number) {
   await prisma.user.deleteMany();
   await prisma.privateMessage.deleteMany();
   await prisma.roomMessage.deleteMany();
   await s3.deleteBucket();
 
-  await generateUsers(50);
-  await generatePosts(1000);
-  await generateRooms(20);
+  await generateUsers(users);
+  await generatePosts(posts);
+  await generateRooms(rooms);
   await generatePostImages();
   await generateCommentsOnPosts();
   await generateLikesAndSharesOnPosts();
@@ -83,12 +83,14 @@ const generatePost = async () => {
     url: "https://jaspervdj.be/lorem-markdownum/markdown.txt",
     responseType: "arraybuffer",
   });
-  const body = await new Promise<string>((resolve, reject) => {
+  const body = (res.data as Buffer).toString();
+  /*const body = await new Promise<string>((resolve, reject) => {
     zlib.gunzip(res.data, (err, out) => {
+      console.log(res.data);
       if (err) reject(err);
       resolve(out.toString());
     });
-  });
+  });*/
   const title = lipsum.generateParagraphs(1).slice(0, 80);
   const description = lipsum
     .generateParagraphs(Math.ceil(Math.random() * 3))

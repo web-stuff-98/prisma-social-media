@@ -230,42 +230,49 @@ class UsersDAO {
         });
     }
     static deleteUser(id) {
-        var e_1, _a, e_2, _b, e_3, _c;
+        var _a, e_1, _b, _c, _d, e_2, _e, _f, _g, e_3, _h, _j;
         return __awaiter(this, void 0, void 0, function* () {
             // delete all the users post images
             const posts = yield prisma_1.default.post.findMany({
                 where: { authorId: id, imagePending: false },
             });
             try {
-                for (var posts_1 = __asyncValues(posts), posts_1_1; posts_1_1 = yield posts_1.next(), !posts_1_1.done;) {
-                    const post = posts_1_1.value;
-                    yield new Promise((resolve, reject) => {
-                        S3.deleteObject({
-                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
-                                post.imageKey}`,
-                            Bucket: "prisma-socialmedia",
-                        }, (err, _) => {
-                            if (err)
-                                reject(err);
-                            resolve();
+                for (var _k = true, posts_1 = __asyncValues(posts), posts_1_1; posts_1_1 = yield posts_1.next(), _a = posts_1_1.done, !_a;) {
+                    _c = posts_1_1.value;
+                    _k = false;
+                    try {
+                        const post = _c;
+                        yield new Promise((resolve, reject) => {
+                            S3.deleteObject({
+                                Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
+                                    post.imageKey}`,
+                                Bucket: "prisma-socialmedia",
+                            }, (err, _) => {
+                                if (err)
+                                    reject(err);
+                                resolve();
+                            });
                         });
-                    });
-                    yield new Promise((resolve, reject) => {
-                        S3.deleteObject({
-                            Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.imageKey}`,
-                            Bucket: "prisma-socialmedia",
-                        }, (err, _) => {
-                            if (err)
-                                reject(err);
-                            resolve();
+                        yield new Promise((resolve, reject) => {
+                            S3.deleteObject({
+                                Key: `${process.env.NODE_ENV !== "production" ? "dev." : ""}thumb.${post.imageKey}`,
+                                Bucket: "prisma-socialmedia",
+                            }, (err, _) => {
+                                if (err)
+                                    reject(err);
+                                resolve();
+                            });
                         });
-                    });
+                    }
+                    finally {
+                        _k = true;
+                    }
                 }
             }
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (posts_1_1 && !posts_1_1.done && (_a = posts_1.return)) yield _a.call(posts_1);
+                    if (!_k && !_a && (_b = posts_1.return)) yield _b.call(posts_1);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
@@ -274,25 +281,32 @@ class UsersDAO {
                 where: { senderId: id, hasAttachment: true },
             });
             try {
-                for (var roomMessages_1 = __asyncValues(roomMessages), roomMessages_1_1; roomMessages_1_1 = yield roomMessages_1.next(), !roomMessages_1_1.done;) {
-                    const msg = roomMessages_1_1.value;
-                    yield new Promise((resolve, reject) => {
-                        S3.deleteObject({
-                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
-                                msg.attachmentKey}`,
-                            Bucket: "prisma-socialmedia",
-                        }, (err, _) => {
-                            if (err)
-                                reject(err);
-                            resolve();
+                for (var _l = true, roomMessages_1 = __asyncValues(roomMessages), roomMessages_1_1; roomMessages_1_1 = yield roomMessages_1.next(), _d = roomMessages_1_1.done, !_d;) {
+                    _f = roomMessages_1_1.value;
+                    _l = false;
+                    try {
+                        const msg = _f;
+                        yield new Promise((resolve, reject) => {
+                            S3.deleteObject({
+                                Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
+                                    msg.attachmentKey}`,
+                                Bucket: "prisma-socialmedia",
+                            }, (err, _) => {
+                                if (err)
+                                    reject(err);
+                                resolve();
+                            });
                         });
-                    });
+                    }
+                    finally {
+                        _l = true;
+                    }
                 }
             }
             catch (e_2_1) { e_2 = { error: e_2_1 }; }
             finally {
                 try {
-                    if (roomMessages_1_1 && !roomMessages_1_1.done && (_b = roomMessages_1.return)) yield _b.call(roomMessages_1);
+                    if (!_l && !_d && (_e = roomMessages_1.return)) yield _e.call(roomMessages_1);
                 }
                 finally { if (e_2) throw e_2.error; }
             }
@@ -300,25 +314,32 @@ class UsersDAO {
                 where: { senderId: id, hasAttachment: true },
             });
             try {
-                for (var privateMessages_1 = __asyncValues(privateMessages), privateMessages_1_1; privateMessages_1_1 = yield privateMessages_1.next(), !privateMessages_1_1.done;) {
-                    const msg = privateMessages_1_1.value;
-                    yield new Promise((resolve, reject) => {
-                        S3.deleteObject({
-                            Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
-                                msg.attachmentKey}`,
-                            Bucket: "prisma-socialmedia",
-                        }, (err, _) => {
-                            if (err)
-                                reject(err);
-                            resolve();
+                for (var _m = true, privateMessages_1 = __asyncValues(privateMessages), privateMessages_1_1; privateMessages_1_1 = yield privateMessages_1.next(), _g = privateMessages_1_1.done, !_g;) {
+                    _j = privateMessages_1_1.value;
+                    _m = false;
+                    try {
+                        const msg = _j;
+                        yield new Promise((resolve, reject) => {
+                            S3.deleteObject({
+                                Key: `${(process.env.NODE_ENV !== "production" ? "dev." : "") +
+                                    msg.attachmentKey}`,
+                                Bucket: "prisma-socialmedia",
+                            }, (err, _) => {
+                                if (err)
+                                    reject(err);
+                                resolve();
+                            });
                         });
-                    });
+                    }
+                    finally {
+                        _m = true;
+                    }
                 }
             }
             catch (e_3_1) { e_3 = { error: e_3_1 }; }
             finally {
                 try {
-                    if (privateMessages_1_1 && !privateMessages_1_1.done && (_c = privateMessages_1.return)) yield _c.call(privateMessages_1);
+                    if (!_m && !_g && (_h = privateMessages_1.return)) yield _h.call(privateMessages_1);
                 }
                 finally { if (e_3) throw e_3.error; }
             }
