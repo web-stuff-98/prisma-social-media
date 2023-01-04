@@ -125,7 +125,7 @@ io.on("connection", async (socket) => {
       "room_video_chat_user_joined",
       payload.signal,
       payload.callerSid,
-      String(socket.data.user?.id)
+      socket.data.user?.id as string
     );
   });
   socket.on("room_video_chat_returning_signal", (payload) => {
@@ -207,7 +207,7 @@ io.on("connection", async (socket) => {
       if (room.startsWith("room="))
         io.to(room).emit(
           "room_video_chat_user_left",
-          String(socket.data.user?.id)
+          socket.data.user?.id as string
         );
     });
   });

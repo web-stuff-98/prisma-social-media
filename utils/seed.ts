@@ -10,11 +10,9 @@ const s3 = new AWS.S3();
 const lipsum = new LoremIpsum();
 
 /*
-  This was working perfectly now I have
-  some bullshit errors about invalide update invocations
-  on records that "dont exist" but were just created
-
-  cant be asked fixing this shit I just put it in trycatch
+ I was having weird errors about invalid update invocation
+ so I put the generated IDs inside global variables and it fixed
+ it somehow
 */
 
 async function seed(users: number, posts: number, rooms: number) {
@@ -77,6 +75,7 @@ const generatePost = async () => {
     responseType: "arraybuffer",
   });
   const body = (res.data as Buffer).toString();
+  // no longer need to use gunzip, must have been an update
   /*const body = await new Promise<string>((resolve, reject) => {
     zlib.gunzip(res.data, (err, out) => {
       console.log(res.data);

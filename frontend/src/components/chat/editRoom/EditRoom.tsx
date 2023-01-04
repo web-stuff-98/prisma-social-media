@@ -18,8 +18,6 @@ export default function EditRoom({ room }: { room: IRoom }) {
 
   const [err, setErr] = useState("");
 
-  
-
   return (
     <div className="w-full h-full p-2">
       {room ? (

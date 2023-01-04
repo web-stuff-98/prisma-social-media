@@ -208,6 +208,7 @@ export default function Message({
         {hasAttachment && attachmentType === "File" && (
           <a
             aria-label="Download attachment"
+            target="__blank"
             download
             href={`https://d2gt89ey9qb5n6.cloudfront.net/${
               (process.env.NODE_ENV !== "production" ? "dev." : "") +

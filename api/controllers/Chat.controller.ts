@@ -271,7 +271,6 @@ export default class ChatController {
   }
 
   static async updateRoom(req: Req, res: Res) {
-    //This DAO function is not finished.
     try {
       if (req.body.name) {
         const foundRoom = await ChatDAO.getRoomByName(req.body.name);

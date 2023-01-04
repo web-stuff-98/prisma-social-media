@@ -1,5 +1,4 @@
 import {
-  Profile,
   PrivateMessage,
   User,
   RoomMessage,
